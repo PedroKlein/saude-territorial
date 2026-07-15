@@ -5,12 +5,9 @@ import type { Database } from "@/lib/supabase/types";
 /**
  * Supabase server client for use in Server Components and Route Handlers.
  *
- * Uses the getAll/setAll cookie adapter — never individual get/set/remove,
- * which break when Supabase chunks cookies across multiple headers.
- *
- * The setAll silently ignores cookie-set failures that occur inside Server
- * Components (which cannot mutate response cookies); proxy.ts handles the
- * session refresh leg that actually needs to set cookies.
+ * Uses the secret key (SUPABASE_SECRET_KEY) for server-side operations
+ * which bypasses RLS — appropriate for cache writes and internal operations.
+ * Falls back to publishable key if secret is not available.
  *
  * Supabase is a CACHE layer only. Never write patient names, CNS, addresses,
  * or health conditions to Supabase tables.
@@ -18,9 +15,14 @@ import type { Database } from "@/lib/supabase/types";
 export async function createClient() {
   const cookieStore = await cookies();
 
+  const supabaseKey =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseKey,
     {
       cookies: {
         getAll() {
