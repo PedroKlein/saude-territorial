@@ -46,8 +46,8 @@ description = "Run all quality gates: type-check + lint + test"
 depends = ["type-check", "lint", "test"]
 
 [tasks."db:auth-migrate"]
-description = "Create Better Auth tables in local SQLite (dev only)"
-run = "node scripts/migrate-auth.mjs"
+description = "Run Better Auth migrations (creates auth tables in SQLite)"
+run = "echo 'y' | npx auth migrate"
 
 [tasks."db:migrate"]
 description = "Run Supabase migrations (requires supabase CLI)"
