@@ -56,9 +56,10 @@ const FAKE_SPREADSHEET_ID = "fake-spreadsheet-id-client-000";
 
 /** Simulate a 429 error response in the googleapis style */
 function make429Error() {
-  const err = new Error("Quota exceeded for quota metric");
-  (err as NodeJS.ErrnoException & { code?: number }).code = 429;
-  (err as { response?: { status: number } }).response = { status: 429 };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const err: any = new Error("Quota exceeded for quota metric");
+  err.code = 429;
+  err.response = { status: 429 };
   return err;
 }
 
