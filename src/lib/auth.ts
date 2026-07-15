@@ -1,11 +1,10 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
+import Database from "better-sqlite3";
 
 export const auth = betterAuth({
-  database: {
-    url: process.env.DATABASE_URL ?? "",
-  },
+  database: new Database("./auth.db"),
   plugins: [nextCookies()],
   socialProviders: {
     google: {

@@ -1,0 +1,70 @@
+[tools]
+node = "24"
+
+[env]
+_.path = ["./node_modules/.bin"]
+
+[tasks.dev]
+description = "Start Next.js dev server with Turbopack"
+run = "next dev --turbopack"
+
+[tasks.build]
+description = "Build production bundle"
+depends = ["type-check", "lint"]
+run = "next build"
+
+[tasks.start]
+description = "Start production server"
+run = "next start"
+
+[tasks.test]
+description = "Run Vitest test suite"
+run = "vitest run"
+
+[tasks."test:watch"]
+description = "Run Vitest in watch mode"
+run = "vitest"
+
+[tasks."test:coverage"]
+description = "Run tests with coverage report"
+run = "vitest run --coverage"
+
+[tasks.lint]
+description = "Run ESLint on src/"
+run = "eslint src/"
+
+[tasks."lint:fix"]
+description = "Run ESLint with auto-fix"
+run = "eslint src/ --fix"
+
+[tasks.type-check]
+description = "TypeScript compilation check (no emit)"
+run = "tsc --noEmit"
+
+[tasks.check]
+description = "Run all quality gates: type-check + lint + test"
+depends = ["type-check", "lint", "test"]
+
+[tasks."db:auth-migrate"]
+description = "Create Better Auth tables in local SQLite (dev only)"
+run = "node scripts/migrate-auth.mjs"
+
+[tasks."db:migrate"]
+description = "Run Supabase migrations (requires supabase CLI)"
+run = "supabase db push"
+
+[tasks."db:reset"]
+description = "Reset local Supabase database"
+run = "supabase db reset"
+
+[tasks."db:types"]
+description = "Generate TypeScript types from Supabase schema"
+run = "supabase gen types --lang=typescript --local > src/lib/supabase/database.types.ts"
+
+[tasks.install]
+description = "Install dependencies with pnpm"
+run = "pnpm install"
+
+[tasks.clean]
+description = "Remove build artifacts and caches"
+run = "rm -rf .next node_modules/.cache coverage"

@@ -24,3 +24,6 @@ coverage/
 # Misc
 .DS_Store
 *.pem
+
+# Better Auth SQLite (local dev only)
+auth.db
