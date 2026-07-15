@@ -27,3 +27,6 @@ coverage/
 
 # Better Auth SQLite (local dev only)
 auth.db
+
+# Dev auth state (contains session cookie)
+.auth-state.json

@@ -95,13 +95,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const signature = key.digest("base64");
     const signedToken = encodeURIComponent(`${session.token}.${signature}`);
 
-    // Set the signed cookie
-    const response = NextResponse.json({
-      success: true,
-      userId: account.userId,
-      email: account.email,
-      tokenRefreshed: true,
-    });
+    // Redirect to the target page — the browser processes Set-Cookie on redirects
+    const redirectTo = new URL(request.url).searchParams.get("redirect") || "/settings";
+
+    const response = NextResponse.redirect(new URL(redirectTo, request.url));
 
     response.cookies.set("better-auth.session_token", signedToken, {
       httpOnly: true,

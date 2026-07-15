@@ -4,6 +4,10 @@ node = "24"
 [env]
 _.path = ["./node_modules/.bin"]
 
+[tasks."dev:auth"]
+description = "Generate auth state for agent_browser testing (requires dev server running)"
+run = "node scripts/dev-auth-state.mjs"
+
 [tasks.dev]
 description = "Start Next.js dev server with Turbopack"
 run = "next dev --turbopack"
