@@ -18,6 +18,12 @@ export default function DashboardLayout({
             <h1 className="text-xl font-bold text-primary">Saúde Territorial</h1>
             <nav className="flex items-center gap-4">
               <Link
+                href="/map"
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Mapa
+              </Link>
+              <Link
                 href="/settings"
                 className="text-sm text-muted-foreground hover:text-primary"
               >

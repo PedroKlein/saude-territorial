@@ -10,8 +10,14 @@ export default function HomePage() {
       </p>
       <nav className="mt-4 flex flex-col items-center gap-3">
         <Link
-          href="/login"
+          href="/map"
           className="rounded-md bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary/90"
+        >
+          Acessar Mapa
+        </Link>
+        <Link
+          href="/login"
+          className="text-sm text-muted-foreground underline hover:text-primary"
         >
           Entrar com Google
         </Link>
