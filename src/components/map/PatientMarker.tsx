@@ -2,6 +2,13 @@
 
 import { CircleMarker, Popup } from "react-leaflet";
 import { useMapStore } from "@/stores/mapStore";
+import type { AlertLevel } from "@/types/alerts";
+
+const ALERT_COLORS: Record<AlertLevel, string> = {
+  vermelho: "#EF4444",
+  amarelo: "#F59E0B",
+  verde: "#22C55E",
+};
 
 interface PatientMarkerProps {
   cns: string;
@@ -9,10 +16,22 @@ interface PatientMarkerProps {
   lat: number;
   lng: number;
   color: string;
+  alertLevel?: AlertLevel;
 }
 
-export function PatientMarker({ cns, name, lat, lng, color }: PatientMarkerProps) {
+export function PatientMarker({
+  cns,
+  name,
+  lat,
+  lng,
+  color,
+  alertLevel,
+}: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
+
+  // Use alert color for the border if an alert is active
+  const borderColor = alertLevel ? ALERT_COLORS[alertLevel] : "#333";
+  const borderWeight = alertLevel && alertLevel !== "verde" ? 3 : 1;
 
   return (
     <CircleMarker
@@ -20,8 +39,8 @@ export function PatientMarker({ cns, name, lat, lng, color }: PatientMarkerProps
       radius={8}
       pathOptions={{
         fillColor: color,
-        color: "#333",
-        weight: 1,
+        color: borderColor,
+        weight: borderWeight,
         fillOpacity: 0.8,
       }}
       eventHandlers={{
@@ -32,6 +51,17 @@ export function PatientMarker({ cns, name, lat, lng, color }: PatientMarkerProps
         <strong>{name ?? "Sem nome"}</strong>
         <br />
         <span className="text-xs text-muted-foreground">CNS: {cns}</span>
+        {alertLevel && alertLevel !== "verde" && (
+          <>
+            <br />
+            <span
+              className="text-xs font-semibold"
+              style={{ color: ALERT_COLORS[alertLevel] }}
+            >
+              {alertLevel === "vermelho" ? "⚠ Crítico" : "⚡ Atenção"}
+            </span>
+          </>
+        )}
       </Popup>
     </CircleMarker>
   );
