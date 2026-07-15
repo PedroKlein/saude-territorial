@@ -90,7 +90,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     .from("manual_pins")
     .insert({
       user_id: session.user.id,
-      ...validation.data,
+      patient_cns: validation.data!.patient_cns,
+      lat: validation.data!.lat,
+      lng: validation.data!.lng,
+      reference_text: validation.data!.reference_text,
     })
     .select()
     .single();
