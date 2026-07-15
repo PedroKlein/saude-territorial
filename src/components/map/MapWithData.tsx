@@ -6,6 +6,7 @@ import { FilterPanel } from "@/components/sidebar/FilterPanel";
 import { PatientDetailPanel } from "@/components/panels/PatientDetailPanel";
 import { StatsDashboard } from "@/components/map/StatsDashboard";
 import { PriorityList } from "@/components/map/PriorityList";
+import { Legend } from "@/components/map/Legend";
 import { usePatientData } from "@/hooks/usePatientData";
 
 /**
@@ -36,6 +37,8 @@ export function MapWithData() {
         <DynamicMap />
         {/* Priority list (top-right over map) */}
         <PriorityList data={data} />
+        {/* Legend (bottom-left) */}
+        <Legend />
         {/* Stats dashboard (bottom center) */}
         <StatsDashboard data={data} />
         {/* Detail panel (right side, shows on marker click) */}
