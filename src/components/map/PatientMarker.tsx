@@ -1,13 +1,21 @@
 "use client";
 
-import { CircleMarker, Popup } from "react-leaflet";
+import { CircleMarker, Tooltip } from "react-leaflet";
 import { useMapStore } from "@/stores/mapStore";
 import type { AlertLevel } from "@/types/alerts";
 
-const ALERT_COLORS: Record<AlertLevel, string> = {
-  vermelho: "#EF4444",
-  amarelo: "#F59E0B",
-  verde: "#22C55E",
+/** PoC-matching urgency colors */
+export const URGENCY_COLORS: Record<AlertLevel, string> = {
+  vermelho: "#dc2626",
+  amarelo: "#d97706",
+  verde: "#16a34a",
+};
+
+/** PoC-matching urgency radii */
+const URGENCY_RADIUS: Record<AlertLevel, number> = {
+  vermelho: 10,
+  amarelo: 8,
+  verde: 6,
 };
 
 interface PatientMarkerProps {
@@ -15,8 +23,7 @@ interface PatientMarkerProps {
   name: string | null;
   lat: number;
   lng: number;
-  color: string;
-  alertLevel?: AlertLevel;
+  alertLevel: AlertLevel;
 }
 
 export function PatientMarker({
@@ -24,45 +31,36 @@ export function PatientMarker({
   name,
   lat,
   lng,
-  color,
   alertLevel,
 }: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
 
-  // Use alert color for the border if an alert is active
-  const borderColor = alertLevel ? ALERT_COLORS[alertLevel] : "#333";
-  const borderWeight = alertLevel && alertLevel !== "verde" ? 3 : 1;
+  const fillColor = URGENCY_COLORS[alertLevel];
+  const radius = URGENCY_RADIUS[alertLevel];
+  const emoji = alertLevel === "vermelho" ? "🔴" : alertLevel === "amarelo" ? "🟡" : "🟢";
 
   return (
     <CircleMarker
       center={[lat, lng]}
-      radius={8}
+      radius={radius}
       pathOptions={{
-        fillColor: color,
-        color: borderColor,
-        weight: borderWeight,
-        fillOpacity: 0.8,
+        fillColor,
+        color: "#ffffff",
+        weight: 2,
+        fillOpacity: 0.85,
+        opacity: 1,
       }}
       eventHandlers={{
         click: () => setSelectedPatient(cns),
       }}
     >
-      <Popup>
+      <Tooltip direction="top" offset={[0, -8]}>
         <strong>{name ?? "Sem nome"}</strong>
         <br />
-        <span className="text-xs text-muted-foreground">CNS: {cns}</span>
-        {alertLevel && alertLevel !== "verde" && (
-          <>
-            <br />
-            <span
-              className="text-xs font-semibold"
-              style={{ color: ALERT_COLORS[alertLevel] }}
-            >
-              {alertLevel === "vermelho" ? "⚠ Crítico" : "⚡ Atenção"}
-            </span>
-          </>
-        )}
-      </Popup>
+        <span style={{ fontSize: "11px" }}>
+          {emoji} {alertLevel === "vermelho" ? "Crítico" : alertLevel === "amarelo" ? "Atenção" : "Normal"}
+        </span>
+      </Tooltip>
     </CircleMarker>
   );
 }
