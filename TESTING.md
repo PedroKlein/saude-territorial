@@ -190,6 +190,93 @@ After implementing a feature, verify ALL of these before committing:
 | "API not enabled" from Google | Sheets API disabled in Cloud project | Enable at console.cloud.google.com |
 | `auth.db` not found | Dev server started from wrong directory | Always start from project root |
 
+## Custom Playwright Scripts
+
+For complex multi-step flows that go beyond what `agent_browser` batch can do
+(multi-page assertions, form submit → verify result → navigate elsewhere),
+write a custom Playwright script:
+
+```bash
+# Run from project root (has access to node_modules/@playwright/test)
+node scripts/test-my-flow.mjs
+```
+
+### Template
+
+```javascript
+// scripts/test-example-flow.mjs
+import { chromium } from '@playwright/test';
+import { readFileSync } from 'fs';
+
+// Load auth state (same file agent_browser uses)
+const STATE_FILE = '.auth-state.json';
+const storageState = JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
+
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext({ storageState });
+const page = await context.newPage();
+
+// Collect console errors
+const errors = [];
+page.on('pageerror', err => errors.push(err.message));
+
+// --- Your test flow ---
+await page.goto('http://localhost:3000/settings');
+await page.waitForLoadState('networkidle');
+
+// Fill the form
+await page.fill('input[type="text"]', 'https://docs.google.com/spreadsheets/d/1Ub7kagnXCfE62oVNWSz0/edit');
+await page.click('button:has-text("Salvar")');
+
+// Wait and verify
+await page.waitForTimeout(1000);
+const successMsg = await page.textContent('body');
+
+if (successMsg.includes('sucesso')) {
+  console.log('✓ Settings form works end-to-end');
+} else {
+  console.error('✗ Expected success message, got:', successMsg);
+  process.exitCode = 1;
+}
+
+// --- Cleanup ---
+if (errors.length > 0) {
+  console.error('Page errors:', errors);
+  process.exitCode = 1;
+}
+
+await browser.close();
+```
+
+### When to use Playwright scripts vs agent_browser
+
+| Scenario | Use |
+|----------|-----|
+| Quick visual check (page renders, elements exist) | `agent_browser` batch |
+| Single click → verify redirect | `agent_browser` batch |
+| Screenshot for review | `agent_browser` batch |
+| Multi-step form: fill → submit → verify → navigate → verify side effect | Playwright script |
+| Assertions with conditional logic | Playwright script |
+| Testing flows across multiple pages with state | Playwright script |
+| Generating test reports | Playwright script |
+| Waiting for specific network requests | Playwright script |
+
+### Running Playwright scripts
+
+Playwright is installed as a dev dependency (`@playwright/test`). Scripts run from
+the project root so they resolve the package correctly:
+
+```bash
+# One-off script
+node scripts/test-my-flow.mjs
+
+# Ensure chromium is available (run once)
+npx playwright install chromium
+```
+
+The `.auth-state.json` file works with both `agent_browser --state` and
+Playwright's `browser.newContext({ storageState })` — same format.
+
 ## Dev Session Endpoint
 
 `GET /api/auth/dev-session` — DEV ONLY (disabled in production)
