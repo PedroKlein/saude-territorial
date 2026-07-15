@@ -9,8 +9,10 @@ import { StatsDashboard } from "@/components/map/StatsDashboard";
 import { PriorityList } from "@/components/map/PriorityList";
 import { Legend } from "@/components/map/Legend";
 import { MicroareaMetrics } from "@/components/sidebar/MicroareaMetrics";
+import { DayPlanner } from "@/components/routes/DayPlanner";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
+import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { useMemo } from "react";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
@@ -25,6 +27,8 @@ export function MapWithData() {
   const spreadsheetId = process.env.NODE_ENV === "development" ? "demo" : "";
   const { data, isLoading } = usePatientData(spreadsheetId);
   const showTerritories = useMapStore((s) => s.showTerritories);
+  const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
+  const togglePlanningMode = useRoutePlannerStore((s) => s.togglePlanningMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Enrich patients with alertLevel for MicroareaMetrics
@@ -83,6 +87,21 @@ export function MapWithData() {
         )}
         <div className="px-4 pb-4">
           <FilterPanel />
+        </div>
+
+        {/* Day Planner section */}
+        <div className="border-t px-4 py-3">
+          <button
+            onClick={togglePlanningMode}
+            className={`w-full rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              isPlanning
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {isPlanning ? "✔ Selecionando visitas..." : "🗓️ Planejar visitas"}
+          </button>
+          {isPlanning && <DayPlanner />}
         </div>
       </div>
 

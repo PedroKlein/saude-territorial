@@ -2,6 +2,7 @@
 
 import { CircleMarker, Tooltip } from "react-leaflet";
 import { useMapStore } from "@/stores/mapStore";
+import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import type { AlertLevel } from "@/types/alerts";
 import { useRef, useEffect } from "react";
 import type { CircleMarker as LeafletCircleMarker } from "leaflet";
@@ -46,6 +47,8 @@ export function PatientMarker({
 }: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const selectedPatient = useMapStore((s) => s.selectedPatient);
+  const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
+  const addWaypoint = useRoutePlannerStore((s) => s.addWaypoint);
   const markerRef = useRef<LeafletCircleMarker>(null);
 
   const isSelected = selectedPatient === cns;
@@ -80,7 +83,13 @@ export function PatientMarker({
         dashArray: isUncertain && !isSelected ? "4 3" : undefined,
       }}
       eventHandlers={{
-        click: () => setSelectedPatient(cns),
+        click: () => {
+          if (isPlanning) {
+            addWaypoint({ cns, lat, lng, name: name ?? "Sem nome" });
+          } else {
+            setSelectedPatient(cns);
+          }
+        },
       }}
     >
       <Tooltip direction="top" offset={[0, -8]}>

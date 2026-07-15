@@ -14,6 +14,7 @@ import { HeatmapLayer } from "./HeatmapLayer";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
+import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { evaluatePatient } from "@/lib/alerts/engine";
@@ -48,6 +49,7 @@ export default function MapView() {
   const showTerritories = useMapStore((s) => s.showTerritories);
   const vizMode = useMapStore((s) => s.vizMode);
   const activeLayers = useMapStore((s) => s.activeLayers);
+  const optimizedRoute = useRoutePlannerStore((s) => s.optimizedRoute);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
 
@@ -135,7 +137,11 @@ export default function MapView() {
           <HeatmapLayer points={heatmapPoints} />
         )}
       </MapContainer>
-      <ActiveRouteLayer route={activeRoute} mapRef={mapRef} />
+      {/* Show optimized planner route OR single-patient route (not both) */}
+      <ActiveRouteLayer
+        route={optimizedRoute ? { result: optimizedRoute, profile: "foot" } : activeRoute}
+        mapRef={mapRef}
+      />
     </>
   );
 }
