@@ -145,7 +145,7 @@ const crossLayerDiabetes: DemoPatient = {
   nomeCompleto: "Ana Beatriz Oliveira",
   dataNascimento: "15/03/1998",
   idade: 28,
-  telefone: "51 998001001",
+  telefone: "51 999887766", // CONFLICT: different phone from gestantes tab
   rua: "Avenida Moab Caldas",
   numero: "220",
   lat: -30.0695,

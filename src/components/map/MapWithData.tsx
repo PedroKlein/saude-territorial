@@ -10,6 +10,8 @@ import { PriorityList } from "@/components/map/PriorityList";
 import { Legend } from "@/components/map/Legend";
 import { MicroareaMetrics } from "@/components/sidebar/MicroareaMetrics";
 import { DayPlanner } from "@/components/routes/DayPlanner";
+import { ConflictPanel } from "@/components/panels/ConflictPanel";
+import { deduplicatePatients } from "@/lib/sheets/dedup";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
@@ -30,6 +32,17 @@ export function MapWithData() {
   const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
   const togglePlanningMode = useRoutePlannerStore((s) => s.togglePlanningMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showConflicts, setShowConflicts] = useState(false);
+
+  // Detect CNS conflicts across layers
+  const conflicts = useMemo(() => {
+    if (!data) return [];
+    const layerData: Record<string, Array<{ cns: string; nomeCompleto: string | null; lat: number; lng: number; [key: string]: unknown }>> = {};
+    for (const [layerId, patients] of Object.entries(data)) {
+      if (patients) layerData[layerId] = patients;
+    }
+    return deduplicatePatients(layerData).conflicts;
+  }, [data]);
 
   // Enrich patients with alertLevel for MicroareaMetrics
   const enrichedPatients = useMemo(() => {
@@ -103,6 +116,20 @@ export function MapWithData() {
           </button>
           {isPlanning && <DayPlanner />}
         </div>
+
+        {/* Conflict badge + panel */}
+        {conflicts.length > 0 && (
+          <div className="border-t px-4 py-3">
+            <button
+              onClick={() => setShowConflicts(!showConflicts)}
+              className="flex w-full items-center justify-between rounded-md bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-800 hover:bg-yellow-100"
+            >
+              <span>⚠ {conflicts.length} conflito{conflicts.length > 1 ? "s" : ""}</span>
+              <span className="text-xs">{showConflicts ? "▲" : "▼"}</span>
+            </button>
+            {showConflicts && <ConflictPanel conflicts={conflicts} />}
+          </div>
+        )}
       </div>
 
       {/* Backdrop for mobile drawer */}
