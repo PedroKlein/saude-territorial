@@ -27,3 +27,20 @@
 
 /* Ensure dynamically-assembled layer classes survive Tailwind v4 tree-shaking */
 @source inline("bg-layer-gestantes bg-layer-tuberculose bg-layer-diabetes bg-layer-hipertensao bg-layer-acamados bg-layer-pse bg-layer-ilpi border-layer-gestantes border-layer-tuberculose border-layer-diabetes border-layer-hipertensao text-layer-gestantes text-layer-tuberculose text-layer-diabetes text-layer-hipertensao bg-urgency-critico bg-urgency-atencao bg-urgency-normal");
+
+/* Global interactive element defaults */
+button,
+a,
+[role="button"],
+input[type="submit"],
+select {
+  cursor: pointer;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+  border-color: var(--color-primary);
+}
