@@ -60,12 +60,16 @@ vi.mock("@/lib/auth", () => ({
 
 // Mock googleapis (used by discoverTabs inside lib/sheets/discovery)
 const mockSpreadsheetsGet = vi.fn();
+const mockValuesUpdate = vi.fn();
 
 vi.mock("googleapis", () => ({
   google: {
     sheets: () => ({
       spreadsheets: {
         get: mockSpreadsheetsGet,
+        values: {
+          update: mockValuesUpdate,
+        },
       },
     }),
     auth: {
@@ -280,5 +284,99 @@ describe("GET /api/sheets", () => {
     expect(response.status).toBe(200);
     const body = (await response.json()) as { tabs: unknown[] };
     expect(body.tabs).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PUT /api/sheets — write back to Google Sheets
+// ---------------------------------------------------------------------------
+
+describe("PUT /api/sheets", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function makePutRequest(body: Record<string, unknown>): NextRequest {
+    return new NextRequest("http://localhost/api/sheets", {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const VALID_PUT_BODY = {
+    spreadsheetId: FAKE_SPREADSHEET_ID,
+    tabName: "Gestantes",
+    rowIndex: 2,
+    updates: { "Nome completo": "Paciente Teste", Idade: "32" },
+  };
+
+  it("returns 200 on successful write", async () => {
+    mockGetSession.mockResolvedValue(FAKE_SESSION);
+    mockGetGoogleAccessToken.mockResolvedValue("fake-access-token");
+    mockValuesUpdate.mockResolvedValue({ data: {} });
+
+    const req = makePutRequest(VALID_PUT_BODY);
+    const { PUT } = await import("@/app/api/sheets/route");
+    const response = await PUT(req);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveProperty("success", true);
+  });
+
+  it("returns 401 when there is no active session", async () => {
+    mockGetSession.mockResolvedValue(null);
+
+    const req = makePutRequest(VALID_PUT_BODY);
+    const { PUT } = await import("@/app/api/sheets/route");
+    const response = await PUT(req);
+
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+  });
+
+  it("returns 400 when required fields are missing", async () => {
+    mockGetSession.mockResolvedValue(FAKE_SESSION);
+    mockGetGoogleAccessToken.mockResolvedValue("fake-access-token");
+
+    const req = makePutRequest({ spreadsheetId: FAKE_SPREADSHEET_ID }); // missing tabName, rowIndex, updates
+    const { PUT } = await import("@/app/api/sheets/route");
+    const response = await PUT(req);
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+  });
+
+  it("returns 502 when Sheets API throws an error", async () => {
+    mockGetSession.mockResolvedValue(FAKE_SESSION);
+    mockGetGoogleAccessToken.mockResolvedValue("fake-access-token");
+    mockValuesUpdate.mockRejectedValue(new Error("Sheets API error"));
+
+    const req = makePutRequest(VALID_PUT_BODY);
+    const { PUT } = await import("@/app/api/sheets/route");
+    const response = await PUT(req);
+
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    // LGPD: error must NOT contain patient data
+    expect(body.error).not.toContain("Paciente");
+  });
+
+  it("does not leak patient data in error responses", async () => {
+    mockGetSession.mockResolvedValue(FAKE_SESSION);
+    mockGetGoogleAccessToken.mockResolvedValue("fake-access-token");
+    mockValuesUpdate.mockRejectedValue(new Error("rate limit"));
+
+    const req = makePutRequest(VALID_PUT_BODY);
+    const { PUT } = await import("@/app/api/sheets/route");
+    const response = await PUT(req);
+
+    const body = await response.json();
+    expect(JSON.stringify(body)).not.toContain("Paciente Teste");
+    expect(JSON.stringify(body)).not.toContain(VALID_PUT_BODY.updates["Nome completo"]);
   });
 });

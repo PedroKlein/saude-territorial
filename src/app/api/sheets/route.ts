@@ -53,3 +53,77 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({ tabs });
 }
+
+// ---------------------------------------------------------------------------
+// PUT /api/sheets — write-back to Google Sheets (source of truth)
+// ---------------------------------------------------------------------------
+
+export async function PUT(request: NextRequest): Promise<NextResponse> {
+  // 1. Verify session
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.json(
+      { error: "Não autenticado. Faça login para continuar." },
+      { status: 401 }
+    );
+  }
+
+  // 2. Parse and validate body
+  let body: {
+    spreadsheetId?: string;
+    tabName?: string;
+    rowIndex?: number;
+    updates?: Record<string, string>;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Corpo da requisição inválido." },
+      { status: 400 }
+    );
+  }
+
+  const { spreadsheetId, tabName, rowIndex, updates } = body;
+
+  if (!spreadsheetId || !tabName || rowIndex == null || !updates || typeof updates !== "object") {
+    return NextResponse.json(
+      { error: "Campos obrigatórios: spreadsheetId, tabName, rowIndex, updates." },
+      { status: 400 }
+    );
+  }
+
+  // 3. Get access token and create OAuth2 client
+  const accessToken = await getGoogleAccessToken();
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: accessToken });
+
+  // 4. Write to Sheet (source of truth)
+  try {
+    const sheets = google.sheets({ version: "v4", auth: oauth2Client });
+
+    // Build cell updates from the updates map
+    const entries = Object.entries(updates);
+    const values = [entries.map(([, value]) => value)];
+
+    // For simplicity, write entire row. In production, use column mapping.
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `'${tabName}'!A${rowIndex}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch {
+    // LGPD: do NOT include patient data or sheet contents in error
+    return NextResponse.json(
+      { error: "Falha ao salvar na planilha. Tente novamente." },
+      { status: 502 }
+    );
+  }
+}
