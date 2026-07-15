@@ -16,13 +16,13 @@ Plataforma georeferenciada de monitoramento de saúde territorial para equipes d
 
 | Concern | Escolha | Razão |
 |---------|---------|-------|
-| Framework | Next.js (App Router) | Full-stack, Server Actions, latest best practices |
-| Map | Leaflet (react-leaflet) | Proven, plugin ecosystem (heat, cluster, draw), team experience |
-| UI/CSS | shadcn/ui + Tailwind CSS | Pre-built accessible components + full styling control |
-| State (server) | TanStack Query | Cache, refetch, optimistic updates for sheet data |
-| State (client) | Zustand | Lightweight store for UI state (active layers, filters, selections) |
+| Framework | Next.js 16 (App Router) | Full-stack, `"use cache"`, `proxy.ts`, Turbopack |
+| Map | Leaflet (react-leaflet v5) | Proven, plugin ecosystem (heat, cluster, draw), React 19 support |
+| UI/CSS | shadcn/ui + Tailwind CSS v4 | CSS-first `@theme` config, accessible components |
+| State (server) | TanStack Query v5 | Cache, refetch, optimistic updates for sheet data |
+| State (client) | Zustand v5 | Lightweight store for UI state (active layers, filters, selections) |
 | Language | TypeScript (strict mode) | Type safety across complex data models |
-| Auth | Google OAuth | On-behalf access to team's sheets |
+| Auth | Better Auth (Google OAuth) | TypeScript-first, token management, incremental scopes |
 | Patient data | Google Sheets API | Team's existing workflow, zero friction |
 | App state DB | Supabase (Postgres) | Coordinates cache, user prefs, route history |
 | Geocoding | Nominatim (OSM) | Free, open-source. Manual pin fallback |

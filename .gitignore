@@ -1,2 +1,26 @@
+# pi / agent tooling (pre-existing entries preserved)
 /.pi
 /.pi-subagents/artifacts
+/.a5c/processes
+
+# Next.js
+.next/
+out/
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env.local
+.env*.local
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing / coverage
+coverage/
+
+# Misc
+.DS_Store
+*.pem

@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-primary: #1B5E20;
+  --color-primary-light: #4CAF50;
+
+  /* Urgency categories — badges, markers, priority list */
+  --color-urgency-critico: oklch(0.55 0.22 25);
+  --color-urgency-atencao: oklch(0.7 0.18 70);
+  --color-urgency-normal: oklch(0.6 0.16 145);
+
+  /* Semantic alert aliases (hex kept for compatibility with legacy references) */
+  --color-urgent-red: #D32F2F;
+  --color-alert-yellow: #F9A825;
+  --color-safe-green: #388E3C;
+
+  /* Layer accents — one per sheet tab, sidebar toggles + map legend */
+  --color-layer-gestantes: oklch(0.6 0.2 340);
+  --color-layer-tuberculose: oklch(0.65 0.15 60);
+  --color-layer-diabetes: oklch(0.6 0.18 280);
+  --color-layer-hipertensao: oklch(0.55 0.2 25);
+  --color-layer-acamados: oklch(0.5 0.15 200);
+  --color-layer-pse: oklch(0.65 0.12 150);
+  --color-layer-ilpi: oklch(0.6 0.1 300);
+}
+
+/* Ensure dynamically-assembled layer classes survive Tailwind v4 tree-shaking */
+@source inline("bg-layer-gestantes bg-layer-tuberculose bg-layer-diabetes bg-layer-hipertensao bg-layer-acamados bg-layer-pse bg-layer-ilpi border-layer-gestantes border-layer-tuberculose border-layer-diabetes border-layer-hipertensao text-layer-gestantes text-layer-tuberculose text-layer-diabetes text-layer-hipertensao bg-urgency-critico bg-urgency-atencao bg-urgency-normal");

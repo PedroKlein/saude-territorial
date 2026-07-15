@@ -20,13 +20,13 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 
 | Concern | Choice |
 |---------|--------|
-| Framework | Next.js 15+ (App Router) |
-| UI | shadcn/ui + Tailwind CSS |
-| Map | Leaflet (react-leaflet) |
-| State (server) | TanStack Query |
-| State (client) | Zustand |
+| Framework | Next.js 16+ (App Router, Turbopack, `"use cache"`, `proxy.ts`) |
+| UI | shadcn/ui + Tailwind CSS v4 (CSS-first `@theme`, no tailwind.config.js) |
+| Map | Leaflet (react-leaflet v5) |
+| State (server) | TanStack Query v5 |
+| State (client) | Zustand v5 |
 | Language | TypeScript (strict mode) |
-| Auth | Google OAuth (NextAuth.js) |
+| Auth | Better Auth (Google OAuth) |
 | Patient data | Google Sheets API v4 |
 | App state DB | Supabase (Postgres) |
 | Geocoding | Nominatim (OpenStreetMap) |
@@ -44,7 +44,7 @@ package.json                       # pnpm project
 pnpm-lock.yaml
 tsconfig.json
 next.config.ts
-tailwind.config.ts
+tailwind.config.ts               # REMOVED in Tailwind v4 (config lives in globals.css @theme)
 .env.local.example                 # Required environment variables template
 src/
 ├── app/                           # Next.js App Router (pages, layouts, API routes)
@@ -54,7 +54,7 @@ src/
 │   │   ├── settings/              # Spreadsheet config, preferences
 │   │   └── layout.tsx             # Dashboard layout (sidebar + map)
 │   ├── api/                       # Route Handlers
-│   │   ├── auth/                  # NextAuth routes
+│   │   ├── auth/                  # Better Auth routes
 │   │   ├── sheets/                # Google Sheets proxy (read/write)
 │   │   ├── geocode/               # Nominatim proxy + caching
 │   │   └── routes/                # OSRM proxy
