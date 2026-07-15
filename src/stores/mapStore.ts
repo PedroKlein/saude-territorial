@@ -22,6 +22,7 @@ interface MapState {
   activeRoute: ActiveRoute | null;
   showTerritories: boolean;
   vizMode: VizMode;
+  alertsOnly: boolean;
 }
 
 interface MapActions {
@@ -31,6 +32,7 @@ interface MapActions {
   setActiveRoute: (route: ActiveRoute | null) => void;
   setShowTerritories: (show: boolean) => void;
   setVizMode: (mode: VizMode) => void;
+  setAlertsOnly: (on: boolean) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -61,6 +63,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   activeRoute: null,
   showTerritories: false,
   vizMode: "markers",
+  alertsOnly: false,
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -79,4 +82,6 @@ export const useMapStore = create<MapStore>()((set) => ({
   setShowTerritories: (show) => set({ showTerritories: show }),
 
   setVizMode: (mode) => set({ vizMode: mode }),
+
+  setAlertsOnly: (on) => set({ alertsOnly: on }),
 }));

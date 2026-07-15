@@ -17,6 +17,7 @@ interface LayerGroupProps {
 
 export function LayerGroup({ layerId, patients }: LayerGroupProps) {
   const isActive = useMapStore((s) => s.activeLayers[layerId]);
+  const alertsOnly = useMapStore((s) => s.alertsOnly);
 
   // Subscribe to filter state so component re-renders on changes
   const microareas = useFilterStore((s) => s.microareas);
@@ -35,7 +36,12 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
       alertLevel: (alertResults.get(p.cns)?.level ?? "verde") as AlertLevel,
     }));
 
-    const filtered = applyFilters(enriched);
+    // Apply alertsOnly meta-filter before regular filters
+    const alertFiltered = alertsOnly
+      ? enriched.filter((p) => p.alertLevel === "vermelho" || p.alertLevel === "amarelo")
+      : enriched;
+
+    const filtered = applyFilters(alertFiltered);
 
     return filtered.map((p) => (
       <PatientMarker
@@ -48,7 +54,7 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
         confidence={p.confidence}
       />
     ));
-  }, [patients, alertResults, applyFilters, microareas, alertLevels, searchText, hideUncertain]);
+  }, [patients, alertResults, applyFilters, microareas, alertLevels, searchText, hideUncertain, alertsOnly]);
 
   if (!isActive) return null;
 
