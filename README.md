@@ -8,35 +8,31 @@ Conecta às planilhas Google Sheets da equipe de saúde e transforma dados de pa
 
 Este aplicativo faz parte do **GAT 4** (Grupo de Ação Territorial 4) no programa **PET-Saúde Digital** (UFRGS + SMS Porto Alegre). O objetivo é construir soluções digitais de geoprocessamento para a Atenção Primária, pilotando na **US Moab Caldas**.
 
-A equipe de saúde monitora pacientes em ~10 planilhas separadas (gestantes, tuberculose, diabetes, hipertensão, acamados, etc.) sem representação espacial. Este app resolve isso ao geocodificar endereços e plotar pacientes em um mapa com:
-
-- Camadas ativáveis por condição de saúde
-- Alertas de urgência configuráveis
-- Edição de dados direto no mapa (sincroniza com a planilha)
-- Planejamento de rotas para visitas domiciliares
-- Heatmap e clustering por densidade
-- Deduplicação de pacientes entre planilhas (pelo CNS)
-
 ## Stack
 
-- **Next.js 15+** (App Router) — framework full-stack
-- **React-Leaflet** — mapa interativo
-- **shadcn/ui + Tailwind CSS** — interface
-- **TanStack Query + Zustand** — gerenciamento de estado
-- **Google OAuth** — autenticação (acesso on-behalf às planilhas)
-- **Google Sheets API** — fonte de dados da equipe
-- **Supabase** (Postgres) — cache de coordenadas e estado do app
-- **Nominatim** — geocodificação (endereço → coordenadas)
-- **OSRM** — cálculo de rotas (a pé / de carro)
-- **Vercel** — deploy
+| Concern | Escolha |
+|---------|---------|
+| Framework | Next.js 16 (App Router, Turbopack, `proxy.ts`) |
+| UI | shadcn/ui + Tailwind CSS v4 (CSS-first `@theme`) |
+| Map | Leaflet (react-leaflet v5) — *em breve* |
+| State (server) | TanStack Query v5 |
+| State (client) | Zustand v5 |
+| Language | TypeScript (strict mode) |
+| Auth | Better Auth (Google OAuth) |
+| Patient data | Google Sheets API v4 |
+| App state DB | Supabase (Postgres) — cache only |
+| Geocoding | Nominatim (OpenStreetMap) |
+| Routing | OSRM — *em breve* |
+| Package manager | pnpm |
+| Task runner | mise |
+| Deploy | Vercel |
 
 ## Pré-requisitos
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 24+ (gerenciado via mise)
+- pnpm
 - Conta Google (para OAuth e acesso às planilhas)
-- Projeto Supabase (free tier)
-- Google Cloud Console project (OAuth credentials)
+- Google Cloud Console project (OAuth credentials + Sheets API habilitada)
 
 ## Setup
 
@@ -45,6 +41,9 @@ A equipe de saúde monitora pacientes em ~10 planilhas separadas (gestantes, tub
 git clone https://github.com/PedroKlein/saude-territorial.git
 cd saude-territorial
 
+# mise instala Node automaticamente
+mise install
+
 # Instalar dependências
 pnpm install
 
@@ -52,8 +51,11 @@ pnpm install
 cp .env.local.example .env.local
 # Editar .env.local com suas credenciais (ver seção abaixo)
 
+# Criar tabelas do Better Auth (SQLite local)
+echo 'y' | npx auth migrate
+
 # Rodar em desenvolvimento
-pnpm dev
+mise run dev
 ```
 
 ### Variáveis de Ambiente
@@ -63,14 +65,15 @@ pnpm dev
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
-# Supabase (Dashboard → Settings → API)
+# Supabase (Dashboard → Settings → API) — opcional para dev local
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXTAUTH_SECRET=          # openssl rand -base64 32
+BETTER_AUTH_SECRET=          # qualquer string aleatória para dev
+BETTER_AUTH_URL=http://localhost:3000
 ```
 
 ### Google Cloud Setup
@@ -79,58 +82,74 @@ NEXTAUTH_SECRET=          # openssl rand -base64 32
 2. Ativar **Google Sheets API**
 3. Configurar **OAuth consent screen** (External, test mode)
 4. Criar **OAuth 2.0 Client ID** (Web application)
+   - Authorized JavaScript origins: `http://localhost:3000`
    - Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-5. Adicionar scope: `https://www.googleapis.com/auth/spreadsheets`
+5. Scope já incluído automaticamente: `https://www.googleapis.com/auth/spreadsheets`
 
-### Supabase Setup
-
-1. Criar projeto no [Supabase](https://supabase.com/)
-2. Rodar as migrations: `pnpm supabase db push` (quando disponíveis)
-
-## Scripts
+## Tasks (mise)
 
 ```bash
-pnpm dev          # Desenvolvimento (http://localhost:3000)
-pnpm build        # Build de produção
-pnpm start        # Servir build de produção
-pnpm lint         # Lint (ESLint)
-pnpm type-check   # Verificar tipos (tsc --noEmit)
-pnpm test         # Testes unitários (Vitest)
+mise run dev            # Dev server (Turbopack, port 3000)
+mise run test           # Rodar testes (Vitest)
+mise run test:watch     # Testes em watch mode
+mise run type-check     # TypeScript check
+mise run lint           # ESLint
+mise run build          # Build de produção (inclui type-check + lint)
+mise run check          # Todos os quality gates: type-check + lint + test
+mise run dev:auth       # Gerar .auth-state.json para testes automatizados
+mise run db:auth-migrate # Criar tabelas do Better Auth no SQLite
 ```
 
 ## Arquitetura
 
 ```
-Google Sheets ←→ Next.js API Routes ←→ Supabase (cache)
-                        ↕
-                  React Client (mapa + painéis)
+Google Sheets (fonte de verdade)
+    ↕ OAuth on-behalf (token do usuário)
+Next.js API Routes
+    ↕
+Supabase (cache: coordenadas, prefs, sync metadata)
+    ↕
+React Client (mapa + painéis)
 ```
 
 - **Google Sheets** = fonte de verdade para dados de pacientes
-- **Supabase** = cache de coordenadas geocodificadas + preferências do usuário
+- **Supabase** = cache de coordenadas geocodificadas + preferências
 - **Edição:** escreve na planilha primeiro, depois atualiza o cache
 - **Cada aba da planilha** = uma camada no mapa (auto-descoberta)
 - **CNS** = identificador único do paciente (deduplicação cross-aba)
 
-Para detalhes completos da arquitetura, ver [`SPEC.md`](SPEC.md).
-
-## Documentação Relacionada
+## Documentação
 
 | Documento | Descrição |
 |-----------|-----------|
 | [`SPEC.md`](SPEC.md) | Especificação funcional completa |
 | [`AGENTS.md`](AGENTS.md) | Instruções para agentes AI |
-| [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) | Repo irmão: documentação do projeto, glossário, PoCs estáticos |
+| [`TESTING.md`](TESTING.md) | Guia de verificação e testes (agent_browser, Playwright) |
+| [`findings/`](findings/) | Achados técnicos e decisões para referência futura |
+| [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) | Repo irmão: documentação, glossário, PoCs |
 
-## Contribuindo
+## Status Atual
 
-Este projeto é desenvolvido pelos monitores de computação do GAT 4 (PET-Saúde Digital, UFRGS). Para contribuir:
+### ✅ M1 Infrastructure (completo)
+- Setup Next.js 16 + Tailwind v4 + TypeScript strict
+- Google OAuth (Better Auth) com scope de spreadsheets
+- Supabase cache layer (esquema + RLS policies)
+- Settings page (configuração de planilha)
+- Google Sheets API (parser, discovery, rate limiting)
+- Nominatim geocoding (normalização, cache, rate limit 1req/s)
+- 185 testes passando
 
-1. Criar branch a partir de `main`
-2. Seguir conventional commits (`feat:`, `fix:`, `docs:`, etc.)
-3. Nunca commitar dados reais de pacientes
-4. Rodar `pnpm lint && pnpm type-check` antes de abrir PR
+### 🔲 M1 Map (próximo)
+- Mapa Leaflet com marcadores
+- Multi-layer toggle (sidebar)
+- Territórios (GeoJSON)
+
+### 🔲 M2 Interaction
+- Painel de detalhes do paciente
+- Edição bidirecional
+- Sistema de alertas
+- Clustering + heatmap
 
 ## Licença
 
-TBD — O projeto segue requisitos de ser **colaborativo e open-source** (exigência do PET-Saúde).
+TBD — Projeto colaborativo e open-source (exigência PET-Saúde).
