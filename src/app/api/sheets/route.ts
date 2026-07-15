@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, getGoogleAccessToken } from "@/lib/auth";
 import { discoverTabs } from "@/lib/sheets/discovery";
+import { google } from "googleapis";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   // 1. Verify session
@@ -42,13 +43,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Obtain the user's Google access token and discover tabs
+  // 3. Obtain the user's Google access token and create a real OAuth2 client
   const accessToken = await getGoogleAccessToken();
 
-  // Build a minimal auth object that googleapis accepts as an access token
-  const authClient = { credentials: { access_token: accessToken } };
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: accessToken });
 
-  const tabs = await discoverTabs(authClient, spreadsheetId);
+  const tabs = await discoverTabs(oauth2Client, spreadsheetId);
 
   return NextResponse.json({ tabs });
 }

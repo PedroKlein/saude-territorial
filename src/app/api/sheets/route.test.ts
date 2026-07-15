@@ -69,7 +69,9 @@ vi.mock("googleapis", () => ({
       },
     }),
     auth: {
-      OAuth2: vi.fn(),
+      OAuth2: class MockOAuth2 {
+        setCredentials = vi.fn();
+      },
     },
   },
 }));
