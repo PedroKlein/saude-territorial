@@ -3,14 +3,17 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
+import { TerritoryLayer } from "./TerritoryLayer";
+import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
+import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 
 // Fix default marker icon paths broken by bundlers (webpack/turbopack)
@@ -38,6 +41,21 @@ export default function MapView() {
   const spreadsheetId = process.env.NODE_ENV === "development" ? "demo" : "";
   const { data } = usePatientData(spreadsheetId);
   const activeRoute = useMapStore((s) => s.activeRoute);
+  const showTerritories = useMapStore((s) => s.showTerritories);
+  const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
+  const currentMicroareas = useFilterStore((s) => s.microareas);
+
+  const handleMicroareaClick = useCallback(
+    (id: string) => {
+      // Toggle: if already filtered to this MA, clear; otherwise set filter
+      if (currentMicroareas.length === 1 && currentMicroareas[0] === id) {
+        setMicroareaFilter([]);
+      } else {
+        setMicroareaFilter([id]);
+      }
+    },
+    [currentMicroareas, setMicroareaFilter]
+  );
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -59,6 +77,12 @@ export default function MapView() {
           </Tooltip>
         </Marker>
         <MapController data={data} />
+        {showTerritories && (
+          <TerritoryLayer
+            geojson={MICROAREAS_GEOJSON}
+            onMicroareaClick={handleMicroareaClick}
+          />
+        )}
         <ClusteredLayer>
           {data &&
             layerIds.map((layerId) => {

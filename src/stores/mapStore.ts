@@ -18,6 +18,7 @@ interface MapState {
   mapCenter: [number, number];
   mapZoom: number;
   activeRoute: ActiveRoute | null;
+  showTerritories: boolean;
 }
 
 interface MapActions {
@@ -25,6 +26,7 @@ interface MapActions {
   setSelectedPatient: (cns: string | null) => void;
   setMapView: (center: [number, number], zoom: number) => void;
   setActiveRoute: (route: ActiveRoute | null) => void;
+  setShowTerritories: (show: boolean) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -53,6 +55,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   mapCenter: PORTO_ALEGRE,
   mapZoom: 14,
   activeRoute: null,
+  showTerritories: false,
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -67,4 +70,6 @@ export const useMapStore = create<MapStore>()((set) => ({
   setMapView: (center, zoom) => set({ mapCenter: center, mapZoom: zoom }),
 
   setActiveRoute: (route) => set({ activeRoute: route }),
+
+  setShowTerritories: (show) => set({ showTerritories: show }),
 }));

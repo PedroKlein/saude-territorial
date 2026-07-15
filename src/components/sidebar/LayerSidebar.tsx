@@ -22,6 +22,8 @@ interface LayerSidebarProps {
 export function LayerSidebar({ data }: LayerSidebarProps) {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const showTerritories = useMapStore((s) => s.showTerritories);
+  const setShowTerritories = useMapStore((s) => s.setShowTerritories);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -56,6 +58,20 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
           );
         })}
       </ul>
+
+      {/* Territory layer toggle */}
+      <div className="mt-4 border-t pt-4">
+        <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
+          <input
+            type="checkbox"
+            checked={showTerritories}
+            onChange={() => setShowTerritories(!showTerritories)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="h-3 w-3 shrink-0 rounded-full border-2 border-purple-500 bg-purple-200" />
+          <span className="flex-1 text-sm">Microáreas</span>
+        </label>
+      </div>
     </div>
   );
 }
