@@ -9,7 +9,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect dashboard routes — redirect to login if unauthenticated
-  if (pathname.startsWith("/settings") || pathname.startsWith("/map")) {
+  // In development with demo mode, /map is accessible without auth
+  const isDev = process.env.NODE_ENV === "development";
+  if (pathname.startsWith("/settings") || (!isDev && pathname.startsWith("/map"))) {
     if (!session) {
       return NextResponse.redirect(new URL("/login", request.url));
     }

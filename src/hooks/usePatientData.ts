@@ -32,7 +32,13 @@ export const patientKeys = {
 async function fetchPatientData(
   spreadsheetId: string
 ): Promise<LayeredPatientData> {
-  const res = await fetch(`/api/sheets?spreadsheetId=${spreadsheetId}`);
+  // Demo mode: use synthetic data endpoint
+  const isDemo = spreadsheetId === "demo";
+  const url = isDemo
+    ? "/api/sheets/demo"
+    : `/api/sheets?spreadsheetId=${spreadsheetId}`;
+
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Falha ao carregar dados: ${res.status}`);
   }
@@ -44,6 +50,10 @@ async function fetchPatientData(
 // Hook
 // ---------------------------------------------------------------------------
 
+/**
+ * Fetches patient data grouped by layer.
+ * Pass spreadsheetId="demo" to use synthetic data without Google Sheets.
+ */
 export function usePatientData(spreadsheetId: string) {
   return useQuery({
     queryKey: patientKeys.bySheet(spreadsheetId),
