@@ -8,11 +8,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <header>
-        <h1>Saúde Territorial</h1>
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b bg-white px-6 py-4 shadow-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <h1 className="text-xl font-bold text-primary">Saúde Territorial</h1>
+        </div>
       </header>
-      <main>{children}</main>
+      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
     </div>
   );
 }
