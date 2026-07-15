@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@better-auth/utils": "^0.4.2",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@tanstack/react-query": "^5.0.0",
