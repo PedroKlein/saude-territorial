@@ -5,6 +5,7 @@ import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
 import { FilterPanel } from "@/components/sidebar/FilterPanel";
 import { PatientDetailPanel } from "@/components/panels/PatientDetailPanel";
 import { StatsDashboard } from "@/components/map/StatsDashboard";
+import { PriorityList } from "@/components/map/PriorityList";
 import { usePatientData } from "@/hooks/usePatientData";
 
 /**
@@ -33,6 +34,8 @@ export function MapWithData() {
           </div>
         )}
         <DynamicMap />
+        {/* Priority list (top-right over map) */}
+        <PriorityList data={data} />
         {/* Stats dashboard (bottom center) */}
         <StatsDashboard data={data} />
         {/* Detail panel (right side, shows on marker click) */}
