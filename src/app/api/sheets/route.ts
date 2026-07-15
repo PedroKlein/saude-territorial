@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, getGoogleAccessToken } from "@/lib/auth";
 import { discoverTabs } from "@/lib/sheets/discovery";
+import { runSheetsPipeline } from "@/lib/sheets/pipeline";
 import { google } from "googleapis";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -49,6 +50,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
 
+  // 4. Check mode: "full" returns parsed+geocoded patient data; default returns tab metadata
+  const mode = searchParams.get("mode");
+
+  if (mode === "full") {
+    // Full pipeline: read → parse → geocode → return LayeredPatientData
+    try {
+      const layers = await runSheetsPipeline(oauth2Client, spreadsheetId);
+      return NextResponse.json({ layers });
+    } catch {
+      return NextResponse.json(
+        { error: "Falha ao processar dados da planilha." },
+        { status: 502 }
+      );
+    }
+  }
+
+  // Default: return tab metadata only
   const tabs = await discoverTabs(oauth2Client, spreadsheetId);
 
   return NextResponse.json({ tabs });
