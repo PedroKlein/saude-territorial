@@ -1,4 +1,4 @@
-import { DynamicMap } from "@/components/map";
+import DynamicMap from "@/components/map/DynamicMap";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
 
 /**
