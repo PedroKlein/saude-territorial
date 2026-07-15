@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MA1",
+        "nome": "Microárea 1",
+        "acs": "ACS Maria"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-51.2250, -30.0300],
+          [-51.2200, -30.0300],
+          [-51.2200, -30.0350],
+          [-51.2250, -30.0350],
+          [-51.2250, -30.0300]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MA2",
+        "nome": "Microárea 2",
+        "acs": "ACS João"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-51.2200, -30.0300],
+          [-51.2150, -30.0300],
+          [-51.2150, -30.0350],
+          [-51.2200, -30.0350],
+          [-51.2200, -30.0300]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MA3",
+        "nome": "Microárea 3",
+        "acs": "ACS Ana"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-51.2250, -30.0350],
+          [-51.2200, -30.0350],
+          [-51.2200, -30.0400],
+          [-51.2250, -30.0400],
+          [-51.2250, -30.0350]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MA4",
+        "nome": "Microárea 4",
+        "acs": "ACS Pedro"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-51.2200, -30.0350],
+          [-51.2150, -30.0350],
+          [-51.2150, -30.0400],
+          [-51.2200, -30.0400],
+          [-51.2200, -30.0350]
+        ]]
+      }
+    }
+  ]
+}

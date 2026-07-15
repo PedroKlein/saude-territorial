@@ -1,0 +1,59 @@
+import { create } from "zustand";
+import type { LayerId } from "@/config/layers.config";
+import { LAYER_CONFIG } from "@/config/layers.config";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface MapState {
+  activeLayers: Record<LayerId, boolean>;
+  selectedPatient: string | null;
+  mapCenter: [number, number];
+  mapZoom: number;
+}
+
+interface MapActions {
+  toggleLayer: (id: LayerId) => void;
+  setSelectedPatient: (cns: string | null) => void;
+  setMapView: (center: [number, number], zoom: number) => void;
+}
+
+type MapStore = MapState & MapActions;
+
+// ---------------------------------------------------------------------------
+// Initial State
+// ---------------------------------------------------------------------------
+
+const PORTO_ALEGRE: [number, number] = [-30.0346, -51.2177];
+
+function buildInitialLayers(): Record<LayerId, boolean> {
+  const layers = {} as Record<LayerId, boolean>;
+  for (const key of Object.keys(LAYER_CONFIG) as LayerId[]) {
+    layers[key] = true;
+  }
+  return layers;
+}
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
+
+export const useMapStore = create<MapStore>()((set) => ({
+  activeLayers: buildInitialLayers(),
+  selectedPatient: null,
+  mapCenter: PORTO_ALEGRE,
+  mapZoom: 14,
+
+  toggleLayer: (id) =>
+    set((state) => ({
+      activeLayers: {
+        ...state.activeLayers,
+        [id]: !state.activeLayers[id],
+      },
+    })),
+
+  setSelectedPatient: (cns) => set({ selectedPatient: cns }),
+
+  setMapView: (center, zoom) => set({ mapCenter: center, mapZoom: zoom }),
+}));
