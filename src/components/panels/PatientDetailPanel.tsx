@@ -16,6 +16,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const selectedPatient = useMapStore((s) => s.selectedPatient);
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
+  const setPinningPatient = useMapStore((s) => s.setPinningPatient);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
@@ -159,6 +160,17 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
               {isLoadingRoute ? "Calculando..." : "Traçar rota"}
             </button>
             </div>
+
+            {/* Manual pin button */}
+            <button
+              onClick={() => {
+                setPinningPatient(selectedPatient);
+                setSelectedPatient(null);
+              }}
+              className="w-full rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:bg-gray-50"
+            >
+              📍 Posicionar no mapa
+            </button>
           </div>
         </>
       )}

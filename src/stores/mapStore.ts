@@ -23,6 +23,8 @@ interface MapState {
   showTerritories: boolean;
   vizMode: VizMode;
   alertsOnly: boolean;
+  /** CNS of patient being manually pinned (null = not in pin mode) */
+  pinningPatient: string | null;
 }
 
 interface MapActions {
@@ -33,6 +35,7 @@ interface MapActions {
   setShowTerritories: (show: boolean) => void;
   setVizMode: (mode: VizMode) => void;
   setAlertsOnly: (on: boolean) => void;
+  setPinningPatient: (cns: string | null) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -64,6 +67,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   showTerritories: false,
   vizMode: "markers",
   alertsOnly: false,
+  pinningPatient: null,
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -84,4 +88,6 @@ export const useMapStore = create<MapStore>()((set) => ({
   setVizMode: (mode) => set({ vizMode: mode }),
 
   setAlertsOnly: (on) => set({ alertsOnly: on }),
+
+  setPinningPatient: (cns) => set({ pinningPatient: cns }),
 }));
