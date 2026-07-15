@@ -8,6 +8,7 @@ import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
+import { ClusteredLayer } from "./ClusteredLayer";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
@@ -58,18 +59,20 @@ export default function MapView() {
           </Tooltip>
         </Marker>
         <MapController data={data} />
-        {data &&
-          layerIds.map((layerId) => {
-            const patients = data[layerId];
-            if (!patients || patients.length === 0) return null;
-            return (
-              <LayerGroup
-                key={layerId}
-                layerId={layerId}
-                patients={patients}
-              />
-            );
-          })}
+        <ClusteredLayer>
+          {data &&
+            layerIds.map((layerId) => {
+              const patients = data[layerId];
+              if (!patients || patients.length === 0) return null;
+              return (
+                <LayerGroup
+                  key={layerId}
+                  layerId={layerId}
+                  patients={patients}
+                />
+              );
+            })}
+        </ClusteredLayer>
       </MapContainer>
       <ActiveRouteLayer route={activeRoute} mapRef={mapRef} />
     </>
