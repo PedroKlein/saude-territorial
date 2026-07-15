@@ -94,7 +94,7 @@ describe("lib/auth — Better Auth server config", () => {
 
     await import("@/lib/auth");
 
-    const config = betterAuthMock.mock.calls[0][0] as {
+    const config = betterAuthMock.mock.calls[0][0] as unknown as {
       socialProviders: { google: Record<string, unknown> };
     };
 
@@ -107,7 +107,7 @@ describe("lib/auth — Better Auth server config", () => {
 
     await import("@/lib/auth");
 
-    const config = betterAuthMock.mock.calls[0][0] as {
+    const config = betterAuthMock.mock.calls[0][0] as unknown as {
       socialProviders: { google: Record<string, unknown> };
     };
 
@@ -154,7 +154,8 @@ describe("lib/auth — getGoogleAccessToken", () => {
   it("throws when no access token is available", async () => {
     // Reconfigure the already-hoisted mock to simulate a null token for one call
     const { betterAuth } = await import("better-auth");
-    vi.mocked(betterAuth).mockImplementationOnce(() => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (vi.mocked(betterAuth) as any).mockImplementationOnce(() => ({
       __capturedConfig: {},
       api: {
         getSession: vi.fn(),
