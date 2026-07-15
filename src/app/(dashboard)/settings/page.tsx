@@ -1,3 +1,5 @@
+"use client";
+
 import { SpreadsheetConfig } from "@/components/settings/SpreadsheetConfig";
 
 /**
