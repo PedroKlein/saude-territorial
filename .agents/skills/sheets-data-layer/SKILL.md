@@ -29,6 +29,25 @@ Client (TanStack Query → map + panels)
 **Write Rule:** On edit → write to Google Sheets → if success → update Supabase cache.
 NEVER write to cache without Sheet confirmation. Sheet write failure = operation failed.
 
+**Creating the OAuth2Client for API calls:**
+
+```typescript
+// In route handlers — get token from Better Auth, create OAuth2Client
+import { google } from 'googleapis'
+import { getGoogleAccessToken } from '@/lib/auth'
+
+const accessToken = await getGoogleAccessToken()
+const oauth2Client = new google.auth.OAuth2()
+oauth2Client.setCredentials({ access_token: accessToken })
+// Pass oauth2Client as the `auth` parameter to all googleapis calls
+```
+
+**WRONG (causes "authClient.request is not a function"):**
+```typescript
+// ❌ Never pass a plain object as auth
+const auth = { credentials: { access_token: token } }  // BROKEN
+```
+
 ## Tab-to-Layer Mapping
 
 Each spreadsheet tab is auto-discovered as a map layer. The header row (row 1) defines

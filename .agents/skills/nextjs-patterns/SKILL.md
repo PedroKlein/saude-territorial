@@ -77,7 +77,9 @@ Cache components run on the server and produce a static snapshot.
 
 ## proxy.ts (replaces middleware.ts)
 
-File: `proxy.ts` at project root. Runs on **every request** before route resolution.
+File: `src/proxy.ts` (or `proxy.ts` at project root if no `src/` directory).
+**CRITICAL:** Do NOT put it at `src/app/proxy.ts` — that path is silently ignored.
+Runs on **every request** before route resolution.
 Default runtime is **Node.js** (not Edge like the old middleware).
 
 ```tsx

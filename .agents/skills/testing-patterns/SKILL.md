@@ -324,3 +324,44 @@ it('fetches patient data', async () => {
 - **NEVER mock Zod schemas in tests** — test them against real-shaped data; they ARE your validation layer
 - **NEVER test TanStack Query hooks without wrapping in `QueryClientProvider`** — use a test utility that creates a fresh `QueryClient` per test
 - **NEVER assert on exact urgency scores** — assert on category and alert codes; scores may change as weights are tuned
+
+## Browser/E2E Testing (Playwright + agent_browser)
+
+Unit tests don't catch: unstyled pages, hydration errors, broken OAuth flows, or
+missing route protection. Use browser testing to verify the assembled app works.
+
+### agent_browser (quick visual checks)
+
+Use for: page renders, elements exist, screenshots, single interactions.
+Always use **batch mode** (sessions get lost between individual calls).
+
+```jsonc
+// Authenticated check
+{ "args": ["--state", ".auth-state.json", "batch"], "sessionMode": "fresh",
+  "stdin": "[[\"open\",\"http://localhost:3000/settings\"],[\"wait\",\"2000\"],[\"snapshot\",\"-i\"]]" }
+```
+
+Generate auth state: `mise run dev:auth`
+
+### Custom Playwright Scripts (complex flows)
+
+Use for: multi-step forms, assertions with logic, cross-page state verification.
+
+```javascript
+// scripts/test-my-flow.mjs
+import { chromium } from '@playwright/test';
+import { readFileSync } from 'fs';
+
+const storageState = JSON.parse(readFileSync('.auth-state.json', 'utf-8'));
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext({ storageState });
+const page = await context.newPage();
+
+await page.goto('http://localhost:3000/settings');
+// ... assertions
+await browser.close();
+```
+
+Both use the same `.auth-state.json` for authentication.
+
+See `TESTING.md` for full patterns and decision guide.

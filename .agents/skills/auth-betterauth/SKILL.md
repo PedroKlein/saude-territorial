@@ -42,12 +42,14 @@ https://myaccount.google.com/permissions, remove the app, and sign in again.
 // lib/auth.ts — Server-side auth configuration
 import { betterAuth } from 'better-auth'
 import { nextCookies } from 'better-auth/next-js'
-import { Pool } from 'pg'  // or use Supabase's connection pooler
+import Database from 'better-sqlite3'  // Local dev (SQLite)
+// For production: import { Pool } from 'pg'
 
 export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,  // Supabase pooler URL
-  }),
+  // Local dev: SQLite file (zero config, just works)
+  database: new Database('./auth.db'),
+  // Production: use Supabase Postgres pooler
+  // database: new Pool({ connectionString: process.env.DATABASE_URL }),
   plugins: [nextCookies()],  // Auto-sets cookies on responses
   socialProviders: {
     google: {
@@ -188,8 +190,10 @@ async function ensureSheetsAccess(grantedScopes: string[]) {
 
 ## Route Protection in proxy.ts
 
+**File location:** `src/proxy.ts` (NOT `src/app/proxy.ts` — that path is silently ignored).
+
 ```typescript
-// proxy.ts
+// src/proxy.ts
 import { auth } from '@/lib/auth'
 
 export async function proxy(request: NextRequest) {
