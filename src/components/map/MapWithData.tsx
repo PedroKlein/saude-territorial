@@ -4,6 +4,7 @@ import DynamicMap from "@/components/map/DynamicMap";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
 import { FilterPanel } from "@/components/sidebar/FilterPanel";
 import { PatientDetailPanel } from "@/components/panels/PatientDetailPanel";
+import { StatsDashboard } from "@/components/map/StatsDashboard";
 import { usePatientData } from "@/hooks/usePatientData";
 
 /**
@@ -32,6 +33,8 @@ export function MapWithData() {
           </div>
         )}
         <DynamicMap />
+        {/* Stats dashboard (bottom center) */}
+        <StatsDashboard data={data} />
         {/* Detail panel (right side, shows on marker click) */}
         <PatientDetailPanel layerData={data} />
       </div>
