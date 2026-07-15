@@ -210,6 +210,7 @@ All patient tabs share: Data última atualização, Nome, CNS, Data Nascimento, 
 | Resource | Location |
 |----------|----------|
 | Functional specification | `SPEC.md` |
+| **Testing & verification guide** | **`TESTING.md`** |
 | Sister repo (docs + PoCs) | [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) |
 | Domain glossary | extensao-gat4 `docs/glossary.md` |
 | Meeting reports | extensao-gat4 `docs/reports.md` |
