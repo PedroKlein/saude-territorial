@@ -31,3 +31,4 @@ auth.db
 # Dev auth state (contains session cookie)
 .auth-state.json
 screenshots/
+PROGRESS.md
