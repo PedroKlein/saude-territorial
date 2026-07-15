@@ -57,7 +57,7 @@ const INVALID_URL = "https://example.com/not-a-spreadsheet";
 // ---------------------------------------------------------------------------
 
 describe("SpreadsheetConfig", () => {
-  let onSave: ReturnType<typeof vi.fn>;
+  let onSave: (spreadsheetId: string) => void;
 
   beforeEach(() => {
     onSave = vi.fn();
