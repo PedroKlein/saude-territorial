@@ -53,7 +53,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   }
 
   return (
-    <aside className="absolute right-0 top-0 z-[1000] h-full w-80 overflow-y-auto border-l bg-white p-4 shadow-lg">
+    <aside className="absolute inset-x-0 bottom-0 z-[1000] max-h-[60vh] overflow-y-auto rounded-t-2xl border-t bg-white p-4 shadow-lg md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-80 md:rounded-none md:border-l md:border-t-0">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Detalhes do Paciente</h2>
         <button

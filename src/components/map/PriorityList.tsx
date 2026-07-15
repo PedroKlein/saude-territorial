@@ -96,7 +96,7 @@ export function PriorityList({ data }: PriorityListProps) {
   if (!data) return null;
 
   return (
-    <div className="absolute top-4 right-4 z-[900] flex w-72 flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+    <div className="absolute top-4 right-4 z-[900] hidden w-72 flex-col overflow-hidden rounded-lg bg-white shadow-lg md:flex">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div>

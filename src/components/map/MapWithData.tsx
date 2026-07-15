@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import DynamicMap from "@/components/map/DynamicMap";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
 import { FilterPanel } from "@/components/sidebar/FilterPanel";
@@ -24,6 +25,7 @@ export function MapWithData() {
   const spreadsheetId = process.env.NODE_ENV === "development" ? "demo" : "";
   const { data, isLoading } = usePatientData(spreadsheetId);
   const showTerritories = useMapStore((s) => s.showTerritories);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Enrich patients with alertLevel for MicroareaMetrics
   const enrichedPatients = useMemo(() => {
@@ -49,8 +51,30 @@ export function MapWithData() {
 
   return (
     <div className="flex h-full w-full">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed bottom-4 left-4 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg md:hidden"
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
+
       {/* Left sidebar: layers + filters */}
-      <div className="flex w-64 flex-col overflow-y-auto border-r bg-white">
+      {/* Desktop: always visible. Mobile: slide-up drawer */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[1050] max-h-[70vh] overflow-y-auto rounded-t-2xl border-t bg-white shadow-2xl transition-transform duration-300 md:static md:inset-auto md:z-auto md:max-h-none md:w-64 md:rounded-none md:border-r md:border-t-0 md:shadow-none md:translate-y-0 ${
+          sidebarOpen ? "translate-y-0" : "translate-y-full md:translate-y-0"
+        }`}
+      >
+        {/* Mobile drawer handle */}
+        <div className="flex justify-center py-2 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="h-1.5 w-10 rounded-full bg-gray-300"
+            aria-label="Fechar menu"
+          />
+        </div>
         <LayerSidebar data={data} />
         {showTerritories && enrichedPatients.length > 0 && (
           <div className="px-4">
@@ -62,8 +86,16 @@ export function MapWithData() {
         </div>
       </div>
 
+      {/* Backdrop for mobile drawer */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[1040] bg-black/30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Map area */}
-      <div className="relative flex-1">
+      <div className="relative h-full flex-1">
         {isLoading && (
           <div className="absolute top-2 left-1/2 z-[1000] -translate-x-1/2 rounded bg-white px-3 py-1 text-sm shadow">
             Carregando dados...
