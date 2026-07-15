@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { SpreadsheetConfig } from "@/components/settings/SpreadsheetConfig";
 
 /**
@@ -7,6 +8,20 @@ import { SpreadsheetConfig } from "@/components/settings/SpreadsheetConfig";
  * Permite configurar a URL da planilha do Google Sheets da equipe.
  */
 export default function SettingsPage() {
+  const router = useRouter();
+
+  async function handleSave(spreadsheetId: string) {
+    const res = await fetch("/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spreadsheetId }),
+    });
+
+    if (res.ok) {
+      router.push("/map");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -16,12 +31,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <SpreadsheetConfig
-        onSave={(id) => {
-          // TODO: persist to Supabase user_preferences
-          console.log("Planilha configurada:", id);
-        }}
-      />
+      <SpreadsheetConfig onSave={handleSave} />
     </div>
   );
 }
