@@ -42,7 +42,8 @@ export function ActiveRouteLayer({ route, mapRef }: ActiveRouteLayerProps) {
     // Distance/duration tooltip
     const distKm = (route.result.distance / 1000).toFixed(1);
     const timeMin = Math.ceil(route.result.duration / 60);
-    polyline.bindTooltip(`🚶 ${distKm} km • ~${timeMin} min`, {
+    const profileIcon = route.profile === "foot" ? "🚶" : "🚗";
+    polyline.bindTooltip(`${profileIcon} ${distKm} km • ~${timeMin} min`, {
       permanent: true,
       direction: "center",
       className: "route-label",

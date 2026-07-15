@@ -5,7 +5,7 @@ import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useState } from "react";
 import { PatientEditPanel } from "./PatientEditPanel";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
-import type { RouteResult } from "@/types/routing";
+import type { RouteResult, RouteProfile } from "@/types/routing";
 
 interface PatientDetailPanelProps {
   /** Patient data grouped by layer */
@@ -18,6 +18,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
 
   if (!selectedPatient) return null;
 
@@ -89,7 +90,35 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
             })}
           </dl>
 
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex flex-col gap-3">
+            {/* Route profile toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Perfil:</span>
+              <div className="flex gap-1 rounded-md bg-gray-100 p-0.5">
+                <button
+                  onClick={() => setRouteProfile("foot")}
+                  className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    routeProfile === "foot"
+                      ? "bg-white text-gray-800 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  🚶 Pé
+                </button>
+                <button
+                  onClick={() => setRouteProfile("car")}
+                  className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    routeProfile === "car"
+                      ? "bg-white text-gray-800 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  🚗 Carro
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(true)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
@@ -115,12 +144,12 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
                       fromLng: US_MOAB_CALDAS[1],
                       toLat: lat,
                       toLng: lng,
-                      profile: "foot",
+                      profile: routeProfile,
                     }),
                   });
                   if (res.ok) {
                     const result: RouteResult = await res.json();
-                    setActiveRoute({ result, profile: "foot" });
+                    setActiveRoute({ result, profile: routeProfile });
                   }
                 } finally {
                   setIsLoadingRoute(false);
@@ -129,6 +158,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
             >
               {isLoadingRoute ? "Calculando..." : "Traçar rota"}
             </button>
+            </div>
           </div>
         </>
       )}
