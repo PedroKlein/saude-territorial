@@ -26,7 +26,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
   return (
-    <aside className="flex w-64 flex-col border-r bg-white p-4 shadow-sm">
+    <div className="p-4">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Camadas
       </h2>
@@ -56,6 +56,6 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
           );
         })}
       </ul>
-    </aside>
+    </div>
   );
 }

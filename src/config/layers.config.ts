@@ -18,7 +18,7 @@ export const LAYER_CONFIG = {
     icon: "/icons/pregnant.svg",
     colorToken: "layer-gestantes",
     label: "Gestantes",
-    visibleColumns: ["nome", "cns", "dum", "dpp", "risco", "ig"],
+    visibleColumns: ["nomeCompleto", "cns", "dum", "dpp", "risco", "ig"],
   },
   tuberculose: {
     icon: "/icons/tb.svg",
