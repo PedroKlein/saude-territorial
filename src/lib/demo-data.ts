@@ -23,6 +23,8 @@ export interface DemoPatient {
   lng: number;
   microarea: string;
   dataUltimaAtualizacao: string;
+  /** Geocoding confidence 0-1 (synthetic for demo) */
+  confidence?: number;
   [key: string]: unknown;
 }
 
@@ -154,15 +156,27 @@ const crossLayerDiabetes: DemoPatient = {
 };
 
 // ─────────────────────────────────────────────────────────────────
+// Add synthetic geocoding confidence (most high, some uncertain)
+// ─────────────────────────────────────────────────────────────────
+
+function addConfidence(patients: DemoPatient[]): DemoPatient[] {
+  return patients.map((p, i) => ({
+    ...p,
+    // Every 5th patient is "uncertain" for demo purposes
+    confidence: i % 5 === 3 ? 0.3 : 0.85 + (i % 3) * 0.05,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────────
 // EXPORT: grouped by layer
 // ─────────────────────────────────────────────────────────────────
 
 export const DEMO_DATA: Record<LayerId, DemoPatient[]> = {
-  gestantes,
-  tuberculose,
-  diabetes: [...diabetes, crossLayerDiabetes],
-  hipertensao,
-  acamados,
+  gestantes: addConfidence(gestantes),
+  tuberculose: addConfidence(tuberculose),
+  diabetes: addConfidence([...diabetes, crossLayerDiabetes]),
+  hipertensao: addConfidence(hipertensao),
+  acamados: addConfidence(acamados),
   pse: [], // Not patient-based
   ilpi: [], // Not patient-based
 };

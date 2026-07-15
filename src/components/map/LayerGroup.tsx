@@ -22,6 +22,7 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
   const microareas = useFilterStore((s) => s.microareas);
   const alertLevels = useFilterStore((s) => s.alertLevels);
   const searchText = useFilterStore((s) => s.searchText);
+  const hideUncertain = useFilterStore((s) => s.hideUncertain);
   const applyFilters = useFilterStore((s) => s.applyFilters);
 
   // Evaluate alert rules for all patients in this layer
@@ -44,9 +45,10 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
         lat={p.lat}
         lng={p.lng}
         alertLevel={p.alertLevel}
+        confidence={p.confidence}
       />
     ));
-  }, [patients, alertResults, applyFilters, microareas, alertLevels, searchText]);
+  }, [patients, alertResults, applyFilters, microareas, alertLevels, searchText, hideUncertain]);
 
   if (!isActive) return null;
 

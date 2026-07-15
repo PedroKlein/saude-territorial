@@ -15,13 +15,15 @@ export function FilterPanel() {
   const microareas = useFilterStore((s) => s.microareas);
   const alertLevels = useFilterStore((s) => s.alertLevels);
   const searchText = useFilterStore((s) => s.searchText);
+  const hideUncertain = useFilterStore((s) => s.hideUncertain);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const setAlertFilter = useFilterStore((s) => s.setAlertFilter);
   const setSearch = useFilterStore((s) => s.setSearch);
+  const setHideUncertain = useFilterStore((s) => s.setHideUncertain);
   const clearFilters = useFilterStore((s) => s.clearFilters);
 
   const activeCount =
-    microareas.length + alertLevels.length + (searchText ? 1 : 0);
+    microareas.length + alertLevels.length + (searchText ? 1 : 0) + (hideUncertain ? 1 : 0);
 
   function toggleMicroarea(id: string) {
     if (microareas.includes(id)) {
@@ -114,6 +116,20 @@ export function FilterPanel() {
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Geocoding confidence */}
+          <div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={hideUncertain}
+                onChange={(e) => setHideUncertain(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-gray-300"
+              />
+              <span>Ocultar incertos</span>
+              <span className="text-xs text-muted-foreground">(confiança &lt; 50%)</span>
+            </label>
           </div>
 
           {/* Clear button */}

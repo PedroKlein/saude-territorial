@@ -10,6 +10,8 @@ export interface PatientRecord {
   nomeCompleto: string | null;
   lat: number;
   lng: number;
+  /** Geocoding confidence 0-1 (1 = exact match, <0.5 = uncertain) */
+  confidence?: number;
   [key: string]: unknown;
 }
 

@@ -10,6 +10,7 @@ interface FilterablePatient {
   alertLevel?: string;
   nomeCompleto?: string | null;
   dataUltimaAtualizacao?: string | null;
+  confidence?: number;
   [key: string]: unknown;
 }
 
@@ -18,6 +19,7 @@ interface FilterState {
   alertLevels: string[];
   dateRange: { from: string; to: string } | null;
   searchText: string;
+  hideUncertain: boolean;
 }
 
 interface FilterActions {
@@ -25,6 +27,7 @@ interface FilterActions {
   setAlertFilter: (levels: string[]) => void;
   setDateRange: (range: { from: string; to: string } | null) => void;
   setSearch: (text: string) => void;
+  setHideUncertain: (hide: boolean) => void;
   clearFilters: () => void;
   applyFilters: <T extends FilterablePatient>(patients: T[]) => T[];
 }
@@ -40,6 +43,7 @@ const INITIAL_STATE: FilterState = {
   alertLevels: [],
   dateRange: null,
   searchText: "",
+  hideUncertain: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -53,11 +57,19 @@ export const useFilterStore = create<FilterStore>()((set, get) => ({
   setAlertFilter: (levels) => set({ alertLevels: levels }),
   setDateRange: (range) => set({ dateRange: range }),
   setSearch: (text) => set({ searchText: text }),
+  setHideUncertain: (hide) => set({ hideUncertain: hide }),
   clearFilters: () => set(INITIAL_STATE),
 
   applyFilters: <T extends FilterablePatient>(patients: T[]): T[] => {
-    const { microareas, alertLevels, dateRange, searchText } = get();
+    const { microareas, alertLevels, dateRange, searchText, hideUncertain } = get();
     let filtered = patients;
+
+    // Filter by geocoding confidence
+    if (hideUncertain) {
+      filtered = filtered.filter(
+        (p) => p.confidence === undefined || p.confidence >= 0.5
+      );
+    }
 
     // Filter by microárea
     if (microareas.length > 0) {

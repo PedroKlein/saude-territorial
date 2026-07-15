@@ -32,6 +32,8 @@ interface PatientMarkerProps {
   lat: number;
   lng: number;
   alertLevel: AlertLevel;
+  /** Geocoding confidence 0-1. Below 0.5 shows dashed border */
+  confidence?: number;
 }
 
 export function PatientMarker({
@@ -40,12 +42,14 @@ export function PatientMarker({
   lat,
   lng,
   alertLevel,
+  confidence,
 }: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const selectedPatient = useMapStore((s) => s.selectedPatient);
   const markerRef = useRef<LeafletCircleMarker>(null);
 
   const isSelected = selectedPatient === cns;
+  const isUncertain = confidence !== undefined && confidence < 0.5;
   const fillColor = URGENCY_COLORS[alertLevel];
   const baseRadius = URGENCY_RADIUS[alertLevel];
   const radius = isSelected ? baseRadius + SELECTED_RADIUS_BOOST : baseRadius;
@@ -67,8 +71,13 @@ export function PatientMarker({
         fillColor,
         color: isSelected ? SELECTED_BORDER_COLOR : "#ffffff",
         weight: isSelected ? SELECTED_WEIGHT : 2,
-        fillOpacity: isSelected ? SELECTED_FILL_OPACITY : 0.85,
-        opacity: 1,
+        fillOpacity: isSelected
+          ? SELECTED_FILL_OPACITY
+          : isUncertain
+            ? 0.45
+            : 0.85,
+        opacity: isUncertain ? 0.6 : 1,
+        dashArray: isUncertain && !isSelected ? "4 3" : undefined,
       }}
       eventHandlers={{
         click: () => setSelectedPatient(cns),
