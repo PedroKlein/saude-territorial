@@ -3,6 +3,7 @@
 import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
+import type { VizMode } from "@/stores/mapStore";
 
 // Layer colors for the visual dot indicator
 const LAYER_COLORS: Record<LayerId, string> = {
@@ -24,6 +25,8 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
   const toggleLayer = useMapStore((s) => s.toggleLayer);
   const showTerritories = useMapStore((s) => s.showTerritories);
   const setShowTerritories = useMapStore((s) => s.setShowTerritories);
+  const vizMode = useMapStore((s) => s.vizMode);
+  const setVizMode = useMapStore((s) => s.setVizMode);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -59,6 +62,25 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         })}
       </ul>
 
+      {/* Visualization mode toggle */}
+      <div className="mt-4 border-t pt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Visualização
+        </p>
+        <div className="flex gap-1 rounded-md bg-gray-100 p-1">
+          <VizButton
+            active={vizMode === "markers"}
+            onClick={() => setVizMode("markers")}
+            label="Marcadores"
+          />
+          <VizButton
+            active={vizMode === "heatmap"}
+            onClick={() => setVizMode("heatmap")}
+            label="Heatmap"
+          />
+        </div>
+      </div>
+
       {/* Territory layer toggle */}
       <div className="mt-4 border-t pt-4">
         <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
@@ -73,5 +95,28 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         </label>
       </div>
     </div>
+  );
+}
+
+function VizButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 rounded px-3 py-1 text-xs font-medium transition-colors ${
+        active
+          ? "bg-white text-gray-800 shadow-sm"
+          : "text-gray-500 hover:text-gray-700"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

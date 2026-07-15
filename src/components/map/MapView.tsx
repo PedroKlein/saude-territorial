@@ -3,18 +3,22 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
+import { HeatmapLayer } from "./HeatmapLayer";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
+import { evaluatePatient } from "@/lib/alerts/engine";
+import { ALERT_RULES } from "@/config/alert-rules.config";
+import type { AlertLevel } from "@/types/alerts";
 
 // Fix default marker icon paths broken by bundlers (webpack/turbopack)
 L.Icon.Default.mergeOptions({
@@ -42,6 +46,8 @@ export default function MapView() {
   const { data } = usePatientData(spreadsheetId);
   const activeRoute = useMapStore((s) => s.activeRoute);
   const showTerritories = useMapStore((s) => s.showTerritories);
+  const vizMode = useMapStore((s) => s.vizMode);
+  const activeLayers = useMapStore((s) => s.activeLayers);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
 
@@ -58,6 +64,33 @@ export default function MapView() {
   );
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
+
+  // Compute heatmap points from data when in heatmap mode
+  const INTENSITY_MAP: Record<AlertLevel, number> = {
+    vermelho: 1.0,
+    amarelo: 0.6,
+    verde: 0.3,
+  };
+
+  const heatmapPoints = useMemo(() => {
+    if (vizMode !== "heatmap" || !data) return [];
+    const points: { lat: number; lng: number; intensity: number }[] = [];
+    for (const layerId of layerIds) {
+      if (!activeLayers[layerId]) continue;
+      const patients = data[layerId];
+      if (!patients) continue;
+      for (const p of patients) {
+        const result = evaluatePatient(ALERT_RULES, p, layerId);
+        const level = (result.level ?? "verde") as AlertLevel;
+        points.push({
+          lat: p.lat,
+          lng: p.lng,
+          intensity: INTENSITY_MAP[level],
+        });
+      }
+    }
+    return points;
+  }, [data, vizMode, activeLayers, layerIds]);
 
   return (
     <>
@@ -84,7 +117,8 @@ export default function MapView() {
           />
         )}
         <ClusteredLayer>
-          {data &&
+          {vizMode === "markers" &&
+            data &&
             layerIds.map((layerId) => {
               const patients = data[layerId];
               if (!patients || patients.length === 0) return null;
@@ -97,6 +131,9 @@ export default function MapView() {
               );
             })}
         </ClusteredLayer>
+        {vizMode === "heatmap" && heatmapPoints.length > 0 && (
+          <HeatmapLayer points={heatmapPoints} />
+        )}
       </MapContainer>
       <ActiveRouteLayer route={activeRoute} mapRef={mapRef} />
     </>

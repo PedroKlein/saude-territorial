@@ -12,6 +12,8 @@ interface ActiveRoute {
   profile: RouteProfile;
 }
 
+export type VizMode = "markers" | "heatmap";
+
 interface MapState {
   activeLayers: Record<LayerId, boolean>;
   selectedPatient: string | null;
@@ -19,6 +21,7 @@ interface MapState {
   mapZoom: number;
   activeRoute: ActiveRoute | null;
   showTerritories: boolean;
+  vizMode: VizMode;
 }
 
 interface MapActions {
@@ -27,6 +30,7 @@ interface MapActions {
   setMapView: (center: [number, number], zoom: number) => void;
   setActiveRoute: (route: ActiveRoute | null) => void;
   setShowTerritories: (show: boolean) => void;
+  setVizMode: (mode: VizMode) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -56,6 +60,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   mapZoom: 14,
   activeRoute: null,
   showTerritories: false,
+  vizMode: "markers",
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -72,4 +77,6 @@ export const useMapStore = create<MapStore>()((set) => ({
   setActiveRoute: (route) => set({ activeRoute: route }),
 
   setShowTerritories: (show) => set({ showTerritories: show }),
+
+  setVizMode: (mode) => set({ vizMode: mode }),
 }));
