@@ -9,6 +9,7 @@ import { StatsDashboard } from "@/components/map/StatsDashboard";
 import { PriorityList } from "@/components/map/PriorityList";
 import { Legend } from "@/components/map/Legend";
 import { MicroareaMetrics } from "@/components/sidebar/MicroareaMetrics";
+import { UnresolvedList } from "@/components/sidebar/UnresolvedList";
 import { DayPlanner } from "@/components/routes/DayPlanner";
 import { ConflictPanel } from "@/components/panels/ConflictPanel";
 import { deduplicatePatients } from "@/lib/sheets/dedup";
@@ -101,6 +102,7 @@ export function MapWithData() {
         <div className="px-4 pb-4">
           <FilterPanel />
         </div>
+        <UnresolvedList data={data} />
 
         {/* Day Planner section */}
         <div className="border-t px-4 py-3">
