@@ -143,6 +143,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      geocode_cache: {
+        Row: {
+          cache_key: string;
+          lat: number;
+          lng: number;
+          confidence: string;
+        };
+        Insert: {
+          cache_key: string;
+          lat: number;
+          lng: number;
+          confidence: string;
+        };
+        Update: {
+          cache_key?: string;
+          lat?: number;
+          lng?: number;
+          confidence?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
