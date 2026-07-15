@@ -21,6 +21,23 @@
 import { google } from "googleapis";
 import Database from "better-sqlite3";
 import path from "path";
+import { readFileSync } from "fs";
+
+// Load .env.local
+const envPath = path.join(process.cwd(), ".env.local");
+try {
+  const envContent = readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const match = line.match(/^([^#=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const value = match[2].trim();
+      if (!process.env[key]) process.env[key] = value;
+    }
+  }
+} catch {
+  console.warn("⚠️  Could not load .env.local");
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Auth: get access token from auth.db (same as dev-session endpoint)
