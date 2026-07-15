@@ -1,22 +1,30 @@
 import { create } from "zustand";
 import type { LayerId } from "@/config/layers.config";
 import { LAYER_CONFIG } from "@/config/layers.config";
+import type { RouteResult, RouteProfile } from "@/types/routing";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+interface ActiveRoute {
+  result: RouteResult;
+  profile: RouteProfile;
+}
 
 interface MapState {
   activeLayers: Record<LayerId, boolean>;
   selectedPatient: string | null;
   mapCenter: [number, number];
   mapZoom: number;
+  activeRoute: ActiveRoute | null;
 }
 
 interface MapActions {
   toggleLayer: (id: LayerId) => void;
   setSelectedPatient: (cns: string | null) => void;
   setMapView: (center: [number, number], zoom: number) => void;
+  setActiveRoute: (route: ActiveRoute | null) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -44,6 +52,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   selectedPatient: null,
   mapCenter: PORTO_ALEGRE,
   mapZoom: 14,
+  activeRoute: null,
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -56,4 +65,6 @@ export const useMapStore = create<MapStore>()((set) => ({
   setSelectedPatient: (cns) => set({ selectedPatient: cns }),
 
   setMapView: (center, zoom) => set({ mapCenter: center, mapZoom: zoom }),
+
+  setActiveRoute: (route) => set({ activeRoute: route }),
 }));

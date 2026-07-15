@@ -4,6 +4,8 @@ import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useState } from "react";
 import { PatientEditPanel } from "./PatientEditPanel";
+import { US_MOAB_CALDAS } from "@/config/geo.constants";
+import type { RouteResult } from "@/types/routing";
 
 interface PatientDetailPanelProps {
   /** Patient data grouped by layer */
@@ -13,7 +15,9 @@ interface PatientDetailPanelProps {
 export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const selectedPatient = useMapStore((s) => s.selectedPatient);
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
+  const setActiveRoute = useMapStore((s) => s.setActiveRoute);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
   if (!selectedPatient) return null;
 
@@ -52,7 +56,10 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Detalhes do Paciente</h2>
         <button
-          onClick={() => setSelectedPatient(null)}
+          onClick={() => {
+            setSelectedPatient(null);
+            setActiveRoute(null);
+          }}
           className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Fechar"
         >
@@ -90,11 +97,37 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
               Editar
             </button>
             <button
-              className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-gray-50"
-              disabled
-              title="Disponível na próxima versão"
+              className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
+              disabled={isLoadingRoute}
+              onClick={async () => {
+                if (!patientData) return;
+                const lat = Number(patientData.lat);
+                const lng = Number(patientData.lng);
+                if (!lat || !lng) return;
+
+                setIsLoadingRoute(true);
+                try {
+                  const res = await fetch("/api/routes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      fromLat: US_MOAB_CALDAS[0],
+                      fromLng: US_MOAB_CALDAS[1],
+                      toLat: lat,
+                      toLng: lng,
+                      profile: "foot",
+                    }),
+                  });
+                  if (res.ok) {
+                    const result: RouteResult = await res.json();
+                    setActiveRoute({ result, profile: "foot" });
+                  }
+                } finally {
+                  setIsLoadingRoute(false);
+                }
+              }}
             >
-              Traçar rota
+              {isLoadingRoute ? "Calculando..." : "Traçar rota"}
             </button>
           </div>
         </>
