@@ -7,6 +7,7 @@ import { useRef } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
+import { MapController } from "./MapController";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
@@ -56,6 +57,7 @@ export default function MapView() {
             US Moab Caldas
           </Tooltip>
         </Marker>
+        <MapController data={data} />
         {data &&
           layerIds.map((layerId) => {
             const patients = data[layerId];
