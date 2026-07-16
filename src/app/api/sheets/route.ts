@@ -58,7 +58,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
       const layers = await runSheetsPipeline(oauth2Client, spreadsheetId);
       return NextResponse.json({ layers });
-    } catch {
+    } catch (err) {
+      console.error("[sheets-pipeline] Error:", err);
       return NextResponse.json(
         { error: "Falha ao processar dados da planilha." },
         { status: 502 }

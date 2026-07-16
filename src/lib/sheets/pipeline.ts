@@ -23,12 +23,21 @@ import type { PatientRecord, LayeredPatientData } from "@/hooks/usePatientData";
 // Tab name → LayerId mapping
 // ---------------------------------------------------------------------------
 
-/** Maps tab labels (from LAYER_CONFIG) to their LayerIds. */
+/** Maps common tab name variations to LayerIds. */
 function buildTabToLayerMap(): Map<string, LayerId> {
   const map = new Map<string, LayerId>();
+  // Exact matches from config
   for (const [id, config] of Object.entries(LAYER_CONFIG)) {
     map.set(config.label.toLowerCase(), id as LayerId);
   }
+  // Common variations found in real spreadsheets
+  map.set("has", "hipertensao");
+  map.set("dm", "diabetes");
+  map.set("domiciliados/acamados", "acamados");
+  map.set("pse", "pse");
+  map.set("ilpi", "ilpi");
+  map.set("gestantes", "gestantes");
+  map.set("tuberculose", "tuberculose");
   return map;
 }
 
@@ -116,10 +125,12 @@ export async function runSheetsPipeline(
   auth: unknown,
   spreadsheetId: string
 ): Promise<LayeredPatientData> {
-  // 1. Read all tabs
-  const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
-  const tabNames = layerIds.map((id) => LAYER_CONFIG[id].label);
+  // 1. Discover actual tab names from the spreadsheet
+  const { discoverTabs } = await import("@/lib/sheets/discovery");
+  const tabs = await discoverTabs(auth, spreadsheetId);
+  const tabNames = tabs.map((t) => t.title);
 
+  // 2. Read all tabs in one batch
   const tabData = await batchReadTabs(auth, spreadsheetId, tabNames);
 
   // 2. Parse each tab and geocode patients
