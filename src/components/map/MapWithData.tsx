@@ -10,6 +10,7 @@ import { PriorityList } from "@/components/map/PriorityList";
 import { Legend } from "@/components/map/Legend";
 import { MicroareaMetrics } from "@/components/sidebar/MicroareaMetrics";
 import { UnresolvedList } from "@/components/sidebar/UnresolvedList";
+import { SyncBadge } from "@/components/sidebar/SyncBadge";
 import { DayPlanner } from "@/components/routes/DayPlanner";
 import { ConflictPanel } from "@/components/panels/ConflictPanel";
 import { deduplicatePatients } from "@/lib/sheets/dedup";
@@ -132,6 +133,7 @@ export function MapWithData() {
             {showConflicts && <ConflictPanel conflicts={conflicts} />}
           </div>
         )}
+        <SyncBadge />
       </div>
 
       {/* Backdrop for mobile drawer */}

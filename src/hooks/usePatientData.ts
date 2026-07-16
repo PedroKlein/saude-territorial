@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { create } from "zustand";
 import type { LayerId } from "@/config/layers.config";
 
 // ---------------------------------------------------------------------------
@@ -16,6 +17,24 @@ export interface PatientRecord {
 }
 
 export type LayeredPatientData = Partial<Record<LayerId, PatientRecord[]>>;
+
+// ---------------------------------------------------------------------------
+// Sync metadata store (tracks last successful fetch time)
+// ---------------------------------------------------------------------------
+
+interface SyncState {
+  lastSyncTime: number | null;
+  isSyncing: boolean;
+  setLastSync: (time: number) => void;
+  setIsSyncing: (syncing: boolean) => void;
+}
+
+export const useSyncStore = create<SyncState>()((set) => ({
+  lastSyncTime: null,
+  isSyncing: false,
+  setLastSync: (time) => set({ lastSyncTime: time }),
+  setIsSyncing: (syncing) => set({ isSyncing: syncing }),
+}));
 
 // ---------------------------------------------------------------------------
 // Query Key Factory
@@ -38,7 +57,7 @@ async function fetchPatientData(
   const isDemo = spreadsheetId === "demo";
   const url = isDemo
     ? "/api/sheets/demo"
-    : `/api/sheets?spreadsheetId=${spreadsheetId}`;
+    : `/api/sheets?spreadsheetId=${spreadsheetId}&mode=full`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -53,14 +72,32 @@ async function fetchPatientData(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches patient data grouped by layer.
+ * Progressive-load patient data:
+ * - Shows stale cached data immediately (placeholderData / gcTime)
+ * - Refetches in background when stale (staleTime: 5min)
+ * - Tracks sync time for freshness indicator
+ *
  * Pass spreadsheetId="demo" to use synthetic data without Google Sheets.
  */
 export function usePatientData(spreadsheetId: string) {
+  const setLastSync = useSyncStore((s) => s.setLastSync);
+  const setIsSyncing = useSyncStore((s) => s.setIsSyncing);
+
   return useQuery({
     queryKey: patientKeys.bySheet(spreadsheetId),
-    queryFn: () => fetchPatientData(spreadsheetId),
+    queryFn: async () => {
+      setIsSyncing(true);
+      try {
+        const data = await fetchPatientData(spreadsheetId);
+        setLastSync(Date.now());
+        return data;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
     enabled: !!spreadsheetId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes — show cached instantly, refetch after
+    gcTime: 30 * 60 * 1000, // 30 minutes — keep in cache for progressive UX
+    refetchOnWindowFocus: true, // Background refresh when user returns to tab
   });
 }
