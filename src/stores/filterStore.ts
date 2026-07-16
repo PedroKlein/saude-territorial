@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,7 +51,8 @@ const INITIAL_STATE: FilterState = {
 // Store
 // ---------------------------------------------------------------------------
 
-export const useFilterStore = create<FilterStore>()((set, get) => ({
+export const useFilterStore = create<FilterStore>()(persist(
+  (set, get) => ({
   ...INITIAL_STATE,
 
   setMicroareaFilter: (ids) => set({ microareas: ids }),
@@ -108,4 +110,13 @@ export const useFilterStore = create<FilterStore>()((set, get) => ({
 
     return filtered;
   },
-}));
+}),
+  {
+    name: "saude-territorial-filters",
+    partialize: (state) => ({
+      microareas: state.microareas,
+      alertLevels: state.alertLevels,
+      hideUncertain: state.hideUncertain,
+    }),
+  }
+));

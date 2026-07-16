@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { LayerId } from "@/config/layers.config";
 import { LAYER_CONFIG } from "@/config/layers.config";
 import type { RouteResult, RouteProfile } from "@/types/routing";
@@ -58,7 +59,8 @@ function buildInitialLayers(): Record<LayerId, boolean> {
 // Store
 // ---------------------------------------------------------------------------
 
-export const useMapStore = create<MapStore>()((set) => ({
+export const useMapStore = create<MapStore>()(persist(
+  (set) => ({
   activeLayers: buildInitialLayers(),
   selectedPatient: null,
   mapCenter: PORTO_ALEGRE,
@@ -90,4 +92,15 @@ export const useMapStore = create<MapStore>()((set) => ({
   setAlertsOnly: (on) => set({ alertsOnly: on }),
 
   setPinningPatient: (cns) => set({ pinningPatient: cns }),
-}));
+}),
+  {
+    name: "saude-territorial-map",
+    partialize: (state) => ({
+      activeLayers: state.activeLayers,
+      mapCenter: state.mapCenter,
+      mapZoom: state.mapZoom,
+      showTerritories: state.showTerritories,
+      vizMode: state.vizMode,
+    }),
+  }
+));
