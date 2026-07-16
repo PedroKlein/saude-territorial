@@ -4,12 +4,18 @@
  * POST /api/config — Save spreadsheet ID
  * GET  /api/config — Load saved spreadsheet ID
  *
+ * Uses SQLite (same as Better Auth) for local persistence.
  * LGPD: Only stores spreadsheet IDs (no patient data).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import Database from "better-sqlite3";
+import path from "path";
+
+function getDb() {
+  return new Database(path.join(process.cwd(), "auth.db"));
+}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -17,16 +23,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("user_preferences")
-    .select("spreadsheet_id")
-    .eq("user_id", session.user.id)
-    .single();
+  const db = getDb();
+  try {
+    // Ensure table exists
+    db.exec(`CREATE TABLE IF NOT EXISTS user_config (
+      user_id TEXT PRIMARY KEY,
+      spreadsheet_id TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`);
 
-  return NextResponse.json({
-    spreadsheetId: data?.spreadsheet_id ?? null,
-  });
+    const row = db.prepare("SELECT spreadsheet_id FROM user_config WHERE user_id = ?").get(session.user.id) as { spreadsheet_id: string } | undefined;
+
+    return NextResponse.json({
+      spreadsheetId: row?.spreadsheet_id ?? null,
+    });
+  } finally {
+    db.close();
+  }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -50,19 +63,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("user_preferences").upsert({
-    user_id: session.user.id,
-    spreadsheet_id: spreadsheetId,
-    updated_at: new Date().toISOString(),
-  });
+  const db = getDb();
+  try {
+    db.exec(`CREATE TABLE IF NOT EXISTS user_config (
+      user_id TEXT PRIMARY KEY,
+      spreadsheet_id TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`);
 
-  if (error) {
-    return NextResponse.json(
-      { error: "Falha ao salvar configuração." },
-      { status: 500 }
-    );
+    db.prepare(
+      `INSERT OR REPLACE INTO user_config (user_id, spreadsheet_id, updated_at) VALUES (?, ?, datetime('now'))`
+    ).run(session.user.id, spreadsheetId);
+
+    return NextResponse.json({ success: true });
+  } finally {
+    db.close();
   }
-
-  return NextResponse.json({ success: true });
 }

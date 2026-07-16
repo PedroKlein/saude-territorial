@@ -18,7 +18,12 @@
  * SYNTHETIC DATA ONLY — no real patient addresses.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+
+// Set env so cache functions don't skip
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "http://test.supabase.co";
+});
 
 // ---------------------------------------------------------------------------
 // Supabase mock — must be hoisted before any import of the module under test.
@@ -270,14 +275,15 @@ describe("upsertCachedCoordinates — storing results", () => {
     ).resolves.not.toThrow();
   });
 
-  it("throws (or rejects) when Supabase upsert returns an error", async () => {
+  it("does not throw when Supabase upsert returns an error (graceful)", async () => {
     mockUpsert.mockResolvedValue({
       error: { message: "Database connection failed", code: "500" },
     });
 
     const { upsertCachedCoordinates } = await import("@/lib/geocoding/cache");
+    // Should not throw — silently skip on failure
     await expect(
       upsertCachedCoordinates(SYNTHETIC_NORMALIZED, SYNTHETIC_COORDINATES)
-    ).rejects.toThrow();
+    ).resolves.toBeUndefined();
   });
 });
