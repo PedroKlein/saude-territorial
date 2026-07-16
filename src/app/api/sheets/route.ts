@@ -138,7 +138,21 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err: unknown) {
+    // Specific error handling for common Sheets API errors
+    const status = (err as { code?: number })?.code ?? (err as { response?: { status?: number } })?.response?.status;
+    if (status === 403) {
+      return NextResponse.json(
+        { error: "Sem permissão para editar esta planilha." },
+        { status: 403 }
+      );
+    }
+    if (status === 429) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Tente novamente em alguns segundos." },
+        { status: 429 }
+      );
+    }
     // LGPD: do NOT include patient data or sheet contents in error
     return NextResponse.json(
       { error: "Falha ao salvar na planilha. Tente novamente." },
