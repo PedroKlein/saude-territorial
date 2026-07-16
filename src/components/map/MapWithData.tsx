@@ -11,6 +11,7 @@ import { Legend } from "@/components/map/Legend";
 import { MicroareaMetrics } from "@/components/sidebar/MicroareaMetrics";
 import { UnresolvedList } from "@/components/sidebar/UnresolvedList";
 import { SyncBadge } from "@/components/sidebar/SyncBadge";
+import { RouteHistory } from "@/components/sidebar/RouteHistory";
 import { DayPlanner } from "@/components/routes/DayPlanner";
 import { ConflictPanel } from "@/components/panels/ConflictPanel";
 import { deduplicatePatients } from "@/lib/sheets/dedup";
@@ -134,6 +135,7 @@ export function MapWithData() {
           </div>
         )}
         <SyncBadge />
+        <RouteHistory />
       </div>
 
       {/* Backdrop for mobile drawer */}

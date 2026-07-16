@@ -1,6 +1,7 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
+import { useRouteHistoryStore } from "@/stores/routeHistoryStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useState } from "react";
 import { PatientEditPanel } from "./PatientEditPanel";
@@ -17,6 +18,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
+  const addRouteEntry = useRouteHistoryStore((s) => s.addEntry);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
@@ -151,6 +153,14 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
                   if (res.ok) {
                     const result: RouteResult = await res.json();
                     setActiveRoute({ result, profile: routeProfile });
+                    addRouteEntry({
+                      patientName: String(patientData.nomeCompleto ?? "Sem nome"),
+                      patientCns: selectedPatient,
+                      profile: routeProfile,
+                      distance: result.distance,
+                      duration: result.duration,
+                      geometry: result.geometry,
+                    });
                   }
                 } finally {
                   setIsLoadingRoute(false);
