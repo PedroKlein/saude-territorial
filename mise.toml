@@ -1,5 +1,5 @@
 [tools]
-node = "24"
+node = "25"
 
 [env]
 _.path = ["./node_modules/.bin"]

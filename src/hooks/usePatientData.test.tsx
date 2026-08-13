@@ -85,4 +85,35 @@ describe("usePatientData", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeDefined();
   });
+
+  it("returns error state on 401 unauthorized", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+    });
+
+    const { result } = renderHook(() => usePatientData(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect((result.current.error as Error).message).toContain("401");
+  });
+
+  it("returns empty layer map when response has no rows", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ layers: { gestantes: [], tuberculose: [], hipertensao: [] } }),
+    });
+
+    const { result } = renderHook(() => usePatientData(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.gestantes).toEqual([]);
+    expect(result.current.data?.tuberculose).toEqual([]);
+    expect(result.current.data?.hipertensao).toEqual([]);
+  });
 });

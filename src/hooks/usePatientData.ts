@@ -49,8 +49,6 @@ export const patientKeys = {
 // ---------------------------------------------------------------------------
 
 async function fetchPatientData(): Promise<LayeredPatientData> {
-  // TEMPORARY: hits the mock /api/patients endpoint until Supabase pivot
-  // execution replaces it with real DB reads (via Drizzle).
   const res = await fetch("/api/patients");
   if (!res.ok) {
     throw new Error(`Falha ao carregar dados: ${res.status}`);
@@ -69,8 +67,8 @@ async function fetchPatientData(): Promise<LayeredPatientData> {
  * - Refetches in background when stale (staleTime: 5min)
  * - Tracks sync time for freshness indicator
  *
- * NOTE: currently hits a temporary mock endpoint (/api/patients). Will be
- * wired to real Supabase reads during pivot execution.
+ * Fetches from `GET /api/patients`, which returns Drizzle-joined patient
+ * rows (base + condition extension) grouped by layer.
  */
 export function usePatientData() {
   const setLastSync = useSyncStore((s) => s.setLastSync);
