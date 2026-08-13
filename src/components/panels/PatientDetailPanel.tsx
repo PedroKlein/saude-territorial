@@ -189,7 +189,12 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
               </button>
             </div>
 
-            {/* Manual pin button — pushes user into pin-drop mode from the panel. */}
+            {/*
+              Reposition button — opens explicit "reposition" mode. In this
+              mode the patient's marker becomes draggable AND clicks on the
+              map re-place the pin. Selection is preserved so the panel
+              stays visible while the user drags/clicks.
+            */}
             <button
               onClick={() => {
                 if (!patientId) return;
@@ -198,12 +203,11 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
                   cns: selectedPatient,
                   nomeCompleto,
                 });
-                setSelectedPatient(null);
               }}
               disabled={!patientId}
               className="w-full rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
             >
-              📍 Posicionar no mapa
+              📍 Reposicionar no mapa
             </button>
           </div>
         </>

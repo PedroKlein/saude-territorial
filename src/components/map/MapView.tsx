@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useMemo, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
@@ -11,7 +11,7 @@ import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
 import { HeatmapLayer } from "./HeatmapLayer";
-import { ManualPinMode } from "./ManualPinMode";
+import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
@@ -54,6 +54,7 @@ export default function MapView() {
   const optimizedRoute = useRoutePlannerStore((s) => s.optimizedRoute);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
+  const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleMicroareaClick = useCallback(
     (id: string) => {
@@ -138,16 +139,28 @@ export default function MapView() {
         {vizMode === "heatmap" && heatmapPoints.length > 0 && (
           <HeatmapLayer points={heatmapPoints} />
         )}
-        <ManualPinMode
-          target={pinningPatient}
-          onCancel={() => setPinningPatient(null)}
-          onPinned={() => setPinningPatient(null)}
+        <PinClickCatcher
+          active={pinningPatient !== null}
+          onPick={setPendingCoords}
         />
       </MapContainer>
       {/* Show optimized planner route OR single-patient route (not both) */}
       <ActiveRouteLayer
         route={optimizedRoute ? { result: optimizedRoute, profile: "foot" } : activeRoute}
         mapRef={mapRef}
+      />
+      <ManualPinOverlay
+        target={pinningPatient}
+        pendingCoords={pendingCoords}
+        clearPendingCoords={() => setPendingCoords(null)}
+        onPinned={() => {
+          setPinningPatient(null);
+          setPendingCoords(null);
+        }}
+        onCancel={() => {
+          setPinningPatient(null);
+          setPendingCoords(null);
+        }}
       />
     </>
   );
