@@ -8,12 +8,22 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+
+import { auth } from "@/lib/auth";
 import { getRoute } from "@/lib/routing/client";
 import type { RouteProfile } from "@/types/routing";
 
 const VALID_PROFILES: RouteProfile[] = ["foot", "car"];
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
+    return NextResponse.json(
+      { error: "Não autenticado. Faça login para continuar." },
+      { status: 401 }
+    );
+  }
+
   let body: {
     fromLat?: number;
     fromLng?: number;

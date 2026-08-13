@@ -75,7 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const key = crypto.createHmac("sha256", secret);
     key.update(session.token);
     const signature = key.digest("base64");
-    const signedToken = encodeURIComponent(`${session.token}.${signature}`);
+    const signedToken = `${session.token}.${signature}`;
 
     // Redirect to the target page — the browser processes Set-Cookie on redirects
     const redirectTo = new URL(request.url).searchParams.get("redirect") || "/map";
