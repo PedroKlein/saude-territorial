@@ -1,14 +1,19 @@
 # saude-territorial — Especificação Funcional
 
+> **Status arquitetural:** pós-pivot (agosto 2026). Ver `docs/adr/ADR-001-drop-sheets.md` e `docs/adr/ADR-002-drizzle-orm.md`.
+> A arquitetura anterior (Google Sheets como fonte da verdade) foi descartada — histórico preservado no git.
+
 ## Visão Geral
 
-Plataforma georeferenciada de monitoramento de saúde territorial para equipes de Atenção Primária. Transforma as planilhas Google Sheets da equipe de saúde em um mapa interativo com múltiplas camadas, alertas de urgência, planejamento de rotas e edição bidirecional.
+Plataforma georreferenciada de monitoramento de saúde territorial para equipes de Atenção Primária. Transforma o registro clínico da equipe em um mapa interativo com múltiplas camadas, alertas de urgência, planejamento de rotas e edição direta no mapa.
 
-**Problema:** A equipe da US Moab Caldas gerencia ~10 planilhas de monitoramento (Gestantes, TB, DM, HAS, Acamados, etc.) sem representação espacial. Não conseguem visualizar onde os pacientes se concentram, quais urgências existem, ou planejar rotas de visita eficientes.
+**Problema:** A equipe da US Moab Caldas gerencia ~10 planilhas de monitoramento (Gestantes, TB, DM, HAS, Acamados, etc.) sem representação espacial. Não conseguem visualizar onde os pacientes se concentram, quais urgências existem, ou planejar rotas de visita eficientes. Além disso, precisam de **customização** — adicionar camadas, corrigir nomenclaturas de ruas, ajustar localizações — que uma planilha não permite ergonomicamente.
 
-**Solução:** Um mapa interativo que conecta às planilhas reais da equipe, mostra pacientes como marcadores com camadas ativáveis, destaca urgências, calcula rotas e permite editar dados direto no mapa.
+**Solução:** Um mapa interativo onde o Agente Comunitário de Saúde (ACS) mantém os dados diretamente na aplicação (CRUD), com camadas por condição, destaque de urgências, planejamento de rotas e edição bidirecional dos endereços/pins.
 
-**Público-alvo:** ACS (Agentes Comunitários de Saúde), enfermeiras, preceptores da US Moab Caldas.
+**Público-alvo:** ACS, enfermeiras e preceptores da US Moab Caldas.
+
+**Escopo do MVP** (agosto 2026): mapa + camadas + alertas estáticos + CRUD básico + territórios. Sem mobile, sem sincronização distribuída, sem tempo real. Ver seção "Milestones".
 
 ---
 
@@ -17,214 +22,155 @@ Plataforma georeferenciada de monitoramento de saúde territorial para equipes d
 | Concern | Escolha | Razão |
 |---------|---------|-------|
 | Framework | Next.js 16 (App Router) | Full-stack, `"use cache"`, `proxy.ts`, Turbopack |
+| Language | TypeScript (strict mode) | Type safety across complex data models |
 | Map | Leaflet (react-leaflet v5) | Proven, plugin ecosystem (heat, cluster, draw), React 19 support |
 | UI/CSS | shadcn/ui + Tailwind CSS v4 | CSS-first `@theme` config, accessible components |
-| State (server) | TanStack Query v5 | Cache, refetch, optimistic updates for sheet data |
+| State (server) | TanStack Query v5 | Cache, refetch, optimistic updates |
 | State (client) | Zustand v5 | Lightweight store for UI state (active layers, filters, selections) |
-| Language | TypeScript (strict mode) | Type safety across complex data models |
-| Auth | Better Auth (Google OAuth) | TypeScript-first, token management, incremental scopes |
-| Patient data | Google Sheets API | Team's existing workflow, zero friction |
-| App state DB | Supabase (Postgres) | Coordinates cache, user prefs, route history |
+| Auth | Better Auth (Google OAuth, identity only) | TypeScript-first sessions; **no** `spreadsheets` scope post-pivot |
+| **Source of truth** | **Supabase Postgres** | All patient data lives here (was: Google Sheets — see ADR-001) |
+| **Data access** | **Drizzle ORM** | Typed queries, SQL-native migrations, RLS-friendly. See ADR-002 |
+| Auth session storage | `@supabase/ssr` | Session cookies only; not used for data queries |
 | Geocoding | Nominatim (OSM) | Free, open-source. Manual pin fallback |
 | Routing | OSRM | Free, open-source. Walking + driving routes |
 | Territories | GeoJSON files (in repo) | Simple, version-controlled. Later: remote source |
 | Package manager | pnpm | Fast, strict, Vercel-native |
-| Deploy | Vercel (free tier) | Native Next.js hosting, automatic deploys |
+| Deploy | Vercel (free tier) + Supabase cloud | Native Next.js hosting, automatic deploys |
 
 ---
 
 ## Modelo de Dados
 
-### Fonte: Google Sheets (equipe de saúde)
+**Fonte da verdade:** Supabase Postgres, acessado via Drizzle ORM. Ver `docs/adr/ADR-002-drizzle-orm.md`.
 
-A equipe possui UMA planilha Google com múltiplas abas. Cada aba = uma condição/programa de saúde = uma camada no mapa.
+### Padrão: base + tabelas de extensão
 
-#### Colunas comuns (base de todas as abas de pacientes)
+Uma única tabela `patients` guarda os campos comuns a todo paciente. Uma tabela de **extensão por condição** guarda os campos específicos de cada programa/agravo, relacionada por `patient_id` (FK, cascade delete).
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| Data última atualização | Date | Última vez que o registro foi editado |
-| Nome | String | Nome completo do paciente |
-| CNS | String | Cartão Nacional de Saúde (identificador único) |
-| Data Nascimento | Date | Data de nascimento |
-| Idade | Number | Idade (calculada ou manual) |
-| Telefone | String | Contato |
-| Rua | String | Endereço - logradouro |
-| Número | String | Endereço - número |
-| Complemento | String | Endereço - complemento |
+| Tabela | Escopo | Chave |
+|--------|--------|-------|
+| `patients` | Dados comuns (CNS, nome, endereço, coordenadas) | `id UUID PK`, `cns UNIQUE` |
+| `gestantes_data` | DUM, DPP, IG, risco, monitoramento pré-natal | `patient_id PK/FK` |
+| `tuberculose_data` | Tipo, baciloscopia, forma clínica, contatos | `patient_id PK/FK` |
+| `has_data` | Data última consulta, monitoramento pressórico | `patient_id PK/FK` |
+| *(futuras)* `dm_data`, `acamados_data`, `puericultura_data`, `pse_data`, `ilpi_data` | Análogas | `patient_id PK/FK` |
 
-#### Abas identificadas (10 camadas potenciais)
+**O desenho de colunas exato é feito na execução do pivot** — este spec fixa apenas o padrão. A tabela `patients` inclui `lat`, `lng`, `geocode_status ∈ {geocoded, manual, unresolved}` para suportar o fluxo de geocodificação com fallback manual.
 
-**Baseadas em pacientes (8 abas):**
+### Deduplicação por CNS
 
-| Aba | Colunas específicas |
-|-----|-------------------|
-| Gestantes | DUM, DPP, Risco (habitual/alto), IG, monitoramento durante/pós |
-| Gestantes expostas | Contatos expostos, posicionamento |
-| Tuberculose | Tipo, Baciloscopia, TRM, Cultura, PPD, RX Tórax, Forma Clínica, contatos domiciliares |
-| DM (Diabetes) | PMDID, monitoramento específico |
-| HAS (Hipertensão) | Data última consulta HAS |
-| Domiciliados Acamados | Vacinas (Pneumo, COVID, Influenza), Status Visita, Sorológico |
-| Exame pé diabético | Dados do exame |
-| Puericultura/Binômio | Crianças <2 anos, par mãe-criança |
+O CNS é chave única em `patients`. Ao criar um paciente com CNS já existente, a UI mostra "Este CNS já pertence a *Fulana*. Adicionar condição ao paciente existente?" — evita duplicatas e preserva o padrão "um paciente = um pin com múltiplas badges de condições".
 
-**Baseadas em locais (2 abas):**
+### Regras de acesso
 
-| Aba | Colunas específicas |
-|-----|-------------------|
-| PSE (Saúde na Escola) | Nome escola, INEP, Tema da ação, Data, Público, Profissionais |
-| ILPI (Inst. Longa Permanência) | Nome do Local, Planejamento Atividades Coletivas |
+- **Sem RLS no MVP.** Todo usuário autenticado lê e escreve o dataset compartilhado da equipe. Controles compensatórios: gates de sessão em cada rota, service-role DB restrito a scripts admin (seed, backup), LGPD guard exige dado sintético em qualquer seed.
+- **Endurecimento pós-MVP:** políticas RLS quando o piloto expandir para múltiplas equipes.
 
-#### Deduplicação
+### Schema e migrations
 
-O CNS é o identificador único de paciente. Um mesmo paciente pode aparecer em múltiplas abas (ex: gestante + hipertensa). O sistema deve:
-1. Detectar duplicatas pelo CNS
-2. Mostrar UM marcador por paciente com badges de cada condição
-3. Surfacear conflitos quando dados base diferem entre abas (endereço, telefone)
-4. Permitir ao usuário resolver qual versão é correta
-
-### App State: Supabase (Postgres)
-
-| Tabela | Propósito |
-|--------|-----------|
-| `coordinates_cache` | Endereço → lat/lng geocodificado. Evita re-geocoding |
-| `manual_pins` | Localizações posicionadas manualmente (sem endereço formal) + referência textual |
-| `user_preferences` | Camadas ativas, filtros salvos, último zoom/centro |
-| `route_history` | Rotas calculadas para reutilização |
-| `sync_metadata` | Última sincronização por aba, status |
+- Schema Drizzle em `src/db/schema/*.ts`.
+- Migrations em `supabase/migrations/*.sql`, geradas por `drizzle-kit generate`.
+- **Migrations legadas (`001..003.sql`) foram apagadas** — histórico preservado no git (ver ADR-002 rollback plan).
+- Novas migrations começam em `0001` na execução do pivot.
 
 ---
 
 ## Fluxo de Dados
 
 ```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│  Google Sheets  │◄───────►│  Next.js API      │◄───────►│    Supabase     │
-│  (fonte real)   │  OAuth  │  Routes           │         │  (cache/state)  │
-└─────────────────┘         └────────┬─────────-┘         └─────────────────┘
+┌─────────────────┐         ┌──────────────────┐
+│    Supabase     │◄───────►│   Next.js API     │
+│   (fonte da     │ Drizzle │   Routes          │
+│    verdade)     │         │                   │
+└─────────────────┘         └────────┬─────────-┘
                                      │
                             ┌────────▼──────────┐
                             │  React Client     │
                             │  (Map + Panels)   │
                             └───────────────────┘
+
+  Auth (Google identity)  ──►  Better Auth  ──►  @supabase/ssr cookies
 ```
 
-### Leitura (load)
-1. App abre → carrega dados do Supabase (cache) → mapa aparece instantaneamente
-2. Em background, compara `sync_metadata` → se stale, busca dados frescos do Google Sheets
-3. Novos dados chegam → geocodifica endereços sem coordenadas (Nominatim) → atualiza cache
-4. Marcadores novos/atualizados aparecem progressivamente no mapa
+### Leitura
+1. Cliente monta a página → `usePatientData` (TanStack Query) chama `GET /api/patients`.
+2. Route handler consulta Drizzle → retorna JSON com pacientes agrupados por camada (`{ [layerId]: [...patients] }`).
+3. Cache TanStack Query mantém staleTime de 5min; refetch em foco de janela.
 
-### Escrita (edit)
-1. Usuário clica marcador → painel de edição abre
-2. Edita campo → clica "Salvar"
-3. Escreve no Google Sheets PRIMEIRO (fonte de verdade) via token do usuário
-4. Se sucesso → atualiza cache Supabase
-5. Se falha → mostra erro, não atualiza cache
+### Escrita
+1. Usuário edita/cria/deleta paciente no painel → `useMutation` chama `POST/PATCH/DELETE /api/patients/[id]`.
+2. Route handler valida sessão → executa mutation Drizzle → retorna paciente atualizado.
+3. `onSuccess` invalida `patientKeys.all` → TanStack refaz `GET`.
 
-### Refresh manual
-- Botão "Sincronizar" força re-leitura de todas as abas
-- Badge mostra "Última sincronia: Xh atrás"
+### Geocodificação (em pivot execution)
+1. Endereço salvo → chama Nominatim.
+2. Sucesso → `geocode_status = 'geocoded'`, salva `lat/lng`.
+3. Falha → prompt para posicionar pin manualmente → `geocode_status = 'manual'`.
+4. Usuário pode arrastar marcador a qualquer momento → PATCH atualiza `lat/lng` e mantém `geocode_status = 'manual'`.
 
 ---
 
 ## Autenticação
 
+**Google OAuth para identidade apenas** (ver `docs/adr/ADR-001-drop-sheets.md`). Sem escopo `spreadsheets`, sem refresh de access token, sem chamadas à Google API em nome do usuário.
+
 ### Fluxo
-1. Usuário acessa o app → redirecionado para Google OAuth
-2. App solicita scopes: `openid`, `email`, `profile`, `https://www.googleapis.com/auth/spreadsheets`
-3. Usuário autoriza → app recebe access token + refresh token
-4. Token usado para: identificar o usuário E acessar as planilhas da equipe
-5. Sessão armazenada no Supabase (user profile, preferences)
+1. Usuário acessa o app → redirecionado para `/login`.
+2. Clica "Entrar com Google" → Better Auth solicita `openid email profile`.
+3. Autorização → cookie de sessão assinado é definido → redireciona para `/map`.
+4. `proxy.ts` protege `/map`, `/settings` e outros dashboard routes.
 
 ### Controle de acesso
-- Qualquer pessoa com Google account que tenha acesso Editor à planilha pode usar o app
-- O acesso à planilha no Google Drive é o controle de acesso real (gerenciado pela equipe)
-- O app apenas respeita as permissões que o Google Drive já impõe
-
-### Configuração da planilha
-- Na primeira vez, o usuário configura qual planilha conectar (cola a URL do Google Sheets)
-- O app extrai o spreadsheet ID e armazena no Supabase vinculado ao usuário/equipe
-- Permite trocar de planilha nas configurações
+- Qualquer conta Google autorizada pela equipe pode entrar.
+- Autorização granular (por microárea, por equipe) fica para pós-MVP.
 
 ---
 
 ## Sistema de Camadas
 
-### Conceito
-Cada aba da planilha = uma camada no mapa. As camadas são **auto-descobertas**: o app lê os nomes das abas e cria uma camada para cada.
+Cada camada representa uma condição de saúde (Gestantes, TB, HAS, etc.). Camadas são **definidas em código** em `src/config/layers.config.ts` — a antiga descoberta automática por aba de planilha não se aplica mais.
 
-### Configuração visual (config file no repo)
+**Camadas prioritárias do MVP:** Gestantes, Tuberculose, HAS.
+**Camadas mantidas em código, sem dados no MVP:** DM, Acamados.
 
-```typescript
-// layers.config.ts
-export const layerConfig: Record<string, LayerConfig> = {
-  "Gestantes": {
-    icon: "baby",
-    color: "#E91E63",
-    visibleColumns: ["Nome", "DPP", "Risco", "IG"],
-    clusterEnabled: true,
-    heatmapEnabled: true,
-  },
-  "Tuberculose": {
-    icon: "lungs",
-    color: "#FF5722",
-    visibleColumns: ["Nome", "Tipo", "Forma Clínica"],
-    clusterEnabled: true,
-    heatmapEnabled: true,
-  },
-  // ...
-};
-```
+Cada config define: `icon`, `color`, `visibleColumns` (para o painel de detalhes), `clusterEnabled`, `heatmapEnabled`.
 
 ### Funcionalidades por camada
-- **Toggle on/off** — barra lateral com checkboxes
-- **Clustering** — marcadores se agrupam em zoom baixo, mostrando contagem
-- **Heatmap** — modo alternativo que mostra densidade ao invés de marcadores individuais
-- **Filtros** — por microárea, por nível de alerta, por data de atualização
-- **Ocultar incertos** — marcadores geocodificados com baixa confiança podem ser ocultados
+- **Toggle on/off** — sidebar com checkboxes por camada.
+- **Clustering** — marcadores se agrupam em zoom baixo com contagem.
+- **Heatmap** — modo alternativo mostrando densidade.
+- **Filtros** — microárea, nível de alerta, texto livre.
 
 ### Camada de visão geral (cross-layer)
-Uma camada especial "Alertas" que mostra TODOS os pacientes com urgência, independente da condição. Transcende as camadas individuais.
+Uma camada especial "Alertas" mostra TODOS os pacientes com urgência ativa, independente da condição.
 
 ---
 
 ## Sistema de Alertas
 
-### Regras configuráveis via Google Sheet
+Regras estáticas em código (`src/config/alert-rules.config.ts`). Configuração dinâmica via UI é pós-MVP.
 
-Uma aba especial na planilha (ou uma planilha separada) com formato:
+### Regras estáticas do MVP
 
 | Camada | Coluna | Operador | Valor | Nível |
 |--------|--------|----------|-------|-------|
-| Gestantes | IG (semanas) | > | 40 | vermelho |
-| Gestantes | Risco | = | alto risco | amarelo |
-| Tuberculose | Data última atualização | older_than_days | 30 | vermelho |
-| HAS | Data última consulta | older_than_days | 180 | amarelo |
-| Domiciliados Acamados | Data INFLUENZA | older_than_days | 365 | amarelo |
+| Gestantes | IG (semanas) | > | 40 | 🔴 Vermelho |
+| Gestantes | Risco | = | alto | 🟡 Amarelo |
+| Tuberculose | data_ultima_atualizacao | older_than_days | 30 | 🔴 Vermelho |
+| HAS | data_ultima_consulta | older_than_days | 180 | 🟡 Amarelo |
 
-### Operadores suportados (v1)
-- `>`, `<`, `>=`, `<=` — comparação numérica
-- `=`, `!=` — igualdade/string match
-- `older_than_days` — diferença em dias entre hoje e uma coluna de data
-- `is_empty` — coluna vazia/sem valor
-
-### Níveis de alerta
-- 🔴 **Vermelho** — urgência alta, requer ação imediata
-- 🟡 **Amarelo** — atenção, acompanhar
-- 🟢 **Verde** — tudo em dia (default, sem alerta)
+Operadores suportados na engine (já implementados, ver `src/lib/alerts/engine.ts`): `>`, `<`, `>=`, `<=`, `=`, `!=`, `older_than_days`, `is_empty`.
 
 ### Visualização
-- Marcadores com borda colorida conforme nível mais alto de alerta
-- Badge no marcador indicando alerta
-- Painel lateral mostra resumo: "12 alertas vermelhos, 28 amarelos"
-- Camada "Alertas" mostra apenas pacientes com alerta ativo
+- Marcadores com borda colorida no maior nível ativo.
+- Painel "Priority List" mostra pacientes ordenados por urgência.
+- Stats dashboard exibe contagem por nível.
 
 ---
 
 ## Endereços e Geocodificação
 
-### Pipeline
+### Pipeline (a implementar em pivot execution)
 
 ```
 Endereço (Rua + Número + Complemento)
@@ -232,72 +178,40 @@ Endereço (Rua + Número + Complemento)
     ▼
 Nominatim geocoding (endereço → lat/lng)
     │
-    ├── Sucesso → cache em Supabase → marcador no mapa
+    ├── Sucesso (confidence ≥ threshold) → salva lat/lng + geocode_status = 'geocoded'
     │
-    └── Falha → marcador de "endereço não resolvido"
+    └── Falha OU baixa confiança → prompt para posicionar pin manualmente
                     │
                     ▼
-              Usuário pode:
-              1. "Posicionar no mapa" → drop pin manual
-              2. Adicionar referência textual ("casa azul após a ponte")
-              3. Mostrar apenas a rua (sem número → marcador na rua)
+              Usuário clica no mapa → lat/lng + geocode_status = 'manual'
+              Campo opcional: referência textual ("casa azul após a ponte")
 ```
 
-### Anotações e nomes alternativos
-- Ruas podem ter múltiplos nomes (oficial + popular)
-- O sistema mantém uma tabela de sinônimos (Supabase)
-- Quando o geocoding falha com nome popular, tenta o nome oficial
-- Usuários podem adicionar anotações a endereços ("acesso pela viela lateral")
-
-### Pin manual com referência
-Para locais sem endereço formal (favelas, ocupações, áreas rurais):
-- Botão "Posicionar manualmente"
-- Usuário clica no mapa para definir localização
-- Campo de texto para referência: "próximo ao bar do Zé, rua sem nome atrás da escola"
-- Coordenadas salvas no Supabase (não na planilha)
+### Ajuste manual em qualquer momento
+Usuário pode **arrastar o marcador** de um paciente para corrigir posicionamento errado — o `geocode_status` passa a `'manual'` e as novas coordenadas são persistidas via `PATCH /api/patients/[id]`.
 
 ---
 
 ## Rotas e Planejamento
 
 ### Rota simples (US → paciente)
-- Clique no marcador → botão "Traçar rota"
-- Calcula rota da US Moab Caldas até o paciente
-- Opções: a pé 🚶 ou de carro 🚗
-- Mostra distância e tempo estimado
-- Polyline desenhada no mapa
+- Já implementada e funcionando pré-pivot — preservada.
+- Botão "Traçar rota" no painel de detalhes → OSRM → polyline no mapa.
+- Perfis: 🚶 a pé ou 🚗 de carro.
 
-### Planejamento do dia
-- Usuário seleciona múltiplos pacientes para visitar
-- App calcula rota otimizada (ordem mais eficiente)
-- Mostra roteiro: US → Paciente A → Paciente B → ... → US
-- Permite reordenar manualmente
-- Mostra tempo total estimado
-
-### Motor de rotas: OSRM
-- API pública para walking e driving profiles
-- Retorna GeoJSON polylines
-- Sem custo, sem API key
-- Limitação: não suporta transporte público (deferred)
+### Planejamento do dia (pós-MVP)
+- Selecionar múltiplos pacientes → rota otimizada.
+- Reordenação manual, tempo total estimado.
 
 ---
 
 ## Territórios
 
-### Fonte: GeoJSON (v1)
-- Arquivo `.geojson` no repositório com polígonos das microáreas
-- Carregado pelo app como camada base do mapa
-- Mostra limites de microáreas, bairros, área de abrangência da US
+- Arquivos `.geojson` em `territories/` — carregados como overlay do Leaflet.
+- Polígonos de microáreas com cor por ACS/equipe.
+- Hover mostra nome da microárea.
 
-### Funcionalidades
-- Coloração por microárea (cada ACS = uma cor)
-- Toggle visibilidade dos limites
-- Hover mostra nome da microárea e ACS responsável
-- Métricas por microárea (total pacientes, alertas, etc.)
-
-### Futuro (deferred)
-- Carregar de fonte remota (Google Drive, URL)
-- Editar limites diretamente no mapa (leaflet-draw)
+Edição de limites diretamente no mapa (leaflet-draw) fica para pós-MVP.
 
 ---
 
@@ -307,96 +221,77 @@ Para locais sem endereço formal (favelas, ocupações, áreas rurais):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Header: Logo + Nome do Usuário + Sync Badge + Settings     │
+│  Header: Logo + Usuário + Sync Badge + Settings             │
 ├──────────┬──────────────────────────────────────────────────┤
 │          │                                                  │
 │  Sidebar │              Map (Leaflet)                       │
 │          │                                                  │
-│  - Layers│         Markers / Clusters / Heatmap             │
-│  - Filter│                                                  │
-│  - Alerts│                                                  │
-│  - Routes│                                                  │
+│  Layers  │         Markers / Clusters / Heatmap             │
+│  Filters │                                                  │
+│  Routes  │                                                  │
 │          │                                                  │
 ├──────────┴──────────────────────────────────────────────────┤
-│  Detail Panel (slide-up on marker click): patient info/edit │
+│  Detail Panel (slide-in on marker click): dados + rotas     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Modos de visualização
-1. **Marcadores** — ícones individuais por paciente, com clustering em zoom baixo
-2. **Heatmap** — densidade de casos por área
-3. **Alertas** — apenas pacientes com urgência, cross-layer
-
-### Interações do mapa
-- Zoom/pan padrão
-- Click marcador → abre painel de detalhes
-- Click cluster → zoom in ou abre lista
-- Toggle camadas na sidebar
-- Filtros por microárea, nível de alerta, data
-- Botão "Sincronizar" no header
+1. **Marcadores** — ícones individuais, cluster em zoom baixo.
+2. **Heatmap** — densidade por área.
+3. **Alertas** — filtro cross-layer mostrando só pacientes com urgência.
 
 ---
 
-## Milestones
+## MVP e Milestones
 
-### Milestone 1: Foundation
-> O mapa carrega e mostra dados reais da planilha com autenticação.
+O MVP foi acordado com a equipe de saúde (ver doc "Design de Software / Definição de Escopo" e memo de reunião).
 
-- [ ] Setup Next.js + pnpm + TypeScript strict + Tailwind + shadcn/ui
-- [ ] Google OAuth (login + sheet scope)
-- [ ] Configuração de planilha (colar URL)
-- [ ] Leitura de dados do Google Sheets (todas as abas)
-- [ ] Geocodificação (Nominatim) + cache Supabase
-- [ ] Mapa Leaflet com marcadores básicos (uma camada)
-- [ ] Multi-layer toggle (sidebar com checkboxes)
-- [ ] Territórios (GeoJSON render)
+### MVP — vai entrar
+- Google OAuth (identidade apenas)
+- CRUD de pacientes direto na aplicação (adicionar, editar, remover)
+- Mapa Leaflet com marcadores por camada
+- 3 camadas prioritárias: Gestantes, TB, HAS
+- Toggle de camadas, heatmap opcional
+- Filtros básicos (microárea, nível de alerta, busca)
+- Alertas estáticos com destaque visual
+- Territórios (GeoJSON overlay)
+- Manual pin para endereços não geocodificáveis
+- Detalhe do paciente com rota até US Moab Caldas
 
-### Milestone 2: Interaction
-> O usuário pode interagir com os dados, ver alertas e editar.
+### Pode entrar (se sobrar tempo)
+- Combinação de camadas com AND/OR/NOT
+- Mapa de calor com peso por gravidade
+- Marker clustering avançado
+- Reordenação manual de rotas para múltiplos pacientes
 
-- [ ] Painel de detalhes do paciente (click marcador)
-- [ ] Edição bidirecional (edit → save to Sheet → update cache)
-- [ ] Sistema de alertas (regras da Sheet, cores nos marcadores)
-- [ ] Camada de visão geral de alertas
-- [ ] Clustering com contagem
-- [ ] Heatmap toggle
-- [ ] Deduplicação por CNS + resolução de conflitos
-- [ ] Pin manual + referência textual para endereços sem geocoding
+### Explicitamente fora do MVP
+- Suporte mobile / tablet
+- Sincronização entre instâncias distribuídas
+- Tempo real / websockets
+- Integração com e-SUS APS
+- Import automático de planilhas (deferred; ver ADR-001)
+- Criação de camadas customizadas por ACS (dream delivery)
+- Nomenclaturas alternativas de ruas com IA
+- Inteligência artificial para priorização
 
-### Milestone 3: Planning
-> O usuário pode planejar seu dia de visitas com rotas.
+### Milestones pós-cleanup
 
-- [ ] Rota simples (US → paciente, walking/driving)
-- [ ] Seleção de múltiplos pacientes para roteiro
-- [ ] Otimização de rota (ordem eficiente)
-- [ ] Métricas por microárea
-- [ ] Filtros avançados (data, microárea, alerta)
-- [ ] Anotações e nomes alternativos de ruas
-
-### Milestone 4: Polish
-> Refinamentos e features avançadas.
-
-- [ ] Ocultar pontos com geocoding incerto
-- [ ] Histórico de rotas
-- [ ] Preferências do usuário persistidas
-- [ ] Responsive/mobile (ACS usa celular)
-- [ ] Performance com muitos marcadores
-- [ ] Territórios de fonte remota
+O plano de execução do pivot (que substitui esta seção) será registrado em `plans/pivot-execution.md` na próxima sessão de planejamento. Este spec fixa a **arquitetura**; a **ordem de implementação** é definida separadamente.
 
 ---
 
 ## Deploy
 
-### Vercel
-- Repositório conectado ao Vercel
-- Deploy automático em push para `main`
-- Environment variables: Google OAuth client ID/secret, Supabase URL/key
-- Preview deployments para PRs
+### Vercel + Supabase cloud
+- Repositório conectado ao Vercel; deploy automático em push para `main`.
+- Environment variables: Google OAuth client ID/secret, Supabase URL/anon key/service-role key, `BETTER_AUTH_SECRET`, `DATABASE_URL`.
+- Preview deployments para PRs.
+- Supabase cloud como Postgres backend.
 
 ### Variáveis de ambiente necessárias
 
 ```env
-# Google OAuth
+# Google OAuth (identidade apenas)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
@@ -405,32 +300,46 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
+# Database (Drizzle connection string — direct Postgres, bypassing PgBouncer for schema ops)
+DATABASE_URL=
+
+# Better Auth
+BETTER_AUTH_SECRET=
+
 # App
 NEXT_PUBLIC_APP_URL=
 ```
 
 ---
 
-## Decisões Arquiteturais
+## Decisões Arquiteturais LOCKED
 
-Todas as decisões abaixo foram discutidas e LOCKED em 2026-07-14:
+Válidas a partir de agosto 2026 (pós-pivot):
 
-1. **Sheet = fonte de verdade** — Supabase é cache. Writes vão pro Sheet primeiro.
-2. **OAuth on-behalf** — cada usuário acessa a planilha com SEU token. Requer que tenham acesso Editor no Google Drive.
-3. **Progressive load** — mapa aparece imediato do cache, dados frescos stream em background.
-4. **Config file para layers** — não banco. Mais simples. Migra para DB + admin UI depois.
-5. **Nominatim + pin manual** — geocoding gratuito, com fallback humano para endereços sem solução.
-6. **Simple rule engine** — coluna/operador/valor/nível. Sem AND/OR complexo por ora.
-7. **Auto-discover tabs** — qualquer nova aba na planilha aparece como camada automaticamente.
-8. **CNS como ID único** — merge cross-tab com surface de conflitos.
+1. **Supabase = fonte da verdade.** Ver ADR-001. Google Sheets não é mais lida em runtime.
+2. **Drizzle ORM = camada de acesso a dados.** Ver ADR-002. `@supabase/supabase-js` restrito a auth/session boundary.
+3. **Migrations SQL geradas via `drizzle-kit`**, commitadas em `supabase/migrations/`. Migrations legadas apagadas — recuperáveis via git.
+4. **Google OAuth para identidade apenas.** Sem escopo `spreadsheets`, sem refresh de access token, sem chamadas Google API on-behalf.
+5. **CRUD in-app.** Editar paciente = modificar Supabase via `PATCH /api/patients/[id]`. Sem write-back para Sheet.
+6. **Camadas definidas em código.** `src/config/layers.config.ts`. Descoberta automática (ex-Sheet-tab) descartada.
+7. **Alertas com regras estáticas em código.** `src/config/alert-rules.config.ts`. Configuração via UI é pós-MVP.
+8. **CNS = identificador único de paciente.** UNIQUE constraint em `patients.cns`. Duplicidade → prompt "adicionar condição a paciente existente".
+9. **Padrão base + extensão** para modelagem de condições. Uma tabela `patients` + N tabelas por condição.
+10. **Sem RLS no MVP.** Compensado por gates de sessão em rotas e service-role restrito a scripts admin.
+11. **Geocodificação com fallback manual.** Blocking no save; usuário pode arrastar marcador para corrigir a qualquer momento.
+12. **Deploy cloud.** Vercel + Supabase cloud. Local install é opção futura, não MVP.
 
 ---
 
 ## Referências
 
-- [extensao-gat4 (docs + PoCs)](https://github.com/PedroKlein/extensao-gat4) — Documentação do projeto e protótipos estáticos
-- [mapa-gestantes PoC](https://pedroklein.github.io/extensao-gat4/mapa-gestantes/) — PoC estático de referência (Leaflet + Vite)
-- [Google Sheets API v4](https://developers.google.com/sheets/api)
+- [`docs/adr/ADR-001-drop-sheets.md`](docs/adr/ADR-001-drop-sheets.md) — por que Sheets caiu
+- [`docs/adr/ADR-002-drizzle-orm.md`](docs/adr/ADR-002-drizzle-orm.md) — por que Drizzle ganhou
+- [`plans/pivot-cleanup.md`](plans/pivot-cleanup.md) — plano de limpeza executado agosto 2026
+- [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — sister repo com documentação, PoCs originais, e seed data sintético
+  - Seed Gestantes: `prototypes/mapa-gestantes/src/data/gestantes.json`
+  - Seed multi-condição: `prototypes/poc-01/data/pacientes.csv`
+- [Drizzle Docs](https://orm.drizzle.team)
 - [Supabase Docs](https://supabase.com/docs)
 - [react-leaflet](https://react-leaflet.js.org/)
 - [shadcn/ui](https://ui.shadcn.com/)

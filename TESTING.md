@@ -93,14 +93,14 @@ Use `agent_browser` to check API routes return correct status codes:
 {
   "args": ["--state", ".auth-state.json", "batch"],
   "sessionMode": "fresh",
-  "stdin": "[[\"open\", \"http://localhost:3000/api/sheets?spreadsheetId=ID\"], [\"wait\", \"3000\"], [\"get\", \"text\", \"body\"]]"
+  "stdin": "[[\"open\", \"http://localhost:3000/api/patients\"], [\"wait\", \"3000\"], [\"get\", \"text\", \"body\"]]"
 }
 
 // Unauthenticated API check (should get 401, not 500)
 {
   "args": ["batch"],
   "sessionMode": "fresh",  
-  "stdin": "[[\"open\", \"http://localhost:3000/api/sheets?spreadsheetId=ID\"], [\"wait\", \"2000\"], [\"get\", \"text\", \"body\"]]"
+  "stdin": "[[\"open\", \"http://localhost:3000/api/patients\"], [\"wait\", \"2000\"], [\"get\", \"text\", \"body\"]]"
 }
 ```
 
@@ -142,10 +142,10 @@ COOKIE=$(curl -s -D - http://localhost:3000/api/auth/dev-session 2>/dev/null \
 
 # Authenticated API call  
 curl -s -H "Cookie: better-auth.session_token=$(python3 -c "import urllib.parse; print(urllib.parse.unquote('$COOKIE'))")" \
-  "http://localhost:3000/api/sheets?spreadsheetId=YOUR_ID"
+  "http://localhost:3000/api/patients"
 
 # Unauthenticated check (expect 401)
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/sheets
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/patients
 ```
 
 ## Verification Checklist per Phase
@@ -183,11 +183,10 @@ After implementing a feature, verify ALL of these before committing:
 |-------|-------|-----|
 | Page shows "This page couldn't load" | Server Component passing event handler to Client Component | Add `"use client"` to the page |
 | Button click does nothing | Better Auth needs database tables | Run `echo 'y' \| npx auth migrate` |
-| 500 on API route | googleapis needs real OAuth2Client | Use `new google.auth.OAuth2()` not plain object |
+| 500 on API route | Route handler bug | Check server logs; ensure Drizzle client is initialized |
 | 500 "no such table: verification" | Auth DB not migrated | `echo 'y' \| npx auth migrate` |
 | Cookie not working | Better Auth signs cookies with HMAC | Use dev-session endpoint for signed cookies |
 | proxy.ts not working | Wrong file location | Must be at `src/proxy.ts`, not `src/app/proxy.ts` |
-| "API not enabled" from Google | Sheets API disabled in Cloud project | Enable at console.cloud.google.com |
 | `auth.db` not found | Dev server started from wrong directory | Always start from project root |
 
 ## Custom Playwright Scripts
@@ -224,18 +223,13 @@ page.on('pageerror', err => errors.push(err.message));
 await page.goto('http://localhost:3000/settings');
 await page.waitForLoadState('networkidle');
 
-// Fill the form
-await page.fill('input[type="text"]', 'https://docs.google.com/spreadsheets/d/1Ub7kagnXCfE62oVNWSz0/edit');
-await page.click('button:has-text("Salvar")');
+// Post-pivot: settings page is a placeholder — verify it renders without runtime errors.
+const bodyText = await page.textContent('body');
 
-// Wait and verify
-await page.waitForTimeout(1000);
-const successMsg = await page.textContent('body');
-
-if (successMsg.includes('sucesso')) {
-  console.log('✓ Settings form works end-to-end');
+if (bodyText.includes('Configurações')) {
+  console.log('✓ Settings placeholder renders');
 } else {
-  console.error('✗ Expected success message, got:', successMsg);
+  console.error('✗ Expected "Configurações" heading, got:', bodyText?.slice(0, 200));
   process.exitCode = 1;
 }
 
