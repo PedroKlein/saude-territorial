@@ -10,6 +10,7 @@ import {
 import { useMapStore } from "@/stores/mapStore";
 import type { PatientPatch } from "@/lib/patients/schemas";
 import type { PatientRecord } from "@/hooks/usePatientData";
+import { LAYER_FIELDS, EDITABLE_LAYERS } from "@/components/panels/layerFields";
 
 /**
  * `PatientEditForm` — layer-aware inline edit form for a single patient.
@@ -44,55 +45,8 @@ interface PatientEditFormProps {
   onDone: () => void;
 }
 
-// Which fields we render per layer. Kept explicit rather than derived from
-// `LAYER_CONFIG.visibleColumns` because the visibleColumns list mixes stale
-// keys (`nome`, `pmdid`) from the pre-pivot mock. The schema files are the
-// ground truth.
-const LAYER_FIELDS: Record<
-  "gestantes" | "tuberculose" | "hipertensao",
-  ReadonlyArray<{ key: string; label: string; type: "text" | "date" | "number" | "select"; options?: readonly string[] }>
-> = {
-  gestantes: [
-    { key: "dum", label: "DUM (Data da Última Menstruação)", type: "date" },
-    { key: "dpp", label: "DPP (Data Provável do Parto)", type: "date" },
-    {
-      key: "risco",
-      label: "Risco",
-      type: "select",
-      options: ["habitual", "alto"] as const,
-    },
-    { key: "igAbertura", label: "IG na abertura PN", type: "text" },
-    { key: "dataUltimaConsulta", label: "Data da última consulta", type: "date" },
-    { key: "dataProximaConsulta", label: "Data da próxima consulta", type: "date" },
-    { key: "numeroConsultas", label: "Número de consultas", type: "number" },
-    { key: "pressaoArterial", label: "Pressão arterial", type: "text" },
-    { key: "vacinaDtpa", label: "Vacina dTpa", type: "text" },
-  ],
-  tuberculose: [
-    { key: "tipo", label: "Tipo", type: "text" },
-    { key: "baciloscopiaResultado", label: "Baciloscopia (resultado)", type: "text" },
-    { key: "trmResultado", label: "TRM (resultado)", type: "text" },
-    { key: "culturaMTuberculosis", label: "Cultura M. tuberculosis", type: "text" },
-    { key: "formaClinica", label: "Forma clínica", type: "text" },
-    { key: "esquema", label: "Esquema", type: "text" },
-    { key: "dataInicio", label: "Data de início do tratamento", type: "date" },
-    { key: "tdoStatus", label: "TDO (status)", type: "text" },
-    { key: "encerramentoMotivo", label: "Motivo de encerramento", type: "text" },
-    { key: "encerramentoData", label: "Data de encerramento", type: "date" },
-    { key: "outrosExames", label: "Outros exames", type: "text" },
-  ],
-  hipertensao: [
-    { key: "dataUltimaConsulta", label: "Data da última consulta", type: "date" },
-    { key: "dataProximaConsulta", label: "Data da próxima consulta", type: "date" },
-    { key: "dataUltimaAfericaoPa", label: "Data da última aferição PA", type: "date" },
-    { key: "pressaoArterial", label: "Pressão arterial", type: "text" },
-    { key: "registroNotas", label: "Notas clínicas", type: "text" },
-    { key: "encaminhamentos", label: "Encaminhamentos", type: "text" },
-  ],
-};
-
-// Layers we don't yet edit in-app (Puericultura, Acamados, DM, PSE, ILPI).
-const EDITABLE_LAYERS = new Set<LayerId>(["gestantes", "tuberculose", "hipertensao"]);
+// Which fields we render per layer and which layers support editing are
+// imported from the shared module so PatientCreateForm stays consistent.
 
 const SHARED_FIELDS: ReadonlyArray<{ key: string; label: string; type: "text" }> = [
   { key: "nomeCompleto", label: "Nome completo", type: "text" },
@@ -122,7 +76,7 @@ export function PatientEditForm({
   const update = useUpdatePatient();
 
   // Build initial state from the current record for both shared + layer fields.
-  const layerFields = EDITABLE_LAYERS.has(layer)
+  const layerFields = layer in EDITABLE_LAYERS
     ? LAYER_FIELDS[layer as keyof typeof LAYER_FIELDS]
     : [];
 

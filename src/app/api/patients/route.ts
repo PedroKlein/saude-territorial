@@ -1,7 +1,16 @@
+import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
+import { patients } from "@/db/schema/patients";
+import { gestantesData } from "@/db/schema/gestantes";
+import { tuberculoseData } from "@/db/schema/tuberculose";
+import { hasData } from "@/db/schema/has";
+import { PatientCreateSchema } from "@/lib/patients/schemas";
+import { normalizeAddress } from "@/lib/geocoding/normalize";
+import { geocodeWithCache } from "@/lib/geocoding/cache";
+import { shape } from "@/lib/patients/shape";
 
 /**
  * GET /api/patients — read all seeded patients joined with their condition
@@ -175,4 +184,171 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/patients — create a new patient with one extension row
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/patients — create a patient + one condition extension in a single
+ * transaction.
+ *
+ * Geocode decision:
+ *   - lat + lng both present (right-click path): skip geocoding, `geocodeStatus='manual'`.
+ *   - rua + numero + bairro present: run `geocodeWithCache`; 422 on failure.
+ *   - neither: `geocodeStatus='unresolved'` — patient surfaces once pinned.
+ *
+ * CNS collision (409): the existing patient shape is returned so the client
+ * can offer "adicionar condição ao paciente existente".
+ *
+ * LGPD: never logs CNS, name, address, or coords — error code only.
+ *
+ * See `plans/pivot-execution.md#pe-6` (T6.1).
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
+    return NextResponse.json(
+      { error: "Autenticação necessária." },
+      { status: 401 },
+    );
+  }
+
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corpo inválido." }, { status: 400 });
+  }
+
+  const parsed = PatientCreateSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Dados inválidos.", issues: parsed.error.issues },
+      { status: 400 },
+    );
+  }
+  const data = parsed.data;
+
+  // Check CNS collision — return 409 with the existing patient's shape so
+  // the client dialog can offer "adicionar condição".
+  const existing = await db.query.patients.findFirst({
+    where: eq(patients.cns, data.cns),
+    with: { gestantes: true, tuberculose: true, has: true },
+  });
+  if (existing) {
+    return NextResponse.json(
+      {
+        error: "cns_exists",
+        patient: {
+          ...shape(existing),
+          id: existing.id,
+          cns: existing.cns,
+          nomeCompleto: existing.nomeCompleto,
+        },
+      },
+      { status: 409 },
+    );
+  }
+
+  // Geocode decision.
+  let lat: number | null = null;
+  let lng: number | null = null;
+  let geocodeStatus: "geocoded" | "manual" | "unresolved" = "unresolved";
+
+  if (data.base.lat != null && data.base.lng != null) {
+    lat = data.base.lat;
+    lng = data.base.lng;
+    geocodeStatus = "manual";
+  } else if (data.base.rua && data.base.numero && data.base.bairro) {
+    const addr = normalizeAddress(
+      data.base.rua,
+      data.base.numero,
+      data.base.bairro,
+    );
+    const result = await geocodeWithCache(addr);
+    if (!result) {
+      return NextResponse.json(
+        {
+          error: "Endereço não encontrado.",
+          requiresManualPin: true,
+          draft: data,
+        },
+        { status: 422 },
+      );
+    }
+    lat = result.lat;
+    lng = result.lng;
+    geocodeStatus = "geocoded";
+  }
+
+  // Insert base + extension in a single transaction.
+  let newId = "";
+  try {
+    await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(patients)
+        .values({
+          cns: data.cns,
+          nomeCompleto: data.base.nomeCompleto,
+          dataNascimento: data.base.dataNascimento ?? null,
+          idade: data.base.idade ?? null,
+          telefone: data.base.telefone ?? null,
+          rua: data.base.rua ?? null,
+          numero: data.base.numero ?? null,
+          complemento: data.base.complemento ?? null,
+          bairro: data.base.bairro ?? null,
+          microarea: data.base.microarea ?? null,
+          lat,
+          lng,
+          geocodeStatus,
+          geocodeReference: data.base.geocodeReference ?? null,
+          vulnerabilidades: data.base.vulnerabilidades ?? null,
+          createdBy: session.user.id,
+          updatedBy: session.user.id,
+        })
+        .returning({ id: patients.id });
+      newId = inserted.id;
+
+      if (data.condicao === "gestantes") {
+        await tx.insert(gestantesData).values({
+          patientId: newId,
+          ...(data.gestantes ?? {}),
+        });
+      } else if (data.condicao === "tuberculose") {
+        await tx.insert(tuberculoseData).values({
+          patientId: newId,
+          ...(data.tuberculose ?? {}),
+        });
+      } else {
+        await tx.insert(hasData).values({
+          patientId: newId,
+          ...(data.hipertensao ?? {}),
+        });
+      }
+    });
+  } catch (err) {
+    const code = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[api/patients:POST] failed (${code})`);
+    return NextResponse.json(
+      { error: "Erro ao criar. Tente novamente." },
+      { status: 500 },
+    );
+  }
+
+  // Re-read the full row so the response mirrors the GET/PATCH envelope.
+  const created = await db.query.patients.findFirst({
+    where: eq(patients.id, newId),
+    with: { gestantes: true, tuberculose: true, has: true },
+  });
+
+  if (!created) {
+    return NextResponse.json(
+      { error: "Erro ao criar. Tente novamente." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ patient: shape(created) }, { status: 201 });
 }

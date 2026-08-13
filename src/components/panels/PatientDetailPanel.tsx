@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { ExtensionLayer } from "@/lib/patients/schemas";
+import { useDeletePatient, useDeleteCondition } from "@/hooks/useDeletePatient";
+import { ConfirmDialog } from "@/components/panels/ConfirmDialog";
 
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useMapStore } from "@/stores/mapStore";
@@ -23,6 +26,9 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState<"patient" | "condition" | null>(null);
+  const deletePatient = useDeletePatient();
+  const deleteCondition = useDeleteCondition();
 
   if (!selectedPatient) return null;
 
@@ -51,6 +57,20 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const canEdit =
     patientId != null &&
     patientLayer != null &&
+    (patientLayer === "gestantes" ||
+      patientLayer === "tuberculose" ||
+      patientLayer === "hipertensao");
+
+  // Count how many layers this patient appears in (used to gate per-condition delete).
+  const conditionCount = layerData
+    ? (Object.entries(layerData) as Array<[string, Array<Record<string, unknown>> | undefined]>)
+        .filter(([, pats]) => pats?.some((p) => p.cns === selectedPatient))
+        .length
+    : 0;
+
+  const canDeleteCondition =
+    conditionCount > 1 &&
+    patientId != null &&
     (patientLayer === "gestantes" ||
       patientLayer === "tuberculose" ||
       patientLayer === "hipertensao");
@@ -209,8 +229,66 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
             >
               📍 Reposicionar no mapa
             </button>
+
+            {/* Condition-only delete — only when patient has 2+ conditions */}
+            {canDeleteCondition && patientLayer && (
+              <button
+                onClick={() => setConfirmOpen("condition")}
+                disabled={deleteCondition.isPending}
+                className="w-full rounded-md border border-orange-300 px-3 py-1.5 text-xs text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+              >
+                Remover apenas{" "}
+                {LAYER_CONFIG[patientLayer].label}
+              </button>
+            )}
+
+            {/* Hard delete — always visible in detail view when patientId is known */}
+            {patientId && (
+              <button
+                onClick={() => setConfirmOpen("patient")}
+                disabled={deletePatient.isPending}
+                className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                Excluir paciente
+              </button>
+            )}
           </div>
         </>
+      )}
+
+      {/* Confirm: delete entire patient */}
+      {confirmOpen === "patient" && patientId && (
+        <ConfirmDialog
+          title="Excluir paciente"
+          body={`Excluir paciente ${nomeCompleto ?? ""} permanentemente? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          destructive
+          isPending={deletePatient.isPending}
+          onConfirm={() => {
+            deletePatient.mutate({ id: patientId }, {
+              onSuccess: () => setConfirmOpen(null),
+            });
+          }}
+          onCancel={() => setConfirmOpen(null)}
+        />
+      )}
+
+      {/* Confirm: remove one condition from patient */}
+      {confirmOpen === "condition" && patientId && canDeleteCondition && patientLayer && (
+        <ConfirmDialog
+          title={`Remover ${LAYER_CONFIG[patientLayer].label}`}
+          body={`Remover ${LAYER_CONFIG[patientLayer].label} deste paciente? O paciente continuará cadastrado nas outras camadas.`}
+          confirmLabel="Remover"
+          destructive
+          isPending={deleteCondition.isPending}
+          onConfirm={() => {
+            deleteCondition.mutate(
+              { id: patientId, condicao: patientLayer as ExtensionLayer },
+              { onSuccess: () => setConfirmOpen(null) },
+            );
+          }}
+          onCancel={() => setConfirmOpen(null)}
+        />
       )}
     </aside>
   );

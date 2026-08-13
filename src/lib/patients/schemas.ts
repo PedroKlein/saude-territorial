@@ -242,3 +242,72 @@ export type AddressField = (typeof ADDRESS_FIELDS)[number];
 /** Extension layers with a 1:1 extension table under `patients`. */
 export const EXTENSION_LAYERS = ["gestantes", "tuberculose", "hipertensao"] as const;
 export type ExtensionLayer = (typeof EXTENSION_LAYERS)[number];
+
+
+// ---------------------------------------------------------------------------
+// Create (POST /api/patients)
+// ---------------------------------------------------------------------------
+
+/**
+ * Body accepted by POST /api/patients.
+ *
+ * `cns` is validated here (server-side 15-digit regex) — PATCH never changes CNS.
+ * `base.nomeCompleto` is required on create; all other fields are optional.
+ * `condicao` selects which extension namespace must be present.
+ * The matching extension object must be provided (even if empty `{}`).
+ */
+export const PatientCreateSchema = z
+  .object({
+    cns: z
+      .string()
+      .regex(/^\d{15}$/, "CNS deve ter exatamente 15 dígitos numéricos."),
+    base: z.object({
+      nomeCompleto: requiredText,
+      dataNascimento: dateFlex.optional(),
+      idade: z.number().int().min(0).max(130).nullable().optional(),
+      telefone: textOrNull.optional(),
+      rua: textOrNull.optional(),
+      numero: textOrNull.optional(),
+      complemento: textOrNull.optional(),
+      bairro: textOrNull.optional(),
+      microarea: textOrNull.optional(),
+      lat: latitude.nullable().optional(),
+      lng: longitude.nullable().optional(),
+      geocodeReference: textOrNull.optional(),
+      vulnerabilidades: textOrNull.optional(),
+    }),
+    condicao: z.enum(["gestantes", "tuberculose", "hipertensao"]),
+    gestantes: GestantesPatchSchema.optional(),
+    tuberculose: TuberculosePatchSchema.optional(),
+    hipertensao: HasPatchSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.condicao === "gestantes") return data.gestantes !== undefined;
+      if (data.condicao === "tuberculose") return data.tuberculose !== undefined;
+      if (data.condicao === "hipertensao") return data.hipertensao !== undefined;
+      return false;
+    },
+    { message: "Dados da condição são obrigatórios." },
+  );
+
+export type PatientCreate = z.infer<typeof PatientCreateSchema>;
+
+// ---------------------------------------------------------------------------
+// Condition attach (POST /api/patients/[id]/conditions)
+// ---------------------------------------------------------------------------
+
+/**
+ * Body accepted by POST /api/patients/[id]/conditions.
+ * Discriminated on `condicao` so the matching `data` schema is applied.
+ */
+export const ConditionAttachSchema = z.discriminatedUnion("condicao", [
+  z.object({ condicao: z.literal("gestantes"), data: GestantesPatchSchema }),
+  z.object({
+    condicao: z.literal("tuberculose"),
+    data: TuberculosePatchSchema,
+  }),
+  z.object({ condicao: z.literal("hipertensao"), data: HasPatchSchema }),
+]);
+
+export type ConditionAttach = z.infer<typeof ConditionAttachSchema>;

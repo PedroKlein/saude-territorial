@@ -316,6 +316,60 @@ export async function PATCH(
 
 
 // ---------------------------------------------------------------------------
+// DELETE handler
+// ---------------------------------------------------------------------------
+
+/**
+ * DELETE /api/patients/[id] — hard-delete a patient and all extension rows.
+ *
+ * FK cascades on gestantes_data, tuberculose_data, has_data, and
+ * tuberculose_consultas handle the extension cleanup in the DB.
+ *
+ * Returns 204 no-content on success, 404 when the patient does not exist.
+ * LGPD: never logs the patient id or CNS — error codes only.
+ *
+ * See `plans/pivot-execution.md#pe-7` (T7.1).
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
+    return NextResponse.json(
+      { error: "Autenticação necessária." },
+      { status: 401 },
+    );
+  }
+
+  const { id } = await params;
+
+  try {
+    const deleted = await db
+      .delete(patients)
+      .where(eq(patients.id, id))
+      .returning({ id: patients.id });
+
+    if (deleted.length === 0) {
+      return NextResponse.json(
+        { error: "Paciente não encontrado." },
+        { status: 404 },
+      );
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    const code = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[api/patients:DELETE] failed (${code})`);
+    return NextResponse.json(
+      { error: "Erro ao excluir. Tente novamente." },
+      { status: 500 },
+    );
+  }
+}
+
+
+// ---------------------------------------------------------------------------
 // Response shape — mirrors the flat "dd/MM/yyyy + computed IG" GET envelope.
 // One patient may appear on multiple layers if it has multiple extensions.
 // ---------------------------------------------------------------------------

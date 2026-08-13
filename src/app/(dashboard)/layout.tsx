@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Providers } from "./providers";
+import { AddPatientButton } from "@/components/panels/AddPatientButton";
 
 /**
  * Layout do painel principal (dashboard).
@@ -17,6 +18,7 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-primary">Saúde Territorial</h1>
             <nav className="flex items-center gap-4">
+              <AddPatientButton />
               <Link
                 href="/map"
                 className="text-sm text-muted-foreground hover:text-primary"
