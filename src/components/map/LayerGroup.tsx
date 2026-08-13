@@ -46,6 +46,7 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
     return filtered.map((p) => (
       <PatientMarker
         key={p.cns}
+        id={p.id}
         cns={p.cns}
         name={p.nomeCompleto}
         lat={p.lat}

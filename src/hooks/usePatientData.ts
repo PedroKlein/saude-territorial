@@ -7,6 +7,8 @@ import type { LayerId } from "@/config/layers.config";
 // ---------------------------------------------------------------------------
 
 export interface PatientRecord {
+  /** Internal DB UUID (source of truth for mutations). */
+  id: string;
   cns: string;
   nomeCompleto: string | null;
   lat: number;

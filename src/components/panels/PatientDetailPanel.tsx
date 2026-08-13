@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
+
+import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useMapStore } from "@/stores/mapStore";
 import { useRouteHistoryStore } from "@/stores/routeHistoryStore";
-import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
-import { useState } from "react";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
 import type { RouteResult, RouteProfile } from "@/types/routing";
+import { PatientEditForm } from "@/components/panels/PatientEditForm";
 
 interface PatientDetailPanelProps {
   /** Patient data grouped by layer */
@@ -18,14 +20,14 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
   const addRouteEntry = useRouteHistoryStore((s) => s.addEntry);
-  // TODO(pivot-execution): patient editing will be restored via PATCH /api/patients/[id]
-  // once the Drizzle-backed CRUD layer lands. See docs/adr/ADR-001-drop-sheets.md.
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
+  const [isEditing, setIsEditing] = useState(false);
 
   if (!selectedPatient) return null;
 
-  // Find patient data across all layers
+  // Find patient data across all layers. A patient may appear in more than
+  // one layer (multi-condition); the first hit wins for detail rendering.
   let patientData: Record<string, unknown> | null = null;
   let patientLayer: LayerId | null = null;
 
@@ -44,14 +46,26 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
     ? LAYER_CONFIG[patientLayer].visibleColumns
     : [];
 
+  const patientId = (patientData?.id as string | undefined) ?? null;
+  const nomeCompleto = (patientData?.nomeCompleto as string | null | undefined) ?? null;
+  const canEdit =
+    patientId != null &&
+    patientLayer != null &&
+    (patientLayer === "gestantes" ||
+      patientLayer === "tuberculose" ||
+      patientLayer === "hipertensao");
+
   return (
     <aside className="absolute inset-x-0 bottom-0 z-[1000] max-h-[60vh] overflow-y-auto rounded-t-2xl border-t bg-white p-4 shadow-lg md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-80 md:rounded-none md:border-l md:border-t-0">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Detalhes do Paciente</h2>
+        <h2 className="text-lg font-semibold">
+          {isEditing ? "Editar paciente" : "Detalhes do paciente"}
+        </h2>
         <button
           onClick={() => {
             setSelectedPatient(null);
             setActiveRoute(null);
+            setIsEditing(false);
           }}
           className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Fechar"
@@ -64,6 +78,15 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
         <p className="text-sm text-muted-foreground">
           Dados não encontrados para CNS: {selectedPatient}
         </p>
+      ) : isEditing && patientId && patientLayer ? (
+        <PatientEditForm
+          patientId={patientId}
+          cns={selectedPatient}
+          nomeCompleto={nomeCompleto}
+          layer={patientLayer}
+          record={patientData}
+          onDone={() => setIsEditing(false)}
+        />
       ) : (
         <>
           <dl className="space-y-2">
@@ -111,63 +134,74 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
             </div>
 
             <div className="flex gap-2">
-            <button
-              disabled
-              title="Edição disponível na próxima versão (Drizzle CRUD em desenvolvimento)"
-              className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
-            >
-              Editar
-            </button>
-            <button
-              className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
-              disabled={isLoadingRoute}
-              onClick={async () => {
-                if (!patientData) return;
-                const lat = Number(patientData.lat);
-                const lng = Number(patientData.lng);
-                if (!lat || !lng) return;
-
-                setIsLoadingRoute(true);
-                try {
-                  const res = await fetch("/api/routes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      fromLat: US_MOAB_CALDAS[0],
-                      fromLng: US_MOAB_CALDAS[1],
-                      toLat: lat,
-                      toLng: lng,
-                      profile: routeProfile,
-                    }),
-                  });
-                  if (res.ok) {
-                    const result: RouteResult = await res.json();
-                    setActiveRoute({ result, profile: routeProfile });
-                    addRouteEntry({
-                      patientName: String(patientData.nomeCompleto ?? "Sem nome"),
-                      patientCns: selectedPatient,
-                      profile: routeProfile,
-                      distance: result.distance,
-                      duration: result.duration,
-                      geometry: result.geometry,
-                    });
-                  }
-                } finally {
-                  setIsLoadingRoute(false);
+              <button
+                disabled={!canEdit}
+                onClick={() => setIsEditing(true)}
+                title={
+                  canEdit
+                    ? "Editar campos deste paciente"
+                    : "Edição disponível apenas para Gestantes, Tuberculose e Hipertensão"
                 }
-              }}
-            >
-              {isLoadingRoute ? "Calculando..." : "Traçar rota"}
-            </button>
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+              >
+                Editar
+              </button>
+              <button
+                className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
+                disabled={isLoadingRoute}
+                onClick={async () => {
+                  if (!patientData) return;
+                  const lat = Number(patientData.lat);
+                  const lng = Number(patientData.lng);
+                  if (!lat || !lng) return;
+
+                  setIsLoadingRoute(true);
+                  try {
+                    const res = await fetch("/api/routes", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        fromLat: US_MOAB_CALDAS[0],
+                        fromLng: US_MOAB_CALDAS[1],
+                        toLat: lat,
+                        toLng: lng,
+                        profile: routeProfile,
+                      }),
+                    });
+                    if (res.ok) {
+                      const result: RouteResult = await res.json();
+                      setActiveRoute({ result, profile: routeProfile });
+                      addRouteEntry({
+                        patientName: String(patientData.nomeCompleto ?? "Sem nome"),
+                        patientCns: selectedPatient,
+                        profile: routeProfile,
+                        distance: result.distance,
+                        duration: result.duration,
+                        geometry: result.geometry,
+                      });
+                    }
+                  } finally {
+                    setIsLoadingRoute(false);
+                  }
+                }}
+              >
+                {isLoadingRoute ? "Calculando..." : "Traçar rota"}
+              </button>
             </div>
 
-            {/* Manual pin button */}
+            {/* Manual pin button — pushes user into pin-drop mode from the panel. */}
             <button
               onClick={() => {
-                setPinningPatient(selectedPatient);
+                if (!patientId) return;
+                setPinningPatient({
+                  id: patientId,
+                  cns: selectedPatient,
+                  nomeCompleto,
+                });
                 setSelectedPatient(null);
               }}
-              className="w-full rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:bg-gray-50"
+              disabled={!patientId}
+              className="w-full rounded-md border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
             >
               📍 Posicionar no mapa
             </button>

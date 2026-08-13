@@ -75,6 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       // Fields shared across every layer this patient appears in.
       const baseRecord = {
+        id: p.id,
         cns: p.cns,
         nomeCompleto: p.nomeCompleto,
         dataNascimento: p.dataNascimento,

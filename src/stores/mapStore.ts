@@ -15,6 +15,16 @@ interface ActiveRoute {
 
 export type VizMode = "markers" | "heatmap";
 
+/** Identifies the patient whose pin is being placed manually. */
+export interface PinningTarget {
+  /** DB UUID — used by mutation calls. */
+  id: string;
+  /** CNS — kept for user-facing text (never rendered as a raw log). */
+  cns: string;
+  /** Display name for the banner. */
+  nomeCompleto: string | null;
+}
+
 interface MapState {
   activeLayers: Record<LayerId, boolean>;
   selectedPatient: string | null;
@@ -24,8 +34,8 @@ interface MapState {
   showTerritories: boolean;
   vizMode: VizMode;
   alertsOnly: boolean;
-  /** CNS of patient being manually pinned (null = not in pin mode) */
-  pinningPatient: string | null;
+  /** Patient currently in manual-pin-drop mode (null = not pinning). */
+  pinningPatient: PinningTarget | null;
 }
 
 interface MapActions {
@@ -36,7 +46,7 @@ interface MapActions {
   setShowTerritories: (show: boolean) => void;
   setVizMode: (mode: VizMode) => void;
   setAlertsOnly: (on: boolean) => void;
-  setPinningPatient: (cns: string | null) => void;
+  setPinningPatient: (target: PinningTarget | null) => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -91,7 +101,7 @@ export const useMapStore = create<MapStore>()(persist(
 
   setAlertsOnly: (on) => set({ alertsOnly: on }),
 
-  setPinningPatient: (cns) => set({ pinningPatient: cns }),
+  setPinningPatient: (target) => set({ pinningPatient: target }),
 }),
   {
     name: "saude-territorial-map",

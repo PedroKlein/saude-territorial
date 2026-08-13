@@ -49,7 +49,9 @@ export function UnresolvedList({ data }: UnresolvedListProps) {
               </p>
             </div>
             <button
-              onClick={() => setPinningPatient(p.cns)}
+              onClick={() =>
+                setPinningPatient({ id: p.id, cns: p.cns, nomeCompleto: p.nomeCompleto })
+              }
               className="ml-2 shrink-0 rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-200"
             >
               Posicionar

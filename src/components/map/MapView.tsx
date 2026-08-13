@@ -139,20 +139,9 @@ export default function MapView() {
           <HeatmapLayer points={heatmapPoints} />
         )}
         <ManualPinMode
-          active={pinningPatient !== null}
-          onPinPlaced={async (pinData) => {
-            if (!pinningPatient) return;
-            try {
-              await fetch("/api/pins", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cns: pinningPatient, ...pinData }),
-              });
-            } finally {
-              setPinningPatient(null);
-            }
-          }}
+          target={pinningPatient}
           onCancel={() => setPinningPatient(null)}
+          onPinned={() => setPinningPatient(null)}
         />
       </MapContainer>
       {/* Show optimized planner route OR single-patient route (not both) */}

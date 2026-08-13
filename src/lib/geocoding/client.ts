@@ -124,6 +124,8 @@ export async function geocode(
         lat: parseFloat(hit.lat),
         lng: parseFloat(hit.lon),
         confidence: mapImportance(hit.importance),
+        importance: hit.importance,
+        displayName: hit.display_name,
       };
     } finally {
       _pendingCount--;

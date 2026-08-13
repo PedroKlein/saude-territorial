@@ -1,0 +1,244 @@
+/**
+ * Patient CRUD Zod schemas — shared across API and (post-PE-5) client forms.
+ *
+ * The schemas define the request body shape for `PATCH /api/patients/[id]`
+ * and (in PE-6) `POST /api/patients`. Every field is optional at the top
+ * level so a PATCH may target any subset; the API rejects the empty body
+ * separately.
+ *
+ * Body shape (structured, not flat) — the transaction knows which extension
+ * table to touch by which top-level key is present:
+ *
+ *   {
+ *     base?:        Partial<Base>,      // fields on `patients`
+ *     gestantes?:   Partial<Gestantes>, // fields on `gestantes_data`
+ *     tuberculose?: Partial<TB>,        // fields on `tuberculose_data`
+ *     hipertensao?: Partial<HAS>,       // fields on `has_data`
+ *   }
+ *
+ * Date fields accept the Brazilian display format `dd/MM/yyyy` from forms
+ * OR the storage format `yyyy-MM-dd` from programmatic callers. Both are
+ * normalized to ISO `yyyy-MM-dd` because the schema columns are `date`.
+ *
+ * `risco` is lowercased at the boundary — seed data may say "Alto", the
+ * API always persists lowercase to keep the alert rule literal-match
+ * (`risco = "alto"`) trivial.
+ *
+ * See `plans/pivot-execution.md#pe-5` for T5.1.
+ */
+
+import { z } from "zod";
+
+// ---------------------------------------------------------------------------
+// Common helpers
+// ---------------------------------------------------------------------------
+
+/** ISO `yyyy-MM-dd` matcher used for storage-side date columns. */
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** Brazilian `dd/MM/yyyy` display format used in forms. */
+const BR_DATE_RE = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+
+/**
+ * Accepts `dd/MM/yyyy` or `yyyy-MM-dd` or empty string; emits ISO or null.
+ * An explicit `null` is passed through — that's how a form clears a date.
+ */
+const dateFlex = z
+  .union([z.string(), z.null()])
+  .transform((v, ctx): string | null => {
+    if (v === null) return null;
+    const s = v.trim();
+    if (s === "") return null;
+    if (ISO_DATE_RE.test(s)) return s;
+    const m = BR_DATE_RE.exec(s);
+    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Data inválida. Use dd/MM/yyyy.",
+    });
+    return z.NEVER;
+  });
+
+/** Trim + coerce empty string to null. Useful for optional text fields. */
+const textOrNull = z
+  .union([z.string(), z.null()])
+  .transform((v): string | null => {
+    if (v === null) return null;
+    const s = v.trim();
+    return s === "" ? null : s;
+  });
+
+/** Non-empty string after trim (for required fields). */
+const requiredText = z
+  .string()
+  .transform((v) => v.trim())
+  .refine((v) => v.length > 0, { message: "Campo obrigatório." });
+
+/** Latitude range for Porto Alegre metropolitan area — plus safety margin. */
+const latitude = z
+  .number()
+  .refine((n) => n >= -31 && n <= -29, {
+    message: "Latitude fora da faixa esperada (RS).",
+  });
+
+/** Longitude range for RS state — plus safety margin. */
+const longitude = z
+  .number()
+  .refine((n) => n >= -52 && n <= -50, {
+    message: "Longitude fora da faixa esperada (RS).",
+  });
+
+// ---------------------------------------------------------------------------
+// Base (patients)
+// ---------------------------------------------------------------------------
+
+export const BasePatchSchema = z
+  .object({
+    nomeCompleto: requiredText.optional(),
+    // 15-digit CNS check enforced only on create; PATCH does not change CNS.
+    dataNascimento: dateFlex.optional(),
+    idade: z.number().int().min(0).max(130).nullable().optional(),
+    telefone: textOrNull.optional(),
+    rua: textOrNull.optional(),
+    numero: textOrNull.optional(),
+    complemento: textOrNull.optional(),
+    bairro: textOrNull.optional(),
+    microarea: textOrNull.optional(),
+    // Direct-coord update: drag-to-fix + manual pin drop. Presence of either
+    // switches the geocode path off and sets geocodeStatus='manual'.
+    lat: latitude.optional(),
+    lng: longitude.optional(),
+    geocodeReference: textOrNull.optional(),
+    vulnerabilidades: textOrNull.optional(),
+  })
+  .strict();
+
+export type BasePatch = z.infer<typeof BasePatchSchema>;
+
+// ---------------------------------------------------------------------------
+// Gestantes extension
+// ---------------------------------------------------------------------------
+
+const RiscoEnum = z
+  .union([z.literal("habitual"), z.literal("alto"), z.string()])
+  .transform((v) => v.trim().toLowerCase())
+  .refine((v) => v === "habitual" || v === "alto", {
+    message: "Risco deve ser 'habitual' ou 'alto'.",
+  }) as z.ZodType<"habitual" | "alto">;
+
+export const GestantesPatchSchema = z
+  .object({
+    dum: dateFlex.optional(),
+    dpp: dateFlex.optional(),
+    risco: RiscoEnum.nullable().optional(),
+    igAbertura: textOrNull.optional(),
+    dataUltimaConsulta: dateFlex.optional(),
+    dataProximaConsulta: dateFlex.optional(),
+    numeroConsultas: z.number().int().min(0).optional(),
+    hasPreviaTag: textOrNull.optional(),
+    diabetesPreviaTag: textOrNull.optional(),
+    pressaoArterial: textOrNull.optional(),
+    acompanhamentoPesoAltura: textOrNull.optional(),
+    numeroVisitasDomiciliares: z.number().int().min(0).optional(),
+    avaliacaoOdontoStatus: textOrNull.optional(),
+    vacinaDtpa: textOrNull.optional(),
+    trPrimeiroTri: textOrNull.optional(),
+    trSegundoTri: textOrNull.optional(),
+    trTerceiroTri: textOrNull.optional(),
+    resultadoTr: textOrNull.optional(),
+    trHepBHepCPrimeiroTri: textOrNull.optional(),
+    trSifHivTerceiroTri: textOrNull.optional(),
+    isPuerpera: z.boolean().optional(),
+    puerperioConsulta: textOrNull.optional(),
+    puerperioVisitaDomiciliar: textOrNull.optional(),
+    puerperioAvaliacaoOdonto: textOrNull.optional(),
+    isExposta: z.boolean().optional(),
+  })
+  .strict();
+
+export type GestantesPatch = z.infer<typeof GestantesPatchSchema>;
+
+// ---------------------------------------------------------------------------
+// Tuberculose extension (data only — consultas edited via a separate route
+// once PE-5 lands. For MVP the edit form does not touch `tuberculose_consultas`.)
+// ---------------------------------------------------------------------------
+
+export const TuberculosePatchSchema = z
+  .object({
+    tipo: textOrNull.optional(),
+    galRegistro: textOrNull.optional(),
+    baciloscopiaPrimeiraData: dateFlex.optional(),
+    baciloscopiaSegundaData: dateFlex.optional(),
+    baciloscopiaResultado: textOrNull.optional(),
+    trmPrimeiraData: dateFlex.optional(),
+    trmSegundaData: dateFlex.optional(),
+    trmResultado: textOrNull.optional(),
+    culturaMTuberculosis: textOrNull.optional(),
+    ppdMm: z.number().int().min(0).nullable().optional(),
+    histopatologia: textOrNull.optional(),
+    rxTorax: textOrNull.optional(),
+    outrosExames: textOrNull.optional(),
+    formaClinica: textOrNull.optional(),
+    tipoEntrada: textOrNull.optional(),
+    esquema: textOrNull.optional(),
+    dataInicio: dateFlex.optional(),
+    formaTratamento: textOrNull.optional(),
+    tdoStatus: textOrNull.optional(),
+    encerramentoMotivo: textOrNull.optional(),
+    encerramentoData: dateFlex.optional(),
+    contatosCoabitantes: z.number().int().min(0).nullable().optional(),
+    contatosExaminados: z.number().int().min(0).nullable().optional(),
+    todosContatosExaminados: z.boolean().nullable().optional(),
+    // NOTE: `contatosLista` is a LGPD hot-spot (household names). Excluded
+    // from the MVP edit surface; will require an explicit consent path.
+  })
+  .strict();
+
+export type TuberculosePatch = z.infer<typeof TuberculosePatchSchema>;
+
+// ---------------------------------------------------------------------------
+// Hipertensão extension
+// ---------------------------------------------------------------------------
+
+export const HasPatchSchema = z
+  .object({
+    dataUltimaConsulta: dateFlex.optional(),
+    dataProximaConsulta: dateFlex.optional(),
+    dataUltimaAfericaoPa: dateFlex.optional(),
+    pressaoArterial: textOrNull.optional(),
+    registroNotas: textOrNull.optional(),
+    encaminhamentos: textOrNull.optional(),
+  })
+  .strict();
+
+export type HasPatch = z.infer<typeof HasPatchSchema>;
+
+// ---------------------------------------------------------------------------
+// Envelope
+// ---------------------------------------------------------------------------
+
+export const PatientPatchSchema = z
+  .object({
+    base: BasePatchSchema.optional(),
+    gestantes: GestantesPatchSchema.optional(),
+    tuberculose: TuberculosePatchSchema.optional(),
+    hipertensao: HasPatchSchema.optional(),
+  })
+  .strict()
+  .refine(
+    (v) =>
+      v.base !== undefined ||
+      v.gestantes !== undefined ||
+      v.tuberculose !== undefined ||
+      v.hipertensao !== undefined,
+    { message: "Nada para atualizar." },
+  );
+
+export type PatientPatch = z.infer<typeof PatientPatchSchema>;
+
+/** Address fields whose change triggers geocoding. */
+export const ADDRESS_FIELDS = ["rua", "numero", "complemento", "bairro"] as const;
+export type AddressField = (typeof ADDRESS_FIELDS)[number];
+
+/** Extension layers with a 1:1 extension table under `patients`. */
+export const EXTENSION_LAYERS = ["gestantes", "tuberculose", "hipertensao"] as const;
+export type ExtensionLayer = (typeof EXTENSION_LAYERS)[number];
