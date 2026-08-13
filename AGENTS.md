@@ -30,8 +30,8 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 | Language | TypeScript (strict mode) |
 | Auth | Better Auth (Google OAuth — **identity only**, no `spreadsheets` scope) |
 | **Source of truth** | **Supabase Postgres** (was Google Sheets pre-pivot — see ADR-001) |
-| **Data access** | **Drizzle ORM** (was `@supabase/supabase-js` queries — see ADR-002) |
-| Auth session store | `@supabase/ssr` (session cookies only; not for data queries) |
+| **Data access** | **Drizzle ORM** |
+| Auth session store | Better Auth (SQLite via `better-sqlite3`) |
 | Geocoding | Nominatim (OpenStreetMap) |
 | Routing | OSRM |
 | Package manager | pnpm |
@@ -111,13 +111,13 @@ Next.js API Routes
     ↕
 React Client (map + panels + editing)
 
-Auth: Google OAuth (identity only) → Better Auth → @supabase/ssr session cookie
+Auth: Google OAuth (identity only) → Better Auth → SQLite (`auth.db`) session cookie
 ```
 
 ### Key Principles
 
 1. **Supabase = source of truth.** All patient data lives in Postgres. There is no external mirror to keep in sync. See ADR-001.
-2. **Drizzle owns data access.** Every read/write goes through `src/db/`. No `@supabase/supabase-js` calls to `.from(...)` anywhere. See ADR-002.
+2. **Drizzle owns data access.** Every read/write goes through `src/db/`. No Supabase client SDK is used in this repo; Postgres is reached exclusively via Drizzle. See ADR-002.
 3. **CRUD in-app.** Patients are added/edited/removed via the UI, not via an external tool. Edits go through `PATCH /api/patients/[id]`.
 4. **Layers are code-defined.** `src/config/layers.config.ts` lists all layers with icon, color, visible columns. Adding a layer is a code change, not a data change.
 5. **CNS is unique.** UNIQUE constraint on `patients.cns`. Creating a patient with an existing CNS surfaces "add condition to existing patient" flow.

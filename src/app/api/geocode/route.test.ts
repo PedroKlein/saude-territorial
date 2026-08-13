@@ -1,21 +1,18 @@
 /**
- * TDD Red Phase — POST /api/geocode route handler contract
+ * POST /api/geocode — route handler contract (post-pivot).
  *
- * These tests define the expected behaviour of app/api/geocode/route.ts.
- * They will FAIL until the implementation is written.
+ * Post-pivot (see docs/adr/ADR-001-drop-sheets.md), the Supabase-backed
+ * coordinate cache is gone. The route hits Nominatim directly on every call.
+ * Caching will be reintroduced during pivot execution via Drizzle.
  *
- * Contracts:
+ * Contracts under test:
  *  - POST with a valid address body returns 200 with { lat, lng, confidence }
  *  - POST without an active session returns 401
- *  - POST with a missing address body returns 400
- *  - The handler checks the Supabase cache first (via getCachedCoordinates)
- *    before calling the Nominatim client
- *  - On a cache miss, the handler calls geocode() and stores the result with
- *    upsertCachedCoordinates()
- *  - On a cache hit, the handler returns cached coordinates without calling geocode()
+ *  - POST with a missing/empty body returns 400
+ *  - POST calls Nominatim client with the normalized address
+ *  - POST returns 404 when Nominatim returns no results
  *
- * fetch() and Supabase are mocked — no real network calls are made.
- * SYNTHETIC DATA ONLY — no real patient addresses.
+ * All network calls are mocked. SYNTHETIC DATA ONLY.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -25,12 +22,10 @@ import { NextRequest } from "next/server";
 // Mocks — must be hoisted before any module import
 // ---------------------------------------------------------------------------
 
-// Better Auth infrastructure mocks (required to import lib/auth)
 vi.mock("better-auth", () => ({
   betterAuth: vi.fn(() => ({
     api: {
       getSession: vi.fn(),
-      getAccessToken: vi.fn(),
     },
   })),
 }));
@@ -40,31 +35,11 @@ vi.mock("better-auth/next-js", () => ({
   toNextJsHandler: vi.fn(() => ({ GET: vi.fn(), POST: vi.fn() })),
 }));
 
-vi.mock("pg", () => ({
-  Pool: vi.fn().mockImplementation(() => ({})),
-}));
-
-vi.mock("next/headers", () => ({
-  headers: vi.fn().mockResolvedValue(new Headers()),
-}));
-
 // Mock lib/auth — control session per test
 const mockGetSession = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mockGetSession } },
-}));
-
-// Mock geocoding cache
-const mockGetCachedCoordinates = vi.fn();
-const mockUpsertCachedCoordinates = vi.fn();
-
-vi.mock("@/lib/geocoding/cache", () => ({
-  getCachedCoordinates: mockGetCachedCoordinates,
-  upsertCachedCoordinates: mockUpsertCachedCoordinates,
-  buildCacheKey: vi.fn((addr: { city: string; street: string; number: string | null }) =>
-    `${addr.city}|${addr.street}|${addr.number ?? ""}`.toLowerCase()
-  ),
 }));
 
 // Mock Nominatim client
@@ -116,7 +91,7 @@ const SYNTHETIC_COORDINATES = {
 };
 
 // ---------------------------------------------------------------------------
-// Helper: build a POST NextRequest with a JSON body
+// Helper
 // ---------------------------------------------------------------------------
 
 function makePostRequest(body: unknown): NextRequest {
@@ -157,14 +132,13 @@ describe("POST /api/geocode — authentication", () => {
     expect(body.error.length).toBeGreaterThan(0);
   });
 
-  it("does not call geocode or cache when unauthenticated", async () => {
+  it("does not call Nominatim when unauthenticated", async () => {
     mockGetSession.mockResolvedValue(null);
 
     const { POST } = await import("@/app/api/geocode/route");
     await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
 
     expect(mockGeocode).not.toHaveBeenCalled();
-    expect(mockGetCachedCoordinates).not.toHaveBeenCalled();
   });
 });
 
@@ -199,15 +173,15 @@ describe("POST /api/geocode — input validation", () => {
   });
 });
 
-describe("POST /api/geocode — cache hit", () => {
+describe("POST /api/geocode — successful Nominatim lookup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue(FAKE_SESSION);
     mockNormalizeAddress.mockReturnValue(SYNTHETIC_NORMALIZED);
-    mockGetCachedCoordinates.mockResolvedValue(SYNTHETIC_COORDINATES);
+    mockGeocode.mockResolvedValue(SYNTHETIC_COORDINATES);
   });
 
-  it("returns 200 with cached coordinates on cache hit", async () => {
+  it("returns 200 with coordinates from Nominatim", async () => {
     const { POST } = await import("@/app/api/geocode/route");
     const response = await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
 
@@ -218,58 +192,12 @@ describe("POST /api/geocode — cache hit", () => {
     expect(body.confidence).toBe(SYNTHETIC_COORDINATES.confidence);
   });
 
-  it("does NOT call geocode() on a cache hit", async () => {
-    const { POST } = await import("@/app/api/geocode/route");
-    await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
-
-    expect(mockGeocode).not.toHaveBeenCalled();
-  });
-
-  it("does NOT call upsertCachedCoordinates() on a cache hit", async () => {
-    const { POST } = await import("@/app/api/geocode/route");
-    await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
-
-    expect(mockUpsertCachedCoordinates).not.toHaveBeenCalled();
-  });
-});
-
-describe("POST /api/geocode — cache miss, successful geocode", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetSession.mockResolvedValue(FAKE_SESSION);
-    mockNormalizeAddress.mockReturnValue(SYNTHETIC_NORMALIZED);
-    mockGetCachedCoordinates.mockResolvedValue(null); // cache miss
-    mockGeocode.mockResolvedValue(SYNTHETIC_COORDINATES);
-    mockUpsertCachedCoordinates.mockResolvedValue(undefined);
-  });
-
-  it("returns 200 with coordinates from Nominatim on cache miss", async () => {
-    const { POST } = await import("@/app/api/geocode/route");
-    const response = await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
-
-    expect(response.status).toBe(200);
-    const body = (await response.json()) as typeof SYNTHETIC_COORDINATES;
-    expect(body.lat).toBe(SYNTHETIC_COORDINATES.lat);
-    expect(body.lng).toBe(SYNTHETIC_COORDINATES.lng);
-  });
-
-  it("calls geocode() with the normalized address on cache miss", async () => {
+  it("calls geocode() with the normalized address", async () => {
     const { POST } = await import("@/app/api/geocode/route");
     await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
 
     expect(mockGeocode).toHaveBeenCalledTimes(1);
     expect(mockGeocode).toHaveBeenCalledWith(SYNTHETIC_NORMALIZED);
-  });
-
-  it("stores the result in cache after a successful Nominatim lookup", async () => {
-    const { POST } = await import("@/app/api/geocode/route");
-    await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
-
-    expect(mockUpsertCachedCoordinates).toHaveBeenCalledTimes(1);
-    expect(mockUpsertCachedCoordinates).toHaveBeenCalledWith(
-      SYNTHETIC_NORMALIZED,
-      SYNTHETIC_COORDINATES
-    );
   });
 });
 
@@ -278,8 +206,7 @@ describe("POST /api/geocode — Nominatim returns no results", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue(FAKE_SESSION);
     mockNormalizeAddress.mockReturnValue(SYNTHETIC_NORMALIZED);
-    mockGetCachedCoordinates.mockResolvedValue(null);
-    mockGeocode.mockResolvedValue(null); // Nominatim found nothing
+    mockGeocode.mockResolvedValue(null);
   });
 
   it("returns 404 when Nominatim returns no results", async () => {
@@ -287,12 +214,5 @@ describe("POST /api/geocode — Nominatim returns no results", () => {
     const response = await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
 
     expect(response.status).toBe(404);
-  });
-
-  it("does NOT call upsertCachedCoordinates when Nominatim finds nothing", async () => {
-    const { POST } = await import("@/app/api/geocode/route");
-    await POST(makePostRequest(SYNTHETIC_ADDRESS_BODY));
-
-    expect(mockUpsertCachedCoordinates).not.toHaveBeenCalled();
   });
 });

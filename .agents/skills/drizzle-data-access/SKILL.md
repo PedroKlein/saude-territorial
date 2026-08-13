@@ -106,6 +106,6 @@ await db.delete(patients).where(eq(patients.id, id));
 ## References
 
 - `docs/adr/ADR-002-drizzle-orm.md` — decision rationale + rollback plan
-- `supabase-patterns` skill — the auth boundary this skill complements
+- `drizzle-data-access` skill — the actual data patterns for this app
 - `lgpd-guard` skill — data-safety gates that ride on top of Drizzle mutations
 - Drizzle docs — https://orm.drizzle.team

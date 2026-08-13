@@ -117,11 +117,13 @@ async function geocodeStructured(params: NominatimParams): Promise<GeoResult | n
 
 ## Geocoding Cache Strategy
 
-Cache lookup uses Supabase `geocode_cache` table (see `supabase-patterns` for schema).
+> **Post-pivot note:** the Supabase-backed `coordinates_cache` table was removed. The `/api/geocode` route currently hits Nominatim directly on every call. Caching will be reintroduced during pivot execution via Drizzle — likely as a `geocode_cache` table keyed on the normalized address. The rest of this section is retained as design guidance for that future reintroduction.
+
+Cache lookup will use a Postgres `geocode_cache` table via Drizzle (see `drizzle-data-access` skill for schema patterns).
 The geospatial-specific logic is the **cache key construction**:
 
 ```typescript
-// lib/geocoding/cache.ts
+// hypothetical src/db/geocode-cache.ts (pivot execution)
 function buildCacheKey(addr: NormalizedAddress): string {
   // Deterministic key from normalized fields — order matters
   return `${addr.city}|${addr.street}|${addr.number}`.toLowerCase()

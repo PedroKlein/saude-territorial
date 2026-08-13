@@ -1,27 +1,27 @@
 /**
  * POST /api/geocode
  *
- * Accepts { rua: string; numero?: string } in the request body.
- * Returns geocoded coordinates from the Supabase cache or Nominatim.
+ * Accepts { rua: string; numero?: string; bairro?: string } in the request body.
+ * Returns geocoded coordinates from Nominatim.
  *
  * Flow:
  *  1. Authenticate session (Better Auth)
  *  2. Validate request body
  *  3. Normalize address
- *  4. Check Supabase cache → return cached result if present
- *  5. Call Nominatim client → store result in cache → return
+ *  4. Call Nominatim client → return
  *
- * LGPD: Only "geocoded N addresses" is safe to log.  Never log street names,
+ * Post-pivot note: a coordinate cache used to live here backed by a Supabase
+ * `coordinates_cache` table. Both are gone (see ADR-001). Caching will be
+ * reintroduced during pivot execution via Drizzle — likely as a `geocode_cache`
+ * table joined to the patient's `geocode_status`.
+ *
+ * LGPD: only "geocoded N addresses" is safe to log. Never log street names,
  * coordinates, or any patient-identifying information.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { normalizeAddress } from "@/lib/geocoding/normalize";
-import {
-  getCachedCoordinates,
-  upsertCachedCoordinates,
-} from "@/lib/geocoding/cache";
 import { geocode } from "@/lib/geocoding/client";
 
 interface GeocodeRequestBody {
@@ -60,19 +60,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const rua = body.rua;
   const numero = typeof body.numero === "string" ? body.numero : "";
-  const bairro =
-    typeof body.bairro === "string" ? body.bairro : undefined;
+  const bairro = typeof body.bairro === "string" ? body.bairro : undefined;
 
   // 3. Normalize
   const normalized = normalizeAddress(rua, numero, bairro);
 
-  // 4. Cache lookup
-  const cached = await getCachedCoordinates(normalized);
-  if (cached) {
-    return NextResponse.json(cached, { status: 200 });
-  }
-
-  // 5. Nominatim lookup
+  // 4. Nominatim lookup
   const result = await geocode(normalized);
   if (!result) {
     return NextResponse.json(
@@ -80,9 +73,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 404 }
     );
   }
-
-  // Store in cache (fire-and-forget on failure — don't break the response)
-  await upsertCachedCoordinates(normalized, result);
 
   return NextResponse.json(result, { status: 200 });
 }

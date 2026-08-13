@@ -30,7 +30,7 @@ Plataforma georreferenciada de monitoramento de saúde territorial para equipes 
 | Auth | Better Auth (Google OAuth, identity only) | TypeScript-first sessions; **no** `spreadsheets` scope post-pivot |
 | **Source of truth** | **Supabase Postgres** | All patient data lives here (was: Google Sheets — see ADR-001) |
 | **Data access** | **Drizzle ORM** | Typed queries, SQL-native migrations, RLS-friendly. See ADR-002 |
-| Auth session storage | `@supabase/ssr` | Session cookies only; not used for data queries |
+| Auth session storage | Better Auth (SQLite via `better-sqlite3`) |
 | Geocoding | Nominatim (OSM) | Free, open-source. Manual pin fallback |
 | Routing | OSRM | Free, open-source. Walking + driving routes |
 | Territories | GeoJSON files (in repo) | Simple, version-controlled. Later: remote source |
@@ -89,7 +89,7 @@ O CNS é chave única em `patients`. Ao criar um paciente com CNS já existente,
                             │  (Map + Panels)   │
                             └───────────────────┘
 
-  Auth (Google identity)  ──►  Better Auth  ──►  @supabase/ssr cookies
+  Auth (Google identity)  ──►  Better Auth  ──►  SQLite (`auth.db`) session cookie
 ```
 
 ### Leitura
@@ -317,7 +317,7 @@ NEXT_PUBLIC_APP_URL=
 Válidas a partir de agosto 2026 (pós-pivot):
 
 1. **Supabase = fonte da verdade.** Ver ADR-001. Google Sheets não é mais lida em runtime.
-2. **Drizzle ORM = camada de acesso a dados.** Ver ADR-002. `@supabase/supabase-js` restrito a auth/session boundary.
+2. **Drizzle ORM = camada de acesso a dados.** Ver ADR-002. Não há Supabase SDK neste repo; Postgres é acessado exclusivamente via Drizzle.
 3. **Migrations SQL geradas via `drizzle-kit`**, commitadas em `supabase/migrations/`. Migrations legadas apagadas — recuperáveis via git.
 4. **Google OAuth para identidade apenas.** Sem escopo `spreadsheets`, sem refresh de access token, sem chamadas Google API on-behalf.
 5. **CRUD in-app.** Editar paciente = modificar Supabase via `PATCH /api/patients/[id]`. Sem write-back para Sheet.

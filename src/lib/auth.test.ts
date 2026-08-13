@@ -33,9 +33,6 @@ vi.mock("better-auth/next-js", () => ({
   toNextJsHandler: vi.fn((auth: unknown) => ({ GET: vi.fn(), POST: vi.fn(), __auth: auth })),
 }));
 
-vi.mock("pg", () => ({
-  Pool: vi.fn().mockImplementation(() => ({})),
-}));
 
 // ---------------------------------------------------------------------------
 // Tests

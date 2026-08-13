@@ -36,9 +36,6 @@ vi.mock("better-auth/next-js", () => {
   };
 });
 
-vi.mock("pg", () => ({
-  Pool: vi.fn().mockImplementation(() => ({})),
-}));
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),

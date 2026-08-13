@@ -28,7 +28,6 @@ You are entering **plan mode**. Do NOT start executing yet.
 
 2. **Load these skills** (via `/skill <name>` or by explicit `read`):
    - `drizzle-data-access` — schema patterns, boundary rules, pre-DB-mutation gate
-   - `supabase-patterns` — auth-boundary-only (do not use for data queries)
    - `auth-betterauth` — identity-only Google OAuth
    - `tanstack-query` — mutation patterns for CRUD flows
    - `nextjs-patterns` — API route patterns
