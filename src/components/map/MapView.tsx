@@ -44,8 +44,7 @@ const US_ICON = L.divIcon({
 
 export default function MapView() {
   const mapRef = useRef<LeafletMap>(null);
-  const spreadsheetId = process.env.NODE_ENV === "development" ? "demo" : "";
-  const { data } = usePatientData(spreadsheetId);
+  const { data } = usePatientData();
   const activeRoute = useMapStore((s) => s.activeRoute);
   const showTerritories = useMapStore((s) => s.showTerritories);
   const vizMode = useMapStore((s) => s.vizMode);

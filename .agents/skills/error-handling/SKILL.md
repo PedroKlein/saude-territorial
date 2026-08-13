@@ -1,17 +1,26 @@
 ---
 name: error-handling
 description: >
-  Unified error handling patterns for this Next.js 16 app. Covers the full error chain from
-  Google Sheets API failure → route handler → TanStack Query error state → user-facing toast.
-  Includes error classification (retryable vs fatal), error.tsx boundaries, Server Action
-  errors, and QueryErrorResetBoundary integration. Use when handling errors anywhere in
-  the stack, designing error responses, or deciding what to show the user. Triggers on: error,
-  catch, try/catch, error boundary, error.tsx, toast, 429, 401, 403, retry, fallback,
-  catchError, QueryErrorResetBoundary, onError, error state, "something went wrong".
-  Do NOT use for LGPD-specific error sanitization (use lgpd-guard for that).
+  Error handling patterns for this Next.js 16 app. Covers the error chain from
+  API route handlers → TanStack Query error states → user-facing UI (toasts, error boundaries).
+  Includes error classification (retryable vs fatal), `error.tsx` boundaries, Server Action
+  errors, and `QueryErrorResetBoundary` integration. Use when handling errors anywhere in
+  the stack, designing error responses, or deciding what to show the user.
+  Do NOT use for LGPD-specific sanitization — use the `lgpd-guard` skill for that.
+disable-model-invocation: true
 ---
 
 # Error Handling Flow
+
+## Historical note (post-pivot)
+
+Before the pivot (see `docs/adr/ADR-001-drop-sheets.md`), this skill covered a specific error chain rooted in **Google Sheets API failures** (429 rate limit, 401 expired scope, 403 sheet access). All of that is gone — the app no longer calls Google Sheets. The general classification and UI patterns below still apply, but the concrete "Sheets 429 retry" logic has been removed.
+
+The main sources of errors now are:
+1. **Supabase / Drizzle** — DB connection issues, constraint violations, RLS denials (if reintroduced later).
+2. **Nominatim geocoding** — 429, network timeouts, unresolvable addresses.
+3. **OSRM routing** — network, no route found.
+4. **App logic** — validation failures, missing session, invalid CNS format.
 
 ## Error Classification
 
@@ -19,14 +28,14 @@ Every error in this app falls into one of three categories:
 
 | Category | Examples | Action | User sees |
 |----------|----------|--------|-----------|
-| **Retryable** | 429 rate limit, network timeout, 503 | Auto-retry with backoff | Nothing (invisible retry) or "Tentando novamente..." |
-| **Recoverable** | 401 expired token, stale cache | Refresh token/cache, retry once | Brief loading state |
-| **Fatal** | 403 no sheet access, invalid sheet format, unknown tab | Stop, inform user, guide action | Toast with explanation + action |
+| **Retryable** | Nominatim 429, network timeout, 503 from OSRM | Auto-retry with backoff | Nothing (invisible retry) or "Tentando novamente..." |
+| **Recoverable** | Expired session, stale query cache | Refresh session/cache, retry once | Brief loading state or redirect to /login |
+| **Fatal** | Validation error, CNS uniqueness violation, unresolvable address | Stop, inform user, guide action | Toast with explanation + action |
 
-## Error Chain: Sheets API → User
+## Error Chain: Route Handler → User
 
 ```
-Google Sheets API error
+DB / Nominatim / OSRM error
     ↓
 Route Handler (catch, classify, sanitize — see lgpd-guard)
     ↓ returns { error: string, code: string, retryable: boolean }
@@ -41,174 +50,99 @@ UI (toast for mutations, error boundary for queries)
 // lib/errors.ts
 export class AppError extends Error {
   constructor(
-    public userMessage: string,  // Safe for display (PT-BR, no patient data)
+    public userMessage: string,   // Safe for display (PT-BR, no patient data)
     public code: string,
     public status: number = 500,
     public retryable: boolean = false,
-    public internal?: Record<string, unknown>,  // Server-side only, never sent to client
+    public internal?: Record<string, unknown>, // server-side only
   ) {
-    super(userMessage)
+    super(userMessage);
   }
 }
 
-// Classify Sheets API errors
-export function classifySheetError(error: any): AppError {
-  // googleapis uses error.response?.status (number) for HTTP status
-  // error.code is a string like 'ERR_BAD_RESPONSE', NOT the HTTP code
-  const status = error.response?.status ?? error.status ?? 500
-
-  switch (status) {
-    case 429:
-      return new AppError('Limite de requisições atingido. Aguarde um momento.', 'RATE_LIMITED', 429, true)
-    case 401:
-      return new AppError('Sessão expirada. Faça login novamente.', 'AUTH_EXPIRED', 401, false)
-    case 403:
-      return new AppError('Sem permissão para acessar a planilha. Verifique o compartilhamento.', 'NO_ACCESS', 403, false)
-    case 404:
-      return new AppError('Planilha ou aba não encontrada. A equipe pode ter renomeado.', 'NOT_FOUND', 404, false)
-    default:
-      return new AppError('Erro ao acessar dados. Tente novamente.', 'SHEETS_ERROR', 500, true)
-  }
+export function isAppError(e: unknown): e is AppError {
+  return e instanceof AppError;
 }
 ```
 
-## Route Handler Error Pattern
+Route handlers convert internal errors into `AppError` before returning JSON:
 
 ```typescript
-// app/api/sheets/[tabName]/route.ts
-export async function GET(request: NextRequest, { params }: { params: Promise<{ tabName: string }> }) {
-  try {
-    const session = await getSession(request)
-    if (!session) return NextResponse.json({ error: 'Não autenticado', code: 'NO_AUTH' }, { status: 401 })
-
-    const { tabName } = await params
-    const token = await getGoogleAccessToken(session.user.id)
-    const data = await fetchTabData(token, tabName)
-
-    return NextResponse.json(data)
-  } catch (error) {
-    const appError = error instanceof AppError ? error : classifySheetError(error)
-
-    // Log server-side (sanitized — no patient data)
-    console.error('Sheet fetch failed', { code: appError.code, tab: (await params).tabName })
-
+try {
+  const patient = await db.query.patients.findFirst({ where: eq(patients.cns, cns) });
+  if (!patient) {
+    throw new AppError("Paciente não encontrado.", "PATIENT_NOT_FOUND", 404);
+  }
+  return NextResponse.json(patient);
+} catch (e) {
+  if (isAppError(e)) {
     return NextResponse.json(
-      { error: appError.userMessage, code: appError.code, retryable: appError.retryable },
-      { status: appError.status }
-    )
+      { error: e.userMessage, code: e.code, retryable: e.retryable },
+      { status: e.status }
+    );
   }
+  // Unknown error — sanitize per lgpd-guard, log server-side
+  console.error("unexpected", e);
+  return NextResponse.json(
+    { error: "Algo deu errado. Tente novamente.", code: "INTERNAL", retryable: true },
+    { status: 500 }
+  );
 }
 ```
 
-## TanStack Query Error Handling
+## TanStack Query error handling
 
-```typescript
-// Queries: use error boundary for page-level data
-const { data, error } = useQuery({
-  ...patientListOptions(filters),
-  throwOnError: true,  // Propagate to nearest error.tsx boundary
-})
+For **queries**:
+```tsx
+const { data, error, isError, refetch } = useQuery({
+  queryKey: patientKeys.all,
+  queryFn: fetchPatients,
+});
 
-// Mutations: use onError for toast feedback
-const mutation = useUpdatePatient()
-mutation.mutate(
-  { cns, data: updates },
-  {
-    onError: (error: any) => {
-      const message = error.response?.data?.error ?? 'Erro ao salvar alterações'
-      toast.error(message)
-    },
-  }
-)
+if (isError) {
+  // Use QueryErrorResetBoundary in the tree above to allow retry
+  return <PatientErrorFallback error={error} onRetry={() => refetch()} />;
+}
 ```
 
-## error.tsx Boundary (Per-Route)
+For **mutations**:
+```tsx
+const mutation = useMutation({
+  mutationFn: (payload) => fetch("/api/patients", { method: "POST", body: JSON.stringify(payload) }),
+  onError: (err) => {
+    toast.error(err.message);  // AppError.userMessage
+  },
+});
+```
+
+## `error.tsx` boundaries
+
+Every route segment that fetches data on the server should have a sibling `error.tsx`:
 
 ```tsx
-// app/(dashboard)/map/error.tsx
-"use client"
-import { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-
-export default function MapError({ error, reset }: { error: Error; reset: () => void }) {
-  useEffect(() => {
-    // Log to monitoring (sanitized by lgpd-guard patterns)
-    console.error('Map page error', { message: error.message })
-  }, [error])
-
+"use client";
+export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4">
-      <h2 className="text-lg font-semibold">Erro ao carregar o mapa</h2>
-      <p className="text-muted-foreground">{error.message}</p>
-      <Button onClick={reset}>Tentar novamente</Button>
+    <div className="p-4">
+      <p className="text-sm text-red-600">Falha ao carregar. Tente novamente.</p>
+      <button onClick={reset} className="mt-2 rounded-md bg-primary px-3 py-1 text-white">
+        Recarregar
+      </button>
     </div>
-  )
+  );
 }
 ```
 
-## QueryErrorResetBoundary (TanStack Query + error.tsx)
+## Anti-patterns
 
-```tsx
-// app/(dashboard)/map/page.tsx
-import { QueryErrorResetBoundary } from '@tanstack/react-query'
+- Returning raw error objects from route handlers — always sanitize.
+- Showing DB errors, stack traces, or CNS values in toast text — LGPD violation.
+- Auto-retrying **mutations** — retry only reads. A retried patient save can create duplicates.
+- Silent `catch` blocks — always log server-side, always surface something to the user.
+- Using `alert()` for errors — use the toast component.
 
-export default function MapPage() {
-  return (
-    <QueryErrorResetBoundary>
-      {({ reset }) => (
-        <ErrorBoundary onReset={reset} fallback={<MapErrorFallback />}>
-          <MapView />
-        </ErrorBoundary>
-      )}
-    </QueryErrorResetBoundary>
-  )
-}
-```
+## References
 
-## Token Refresh Retry Flow
-
-When a 401 comes back from Sheets API mid-session:
-
-```typescript
-// lib/sheets/client.ts
-async function fetchWithTokenRefresh<T>(
-  fetchFn: (token: string) => Promise<T>
-): Promise<T> {
-  let token = await getGoogleAccessToken()
-  try {
-    return await fetchFn(token)
-  } catch (error: any) {
-    const status = error.response?.status ?? error.status
-    if (status === 401) {
-      // Token expired — Better Auth's getAccessToken auto-refreshes
-      token = await getGoogleAccessToken()  // Gets fresh token
-      return await fetchFn(token)  // Retry once with new token
-    }
-    throw error
-  }
-}
-```
-
-## User-Facing Error Messages (PT-BR)
-
-All error messages shown to users MUST be in Portuguese and actionable:
-
-| Code | Message | Action hint |
-|------|---------|------------|
-| RATE_LIMITED | "Limite de requisições atingido. Aguarde um momento." | Auto-retry |
-| AUTH_EXPIRED | "Sessão expirada. Faça login novamente." | Redirect to login |
-| NO_ACCESS | "Sem permissão para acessar a planilha." | Check sharing settings |
-| NOT_FOUND | "Aba não encontrada. A equipe pode ter renomeado." | Refresh tab list |
-| CONFLICT | "Outro usuário atualizou este registro." | Reload data |
-| GEOCODE_FAILED | "Endereço não encontrado no mapa." | Check address spelling |
-| NETWORK | "Sem conexão. Verifique sua internet." | Retry button |
-
-## NEVER
-
-- **NEVER show raw API error messages to users** — they contain English technical details and possibly patient data
-- **NEVER retry 403 (no access) or 404 (not found)** — these are permanent; retrying wastes quota
-- **NEVER let TanStack Query retry mutations by default** — queries retry 3x automatically; mutations should not (risk of duplicate writes)
-- **NEVER throw errors in Server Components without an error.tsx boundary** — unhandled throws crash the entire route
-- **NEVER forget to sanitize error objects before logging** — googleapis errors contain `config.data` with patient info (see lgpd-guard)
-- **NEVER show English error messages** — all user-facing text must be PT-BR
-- **NEVER use generic "Algo deu errado" without guidance** — always tell the user what to DO next
+- `docs/adr/ADR-001-drop-sheets.md` — historical context (Sheets 429 chain removed)
+- `lgpd-guard` skill — how to sanitize error strings that touch patient data
+- TanStack Query docs — https://tanstack.com/query

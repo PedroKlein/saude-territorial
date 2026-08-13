@@ -1,257 +1,158 @@
 ---
 name: auth-betterauth
-description: >
-  Better Auth integration for this Next.js 16 project with Google OAuth. Better Auth is the
-  successor to Auth.js/NextAuth.js (Auth.js team joined Better Auth Sep 2025). Covers Google
-  OAuth setup with custom scopes (spreadsheets), access token management for Sheets API
-  on-behalf-of calls, session handling, proxy.ts route protection, incremental scope requests
-  (linkSocial), and token refresh. Use when setting up auth, protecting routes, accessing
-  the Google Sheets API token, refreshing tokens, or handling auth errors. Triggers on:
-  Better Auth, auth, login, session, Google OAuth, access token, scope, spreadsheets scope,
-  token refresh, sign in, sign out, protected route, proxy.ts auth, linkSocial, on-behalf-of.
-  Do NOT use for Supabase Auth (we use Better Auth, not Supabase Auth for the primary login)
-  or general proxy.ts patterns (use nextjs-patterns).
+description: Google OAuth via Better Auth — identity only. Session cookies, dashboard route protection, sign-in/sign-out flows. Post-pivot (see docs/adr/ADR-001-drop-sheets.md), no Sheets/Google API scopes, no on-behalf-of token handling.
+disable-model-invocation: true
 ---
 
-# Better Auth + Google OAuth
+# Better Auth — Identity-Only Google OAuth
 
-## Why Better Auth
+## Scope of this skill
 
-Auth.js (formerly NextAuth.js) is now maintenance-only — the team joined Better Auth
-(Sep 2025). Better Auth is TypeScript-first, framework-agnostic, and has first-class
-support for:
-- Incremental scope requests (critical for requesting Sheets access after initial login)
-- Access token storage + retrieval (needed to call Google Sheets API on-behalf-of)
-- Accumulated granted scopes per account
-- Plugin system for 2FA, organizations, etc.
+Everything auth-related **for identity**: who is this user, do they have a valid session, protect the dashboard routes, sign in and sign out. Nothing more.
 
-## Google Refresh Token: The #1 Production Failure
+**This skill does NOT cover data access.** All CRUD queries and mutations against Supabase go through Drizzle — see the `drizzle-data-access` skill. Auth's only relationship with data is "is there a session cookie set on this request".
 
-Google only issues a refresh token the FIRST time a user grants access. If you lose
-the refresh token (or didn't request one), Sheets API calls fail silently after 1 hour.
+## Historical note (post-pivot)
 
-**Always use `prompt: 'consent'` + `accessType: 'offline'`** in the provider config.
-Without both, returning users won't get a new refresh token.
+Before the pivot (see `docs/adr/ADR-001-drop-sheets.md`), this app requested the `https://www.googleapis.com/auth/spreadsheets` scope, refreshed Google access tokens on demand, and called Sheets on behalf of the signed-in user. **All of that is gone.** The scope is now `openid email profile` only, there is no refresh-token dance, and `getGoogleAccessToken` no longer exists.
 
-If a user reports "sheets stopped loading": they need to go to
-https://myaccount.google.com/permissions, remove the app, and sign in again.
+If a future feature needs additional Google scopes (a "sync from Sheets" import, a Drive picker, etc.), use Better Auth's **incremental scope** pattern — do NOT re-broaden the initial sign-in.
 
 ## Setup
 
+### `src/lib/auth.ts`
+
 ```typescript
-// lib/auth.ts — Server-side auth configuration
-import { betterAuth } from 'better-auth'
-import { nextCookies } from 'better-auth/next-js'
-import Database from 'better-sqlite3'  // Local dev (SQLite)
-// For production: import { Pool } from 'pg'
+import { betterAuth } from "better-auth";
+import { nextCookies } from "better-auth/next-js";
+import Database from "better-sqlite3";
 
 export const auth = betterAuth({
-  // Local dev: SQLite file (zero config, just works)
-  database: new Database('./auth.db'),
-  // Production: use Supabase Postgres pooler
-  // database: new Pool({ connectionString: process.env.DATABASE_URL }),
-  plugins: [nextCookies()],  // Auto-sets cookies on responses
+  database: new Database("./auth.db"),
+  plugins: [nextCookies()],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      // Request spreadsheets scope at login
-      scope: [
-        'openid',
-        'email',
-        'profile',
-        'https://www.googleapis.com/auth/spreadsheets',
-      ],
-      // Store access + refresh tokens for Sheets API calls
-      accessType: 'offline',        // Gets refresh token
-      prompt: 'consent',            // Forces consent screen → ensures refresh token
-      includeGrantedScopes: true,   // Accumulate scopes across flows
+      scope: ["openid", "email", "profile"],
     },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7,   // 7 days
-    updateAge: 60 * 60 * 24,        // Refresh session daily
+    updateAge: 60 * 60 * 24,        // refresh sliding-window daily
   },
-})
+});
 ```
 
+**Rules:**
+- Never add `spreadsheets`, `drive`, or any Google API scope here. Use incremental scopes for those.
+- Never persist raw access tokens or refresh tokens outside Better Auth's own store.
+- `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` must all be present in env; the app should fail fast on start otherwise.
+
+### `src/lib/auth-client.ts`
+
 ```typescript
-// lib/auth-client.ts — Client-side auth hooks
-import { createAuthClient } from 'better-auth/react'
+import { createAuthClient } from "better-auth/client";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL,
-})
-
-// Export typed hooks
-export const { useSession, signIn, signOut } = authClient
+  baseURL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+});
 ```
 
-## Route Handler
+Import `signIn`, `signOut`, `useSession` from `authClient` in client components.
+
+## Route protection
+
+### `proxy.ts` at repo root
 
 ```typescript
-// app/api/auth/[...all]/route.ts
-import { auth } from '@/lib/auth'
-import { toNextJsHandler } from 'better-auth/next-js'
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
-export const { GET, POST } = toNextJsHandler(auth)
-```
-
-## Sign In Flow
-
-```tsx
-// components/auth/LoginButton.tsx
-"use client"
-import { signIn } from '@/lib/auth-client'
-
-export function LoginButton() {
-  return (
-    <Button onClick={() => signIn.social({ provider: 'google' })}>
-      Entrar com Google
-    </Button>
-  )
-}
-```
-
-## Getting the Access Token (for Sheets API)
-
-Better Auth provides a dedicated `getAccessToken` API that handles refresh automatically:
-
-```typescript
-// lib/sheets/auth.ts — get Google access token for Sheets API calls
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
-
-export async function getGoogleAccessToken(): Promise<string> {
-  // getAccessToken auto-refreshes if the token is expired — no manual expiry check needed.
-  // ALWAYS call this fresh before each Sheets API call. Never cache the returned string.
-  const result = await auth.api.getAccessToken({
-    body: { providerId: 'google' },
-    headers: await headers(),
-  })
-
-  if (!result?.accessToken) throw new Error('No Google access token available')
-  return result.accessToken
-}
-```
-
-Client-side (for triggering scope checks):
-```typescript
-"use client"
-const { data } = await authClient.getAccessToken({ providerId: 'google' })
-```
-
-**Listing accounts** (to check granted scopes):
-```typescript
-const accounts = await authClient.user.listAccounts()
-const google = accounts.data?.find(a => a.providerId === 'google')
-```
-```
-
-Use in API routes:
-
-```typescript
-// app/api/sheets/[tabName]/route.ts
-import { auth } from '@/lib/auth'
-import { getGoogleAccessToken } from '@/lib/auth'
-import { headers } from 'next/headers'
-
-export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = await getGoogleAccessToken()
-  const sheetsData = await fetchSheetWithToken(token, tabName)
-
-  return NextResponse.json(sheetsData)
-}
-```
-
-## Incremental Scope Requests
-
-If user first logs in without Sheets scope, request it later.
-**Check before requesting** — calling `linkSocial` when scope is already granted
-forces an unnecessary re-consent screen:
-
-```typescript
-"use client"
-import { authClient } from '@/lib/auth-client'
-
-async function ensureSheetsAccess(grantedScopes: string[]) {
-  const sheetsScope = 'https://www.googleapis.com/auth/spreadsheets'
-  if (grantedScopes.includes(sheetsScope)) return  // Already have it
-
-  await authClient.linkSocial({
-    provider: 'google',
-    scopes: [sheetsScope],
-  })
-}
-```
-
-## Route Protection in proxy.ts
-
-**File location:** `src/proxy.ts` (NOT `src/app/proxy.ts` — that path is silently ignored).
-
-```typescript
-// src/proxy.ts
-import { auth } from '@/lib/auth'
+const PROTECTED_PREFIXES = ["/map", "/settings"];
+const AUTH_ROUTES = ["/login"];
 
 export async function proxy(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  })
+  const { pathname } = request.nextUrl;
+  const session = await auth.api.getSession({ headers: request.headers });
 
-  const { pathname } = request.nextUrl
-
-  // Protect app routes
-  if (pathname.startsWith('/map') || pathname.startsWith('/settings')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  if (session && AUTH_ROUTES.includes(pathname)) {
+    return NextResponse.redirect(new URL("/map", request.url));
   }
 
-  // Redirect logged-in users away from login
-  if (pathname === '/login' && session) {
-    return NextResponse.redirect(new URL('/map', request.url))
+  const requiresAuth = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  if (!session && requiresAuth) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+## Sign-in / sign-out UI
+
+```tsx
+"use client";
+import { authClient } from "@/lib/auth-client";
+
+export function SignInButton() {
+  return (
+    <button
+      onClick={() =>
+        authClient.signIn.social({
+          provider: "google",
+          callbackURL: "/map",
+        })
+      }
+    >
+      Entrar com Google
+    </button>
+  );
 }
 ```
 
-## Server-Side Session Access
+Do **not** pass extra scopes to `signIn.social`. The default scopes from `auth.ts` are correct; adding more here defeats the identity-only stance.
+
+## Reading the session in server components / API routes
 
 ```typescript
-// In Server Components or Route Handlers
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { auth } from "@/lib/auth";
 
-export default async function DashboardLayout({ children }) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/login')
-
-  return (
-    <div>
-      <Sidebar user={session.user} />
-      {children}
-    </div>
-  )
+const session = await auth.api.getSession({ headers: request.headers });
+if (!session) {
+  return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 }
+// session.user.id, session.user.email, session.user.name are all you get
 ```
 
-## NEVER
+## Testing
 
-- **NEVER store Google access tokens in localStorage or cookies** — Better Auth stores them server-side in the database; access via `getGoogleAccessToken()`
-- **NEVER use `getSession()` alone to validate auth** — sessions can be stale; use the API route protection pattern or validate token expiry
-- **NEVER request Sheets scope without `accessType: 'offline'`** — without it, you don't get a refresh token and can't make API calls when the session expires
-- **NEVER assume the access token is valid just because you have one** — always call `getGoogleAccessToken()` which auto-refreshes; never store or reuse a previous token string
-- **NEVER skip `prompt: 'consent'`** — Google only issues refresh tokens on first consent; without forcing it, returning users won't get a new refresh token
-- **NEVER cache the access token string** — always call `getAccessToken()` fresh before each Sheets API call; Better Auth handles refresh internally; caching risks using an expired token
-- **NEVER call Google Sheets API from Client Components** — always proxy through your API routes; the access token must never reach the browser
-- **NEVER hardcode Google OAuth client credentials** — use environment variables; they differ between dev and prod
-- **NEVER block on auth check in proxy.ts for public routes** — only check session for protected paths; checking everywhere adds latency to every request
-- **NEVER assume the access token is valid** — always check expiry and refresh if needed before making Sheets API calls
+Mock `better-auth` at the module level to control session state per test. Never spin up a real Better Auth instance in unit tests.
+
+```typescript
+vi.mock("better-auth", () => ({
+  betterAuth: vi.fn((config) => ({
+    __capturedConfig: config,
+    api: { getSession: vi.fn() },
+  })),
+}));
+```
+
+Assert the scope shape (identity-only) at least once — it's cheap insurance against a regression that re-adds Sheets scopes silently.
+
+## Anti-patterns
+
+- Requesting Google API scopes at sign-in "just in case" — request them incrementally when the feature that needs them is built.
+- Storing patient data or personal identifiers in `auth.db` — that database is for authentication artefacts only.
+- Building custom session logic on top of Better Auth — use its `getSession` and let it handle cookies, expiration, and refresh.
+- Logging `session.token` or any raw credential — never. Log `session.user.id` when you must correlate.
+
+## References
+
+- `docs/adr/ADR-001-drop-sheets.md` — why the Sheets scope disappeared
+- Better Auth docs — https://better-auth.com

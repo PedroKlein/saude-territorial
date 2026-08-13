@@ -4,7 +4,6 @@ import { useMapStore } from "@/stores/mapStore";
 import { useRouteHistoryStore } from "@/stores/routeHistoryStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { useState } from "react";
-import { PatientEditPanel } from "./PatientEditPanel";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
 import type { RouteResult, RouteProfile } from "@/types/routing";
 
@@ -19,7 +18,8 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
   const addRouteEntry = useRouteHistoryStore((s) => s.addEntry);
-  const [isEditing, setIsEditing] = useState(false);
+  // TODO(pivot-execution): patient editing will be restored via PATCH /api/patients/[id]
+  // once the Drizzle-backed CRUD layer lands. See docs/adr/ADR-001-drop-sheets.md.
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeProfile, setRouteProfile] = useState<RouteProfile>("foot");
 
@@ -43,17 +43,6 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
   const visibleColumns = patientLayer
     ? LAYER_CONFIG[patientLayer].visibleColumns
     : [];
-
-  if (isEditing && patientData) {
-    return (
-      <PatientEditPanel
-        patient={patientData}
-        columns={visibleColumns}
-        onCancel={() => setIsEditing(false)}
-        onSaved={() => setIsEditing(false)}
-      />
-    );
-  }
 
   return (
     <aside className="absolute inset-x-0 bottom-0 z-[1000] max-h-[60vh] overflow-y-auto rounded-t-2xl border-t bg-white p-4 shadow-lg md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-80 md:rounded-none md:border-l md:border-t-0">
@@ -123,8 +112,9 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
 
             <div className="flex gap-2">
             <button
-              onClick={() => setIsEditing(true)}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+              disabled
+              title="Edição disponível na próxima versão (Drizzle CRUD em desenvolvimento)"
+              className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
             >
               Editar
             </button>

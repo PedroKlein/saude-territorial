@@ -42,24 +42,16 @@ export const useSyncStore = create<SyncState>()((set) => ({
 
 export const patientKeys = {
   all: ["patients"] as const,
-  bySheet: (spreadsheetId: string) =>
-    [...patientKeys.all, spreadsheetId] as const,
 };
 
 // ---------------------------------------------------------------------------
 // Fetcher
 // ---------------------------------------------------------------------------
 
-async function fetchPatientData(
-  spreadsheetId: string
-): Promise<LayeredPatientData> {
-  // Demo mode: use synthetic data endpoint
-  const isDemo = spreadsheetId === "demo";
-  const url = isDemo
-    ? "/api/sheets/demo"
-    : `/api/sheets?spreadsheetId=${spreadsheetId}&mode=full`;
-
-  const res = await fetch(url);
+async function fetchPatientData(): Promise<LayeredPatientData> {
+  // TEMPORARY: hits the mock /api/patients endpoint until Supabase pivot
+  // execution replaces it with real DB reads (via Drizzle).
+  const res = await fetch("/api/patients");
   if (!res.ok) {
     throw new Error(`Falha ao carregar dados: ${res.status}`);
   }
@@ -77,25 +69,25 @@ async function fetchPatientData(
  * - Refetches in background when stale (staleTime: 5min)
  * - Tracks sync time for freshness indicator
  *
- * Pass spreadsheetId="demo" to use synthetic data without Google Sheets.
+ * NOTE: currently hits a temporary mock endpoint (/api/patients). Will be
+ * wired to real Supabase reads during pivot execution.
  */
-export function usePatientData(spreadsheetId: string) {
+export function usePatientData() {
   const setLastSync = useSyncStore((s) => s.setLastSync);
   const setIsSyncing = useSyncStore((s) => s.setIsSyncing);
 
   return useQuery({
-    queryKey: patientKeys.bySheet(spreadsheetId),
+    queryKey: patientKeys.all,
     queryFn: async () => {
       setIsSyncing(true);
       try {
-        const data = await fetchPatientData(spreadsheetId);
+        const data = await fetchPatientData();
         setLastSync(Date.now());
         return data;
       } finally {
         setIsSyncing(false);
       }
     },
-    enabled: !!spreadsheetId,
     staleTime: 5 * 60 * 1000, // 5 minutes — show cached instantly, refetch after
     gcTime: 30 * 60 * 1000, // 30 minutes — keep in cache for progressive UX
     refetchOnWindowFocus: true, // Background refresh when user returns to tab

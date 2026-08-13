@@ -9,7 +9,7 @@ description: >
   domain. Triggers on: patient, gestante, CNS, microárea, ACS, urgency, alert, DUM, DPP,
   IG, trimester, puérpera, tuberculose, diabetes, hipertensão, layer, tab, health condition,
   visit, consulta, score, risco, critical, attention, normal. Do NOT use for API/technical
-  patterns (use sheets-data-layer, tanstack-query, etc.).
+  patterns (use drizzle-data-access, tanstack-query, etc.).
 ---
 
 # Healthcare Domain Model (SUS/APS)

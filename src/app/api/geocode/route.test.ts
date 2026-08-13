@@ -50,11 +50,9 @@ vi.mock("next/headers", () => ({
 
 // Mock lib/auth — control session per test
 const mockGetSession = vi.fn();
-const mockGetGoogleAccessToken = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: mockGetSession } },
-  getGoogleAccessToken: mockGetGoogleAccessToken,
 }));
 
 // Mock geocoding cache

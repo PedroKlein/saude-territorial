@@ -28,7 +28,7 @@ describe("usePatientData", () => {
 
   it("returns loading state initially", () => {
     mockFetch.mockImplementation(() => new Promise(() => {})); // never resolves
-    const { result } = renderHook(() => usePatientData("spreadsheet-id-1"), {
+    const { result } = renderHook(() => usePatientData(), {
       wrapper: createWrapper(),
     });
     expect(result.current.isLoading).toBe(true);
@@ -39,10 +39,20 @@ describe("usePatientData", () => {
     const mockResponse = {
       layers: {
         gestantes: [
-          { cns: "111222333444555", nomeCompleto: "Paciente A", lat: -30.03, lng: -51.22 },
+          {
+            cns: "111222333444555",
+            nomeCompleto: "Paciente A",
+            lat: -30.03,
+            lng: -51.22,
+          },
         ],
         tuberculose: [
-          { cns: "555444333222111", nomeCompleto: "Paciente B", lat: -30.04, lng: -51.23 },
+          {
+            cns: "555444333222111",
+            nomeCompleto: "Paciente B",
+            lat: -30.04,
+            lng: -51.23,
+          },
         ],
       },
     };
@@ -51,13 +61,14 @@ describe("usePatientData", () => {
       json: () => Promise.resolve(mockResponse),
     });
 
-    const { result } = renderHook(() => usePatientData("spreadsheet-id-1"), {
+    const { result } = renderHook(() => usePatientData(), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.gestantes).toHaveLength(1);
     expect(result.current.data?.tuberculose).toHaveLength(1);
+    expect(mockFetch).toHaveBeenCalledWith("/api/patients");
   });
 
   it("returns error state on fetch failure", async () => {
@@ -67,20 +78,11 @@ describe("usePatientData", () => {
       statusText: "Internal Server Error",
     });
 
-    const { result } = renderHook(() => usePatientData("spreadsheet-id-1"), {
+    const { result } = renderHook(() => usePatientData(), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeDefined();
-  });
-
-  it("does not fetch when spreadsheetId is empty", () => {
-    const { result } = renderHook(() => usePatientData(""), {
-      wrapper: createWrapper(),
-    });
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.data).toBeUndefined();
-    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

@@ -13,8 +13,6 @@ import { UnresolvedList } from "@/components/sidebar/UnresolvedList";
 import { SyncBadge } from "@/components/sidebar/SyncBadge";
 import { RouteHistory } from "@/components/sidebar/RouteHistory";
 import { DayPlanner } from "@/components/routes/DayPlanner";
-import { ConflictPanel } from "@/components/panels/ConflictPanel";
-import { deduplicatePatients } from "@/lib/sheets/dedup";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
@@ -26,26 +24,20 @@ import type { AlertLevel } from "@/types/alerts";
 
 /**
  * Client component that wires patient data into the map, sidebar, and panels.
- * Uses "demo" as spreadsheetId in development for synthetic data.
+ *
+ * NOTE: Patient data currently comes from a temporary mock endpoint
+ * (/api/patients). Will be wired to real Supabase reads (via Drizzle) during
+ * pivot execution. Cross-tab CNS conflict detection was removed as part of
+ * the Sheets pivot — with Supabase as source of truth, CNS is a UNIQUE
+ * constraint at the DB level and conflicts are handled at write time via the
+ * "add condition to existing patient" flow.
  */
 export function MapWithData() {
-  const spreadsheetId = process.env.NODE_ENV === "development" ? "demo" : "";
-  const { data, isLoading } = usePatientData(spreadsheetId);
+  const { data, isLoading } = usePatientData();
   const showTerritories = useMapStore((s) => s.showTerritories);
   const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
   const togglePlanningMode = useRoutePlannerStore((s) => s.togglePlanningMode);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showConflicts, setShowConflicts] = useState(false);
-
-  // Detect CNS conflicts across layers
-  const conflicts = useMemo(() => {
-    if (!data) return [];
-    const layerData: Record<string, Array<{ cns: string; nomeCompleto: string | null; lat: number; lng: number; [key: string]: unknown }>> = {};
-    for (const [layerId, patients] of Object.entries(data)) {
-      if (patients) layerData[layerId] = patients;
-    }
-    return deduplicatePatients(layerData).conflicts;
-  }, [data]);
 
   // Enrich patients with alertLevel for MicroareaMetrics
   const enrichedPatients = useMemo(() => {
@@ -121,19 +113,6 @@ export function MapWithData() {
           {isPlanning && <DayPlanner />}
         </div>
 
-        {/* Conflict badge + panel */}
-        {conflicts.length > 0 && (
-          <div className="border-t px-4 py-3">
-            <button
-              onClick={() => setShowConflicts(!showConflicts)}
-              className="flex w-full items-center justify-between rounded-md bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-800 hover:bg-yellow-100"
-            >
-              <span>⚠ {conflicts.length} conflito{conflicts.length > 1 ? "s" : ""}</span>
-              <span className="text-xs">{showConflicts ? "▲" : "▼"}</span>
-            </button>
-            {showConflicts && <ConflictPanel conflicts={conflicts} />}
-          </div>
-        )}
         <SyncBadge />
         <RouteHistory />
       </div>

@@ -52,11 +52,11 @@ export default async function PatientsPage() {
 }
 
 // Cache a single function
-async function getSheetData(tabName: string) {
+async function getPatientLayer(layerId: string) {
   "use cache"
   cacheLife('minutes')
-  cacheTag(`sheet-${tabName}`)
-  return await sheetsApi.getValues(tabName)
+  cacheTag(`layer-${layerId}`)
+  return await db.query.patients.findMany({ where: eq(patients.layer, layerId) })
 }
 ```
 
@@ -65,10 +65,10 @@ async function getSheetData(tabName: string) {
 "use server"
 import { revalidateTag } from 'next/cache'
 
-export async function updatePatient(cns: string, data: PatientUpdate) {
-  await writeToSheet(cns, data)
-  revalidateTag('patients')  // Purge all cached patient data
-  revalidateTag(`patient-${cns}`)  // Purge specific patient
+export async function updatePatient(id: string, data: PatientUpdate) {
+  await db.update(patients).set(data).where(eq(patients.id, id))
+  revalidateTag('patients')             // Purge all cached patient data
+  revalidateTag(`patient-${id}`)        // Purge specific patient
 }
 ```
 

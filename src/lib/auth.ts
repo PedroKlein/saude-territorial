@@ -1,8 +1,19 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { headers } from "next/headers";
 import Database from "better-sqlite3";
 
+/**
+ * Better Auth configuration — identity only.
+ *
+ * As of the pivot (see docs/adr/ADR-001-drop-sheets.md), this app no longer
+ * calls Google Sheets on behalf of the user. The OAuth scope is reduced to
+ * `openid email profile`, and there is no Google access token to refresh
+ * or expose for API calls.
+ *
+ * If we ever add a "sign in with Google" that needs additional scopes
+ * (Sheets import, Drive, etc.), reintroduce them via Better Auth's
+ * incremental-scope pattern rather than requesting them upfront.
+ */
 export const auth = betterAuth({
   database: new Database("./auth.db"),
   plugins: [nextCookies()],
@@ -10,15 +21,7 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      scope: [
-        "openid",
-        "email",
-        "profile",
-        "https://www.googleapis.com/auth/spreadsheets",
-      ],
-      accessType: "offline",
-      prompt: "consent",
-      includeGrantedScopes: true,
+      scope: ["openid", "email", "profile"],
     },
   },
   session: {
@@ -26,21 +29,3 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
 });
-
-/**
- * Returns a fresh Google access token suitable for Google Sheets API calls.
- * Auto-refreshes if the token is expired — never cache the returned string.
- * NEVER log the returned token.
- */
-export async function getGoogleAccessToken(): Promise<string> {
-  const result = await auth.api.getAccessToken({
-    body: { providerId: "google" },
-    headers: await headers(),
-  });
-
-  if (!result?.accessToken) {
-    throw new Error("No Google access token available");
-  }
-
-  return result.accessToken;
-}

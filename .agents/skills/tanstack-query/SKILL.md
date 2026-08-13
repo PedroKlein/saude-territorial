@@ -100,9 +100,9 @@ export function PatientLayer({ filters }: { filters: PatientFilters }) {
 }
 ```
 
-## Mutations: Write to Sheet → Invalidate Cache
+## Mutations: Write to Supabase (via Drizzle) → Invalidate Cache
 
-Follow the project's "write to Sheet first" principle:
+Post-pivot (see `docs/adr/ADR-001-drop-sheets.md`), Supabase is the source of truth and Drizzle owns writes. The write-to-Sheet-first pattern is dead. Same TanStack Query shape, different destination:
 
 ```typescript
 // lib/queries/mutations.ts
@@ -112,15 +112,19 @@ export function useUpdatePatient() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ cns, data }: { cns: CNS; data: Partial<PatientRow> }) => {
-      // 1. Write to Google Sheets (source of truth)
-      await updateSheetRow(cns, data)
-      // 2. Update Supabase cache
-      await updateSupabaseCache(cns, data)
+    mutationFn: async ({ id, data }: { id: string; data: Partial<PatientRow> }) => {
+      // Write through the CRUD API which uses Drizzle against Supabase (source of truth)
+      const res = await fetch(`/api/patients/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return res.json()
     },
-    onSuccess: (_, { cns }) => {
+    onSuccess: (_, { id }) => {
       // Invalidate related queries — triggers refetch
-      queryClient.invalidateQueries({ queryKey: patientKeys.detail(cns) })
+      queryClient.invalidateQueries({ queryKey: patientKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: patientKeys.lists() })
     },
     onError: (error) => {
