@@ -14,13 +14,24 @@ import Database from "better-sqlite3";
  * (Sheets import, Drive, etc.), reintroduce them via Better Auth's
  * incremental-scope pattern rather than requesting them upfront.
  */
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!clientId || !clientSecret) {
+  // Fail fast at import time: identity-only Better Auth is useless without
+  // Google creds, and silent misconfiguration produces cryptic OAuth loops.
+  throw new Error(
+    "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in the environment.",
+  );
+}
+
 export const auth = betterAuth({
   database: new Database("./auth.db"),
   plugins: [nextCookies()],
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId,
+      clientSecret,
       scope: ["openid", "email", "profile"],
     },
   },

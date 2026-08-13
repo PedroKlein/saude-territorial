@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
-import type { LayerId } from "@/config/layers.config";
 
 /**
  * GET /api/patients — read all seeded patients joined with their condition
@@ -63,11 +62,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
 
-    const layers: Partial<Record<LayerId, Record<string, unknown>[]>> = {
-      gestantes: [],
-      tuberculose: [],
-      hipertensao: [],
-    };
+    const gestantes: Record<string, unknown>[] = [];
+    const tuberculose: Record<string, unknown>[] = [];
+    const hipertensao: Record<string, unknown>[] = [];
 
     for (const p of rows) {
       // Only pins on the map: patients with a resolved coordinate.
@@ -95,7 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       if (p.gestantes) {
         const g = p.gestantes;
-        layers.gestantes!.push({
+        gestantes.push({
           ...baseRecord,
           dum: toBRDate(g.dum),
           dpp: toBRDate(g.dpp),
@@ -126,7 +123,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       if (p.tuberculose) {
         const t = p.tuberculose;
-        layers.tuberculose!.push({
+        tuberculose.push({
           ...baseRecord,
           tipo: t.tipo,
           galRegistro: t.galRegistro,
@@ -153,7 +150,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       if (p.has) {
         const h = p.has;
-        layers.hipertensao!.push({
+        hipertensao.push({
           ...baseRecord,
           dataUltimaConsulta: toBRDate(h.dataUltimaConsulta),
           dataProximaConsulta: toBRDate(h.dataProximaConsulta),
@@ -168,7 +165,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    return NextResponse.json({ layers });
+    return NextResponse.json({ layers: { gestantes, tuberculose, hipertensao } });
   } catch (err) {
     // LGPD: never surface the raw error to the client; log a code, not data.
     const code = err instanceof Error ? err.name : "UnknownError";

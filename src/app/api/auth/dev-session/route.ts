@@ -71,7 +71,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Sign the session token using HMAC-SHA256 (same as better-call's signCookieValue)
-    const secret = process.env.BETTER_AUTH_SECRET!;
+    const secret = process.env.BETTER_AUTH_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { error: "Server misconfigured: BETTER_AUTH_SECRET is unset." },
+        { status: 500 },
+      );
+    }
     const key = crypto.createHmac("sha256", secret);
     key.update(session.token);
     const signature = key.digest("base64");

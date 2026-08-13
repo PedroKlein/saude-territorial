@@ -3,7 +3,6 @@
 import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
-import type { VizMode } from "@/stores/mapStore";
 import { useMemo } from "react";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";

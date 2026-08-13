@@ -1,9 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSyncStore } from "@/hooks/usePatientData";
 import { useQueryClient } from "@tanstack/react-query";
 import { patientKeys } from "@/hooks/usePatientData";
-
 /**
  * Shows data freshness badge + manual sync button.
  * Colors: green (<1h), yellow (1-24h), red (>24h).
@@ -17,34 +17,27 @@ export function SyncBadge() {
     queryClient.invalidateQueries({ queryKey: patientKeys.all });
   }
 
-  // Format relative time
-  let label = "Nunca sincronizado";
-  let colorClass = "text-gray-500 bg-gray-100";
-
-  if (lastSyncTime) {
+  // Frozen snapshot: recompute the badge only when `lastSyncTime` changes,
+  // not on every render. The badge is a coarse indicator; a ticking clock
+  // would just churn the DOM every render.
+  const { label, colorClass } = useMemo(() => {
+    if (!lastSyncTime) {
+      return { label: "Nunca sincronizado", colorClass: "text-gray-500 bg-gray-100" };
+    }
     const diffMs = Date.now() - lastSyncTime;
     const diffMin = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMin / 60);
-
-    if (diffMin < 1) {
-      label = "Agora";
-    } else if (diffMin < 60) {
-      label = `${diffMin}min atrás`;
-    } else if (diffHours < 24) {
-      label = `${diffHours}h atrás`;
-    } else {
-      label = `${Math.floor(diffHours / 24)}d atrás`;
-    }
-
-    // Color by staleness
-    if (diffMs < 60 * 60 * 1000) {
-      colorClass = "text-green-700 bg-green-100";
-    } else if (diffMs < 24 * 60 * 60 * 1000) {
-      colorClass = "text-yellow-700 bg-yellow-100";
-    } else {
-      colorClass = "text-red-700 bg-red-100";
-    }
-  }
+    let relLabel: string;
+    if (diffMin < 1) relLabel = "Agora";
+    else if (diffMin < 60) relLabel = `${diffMin}min atrás`;
+    else if (diffHours < 24) relLabel = `${diffHours}h atrás`;
+    else relLabel = `${Math.floor(diffHours / 24)}d atrás`;
+    let cls: string;
+    if (diffMs < 60 * 60 * 1000) cls = "text-green-700 bg-green-100";
+    else if (diffMs < 24 * 60 * 60 * 1000) cls = "text-yellow-700 bg-yellow-100";
+    else cls = "text-red-700 bg-red-100";
+    return { label: relLabel, colorClass: cls };
+  }, [lastSyncTime]);
 
   return (
     <div className="flex items-center gap-2 border-t px-4 py-2">

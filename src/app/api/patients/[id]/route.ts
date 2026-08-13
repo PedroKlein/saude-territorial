@@ -71,11 +71,6 @@ function isAddressChange(base: BasePatch | undefined): boolean {
   return ADDRESS_FIELDS.some((f) => Object.prototype.hasOwnProperty.call(base, f));
 }
 
-/** True if the caller supplied explicit coordinates (drag/manual pin). */
-function hasDirectCoords(base: BasePatch | undefined): boolean {
-  if (!base) return false;
-  return base.lat !== undefined && base.lng !== undefined;
-}
 
 // ---------------------------------------------------------------------------
 // PATCH handler
@@ -131,7 +126,6 @@ export async function PATCH(
   // hold the connection idle for the duration otherwise).
   // ------------------------------------------------------------------------
   const addressChanged = isAddressChange(basePatch);
-  const directCoords = hasDirectCoords(basePatch);
 
   type CoordResult =
     | { kind: "none" }
@@ -140,11 +134,15 @@ export async function PATCH(
 
   let coord: CoordResult = { kind: "none" };
 
-  if (directCoords) {
+  if (
+    basePatch &&
+    basePatch.lat !== undefined &&
+    basePatch.lng !== undefined
+  ) {
     coord = {
       kind: "manual",
-      lat: basePatch!.lat as number,
-      lng: basePatch!.lng as number,
+      lat: basePatch.lat,
+      lng: basePatch.lng,
     };
   } else if (addressChanged) {
     // Merge current + patched address fields so we geocode the resulting

@@ -26,3 +26,10 @@ if (typeof window !== "undefined") {
   Object.defineProperty(window, "localStorage", { value: storage, configurable: true });
   Object.defineProperty(window, "sessionStorage", { value: storage, configurable: true });
 }
+
+// Stub Better Auth environment vars so `src/lib/auth.ts` can import cleanly
+// under Vitest without a real .env.local. The `better-auth` module itself is
+// vi.mock'd in auth.test.ts, so these values never hit the network.
+process.env.BETTER_AUTH_SECRET ||= "test-secret-not-used-outside-vitest";
+process.env.GOOGLE_CLIENT_ID ||= "test-client-id.apps.googleusercontent.com";
+process.env.GOOGLE_CLIENT_SECRET ||= "test-client-secret";

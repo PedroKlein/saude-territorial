@@ -7,6 +7,13 @@
 
 import type { AlertRule } from "@/types/alerts";
 
+/**
+ * MVP alert rules (LOCKED per plans/pivot-execution.md).
+ *
+ * These four rules were locked by the health team as the only alerts to
+ * evaluate for the MVP. Any change to this list needs an ADR-style note in
+ * the plan; the SPEC calls the set out explicitly (see §Sistema de Alertas).
+ */
 export const ALERT_RULES: AlertRule[] = [
   // Gestantes — IG > 40 semanas (pós-termo)
   {
@@ -16,52 +23,28 @@ export const ALERT_RULES: AlertRule[] = [
     value: 40,
     level: "vermelho",
   },
-  // Gestantes — risco alto
+  // Gestantes — risco alto (canonical lowercase; API/normalization enforces it)
   {
     layer: "gestantes",
     column: "risco",
     operator: "=",
     value: "alto",
-    level: "vermelho",
-  },
-  // Gestantes — sem consulta há mais de 30 dias
-  {
-    layer: "gestantes",
-    column: "dataUltimaConsulta",
-    operator: "older_than_days",
-    value: 30,
-    level: "vermelho",
-  },
-  // Tuberculose — sem baciloscopia
-  {
-    layer: "tuberculose",
-    column: "baciloscopia",
-    operator: "is_empty",
-    value: "",
     level: "amarelo",
   },
-  // Acamados — sem visita há mais de 30 dias
+  // Tuberculose — sem atualização há mais de 30 dias
   {
-    layer: "acamados",
+    layer: "tuberculose",
     column: "dataUltimaAtualizacao",
     operator: "older_than_days",
     value: 30,
-    level: "amarelo",
+    level: "vermelho",
   },
-  // Hipertensão — sem consulta há mais de 60 dias
+  // Hipertensão — sem consulta há mais de 180 dias
   {
     layer: "hipertensao",
     column: "dataUltimaConsulta",
     operator: "older_than_days",
-    value: 60,
-    level: "vermelho",
-  },
-  // Diabetes — sem consulta há mais de 45 dias
-  {
-    layer: "diabetes",
-    column: "dataUltimaConsulta",
-    operator: "older_than_days",
-    value: 45,
+    value: 180,
     level: "amarelo",
   },
 ];

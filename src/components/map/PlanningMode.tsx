@@ -1,7 +1,6 @@
 "use client";
 
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
-import { useMapStore } from "@/stores/mapStore";
 import { CircleMarker, Tooltip } from "react-leaflet";
 import { useMemo } from "react";
 

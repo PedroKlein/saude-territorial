@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useFilterStore } from "@/stores/filterStore";
 
 interface MicroareaStats {
@@ -21,30 +22,32 @@ interface MicroareaMetricsProps {
 export function MicroareaMetrics({ patients }: MicroareaMetricsProps) {
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
 
-  const now = Date.now();
-  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  // Freeze `now` inside a memo so the render itself is pure. The stats
+  // recompute only when the patient set changes; we don't tick a clock —
+  // "overdue visit" is a coarse indicator, sub-day freshness isn't useful.
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const statsMap = new Map<string, MicroareaStats>();
 
-  // Compute stats per microárea
-  const statsMap = new Map<string, MicroareaStats>();
-
-  for (const p of patients) {
-    const ma = p.microarea ?? "Sem MA";
-    if (!statsMap.has(ma)) {
-      statsMap.set(ma, { id: ma, total: 0, red: 0, yellow: 0, overdueVisit: 0 });
+    for (const p of patients) {
+      const ma = p.microarea ?? "Sem MA";
+      let entry = statsMap.get(ma);
+      if (!entry) {
+        entry = { id: ma, total: 0, red: 0, yellow: 0, overdueVisit: 0 };
+        statsMap.set(ma, entry);
+      }
+      entry.total++;
+      if (p.alertLevel === "vermelho") entry.red++;
+      if (p.alertLevel === "amarelo") entry.yellow++;
+      if (p.dataUltimaAtualizacao) {
+        const lastUpdate = new Date(p.dataUltimaAtualizacao).getTime();
+        if (now - lastUpdate > thirtyDaysMs) entry.overdueVisit++;
+      }
     }
-    const s = statsMap.get(ma)!;
-    s.total++;
-    if (p.alertLevel === "vermelho") s.red++;
-    if (p.alertLevel === "amarelo") s.yellow++;
-    if (p.dataUltimaAtualizacao) {
-      const lastUpdate = new Date(p.dataUltimaAtualizacao).getTime();
-      if (now - lastUpdate > thirtyDaysMs) s.overdueVisit++;
-    }
-  }
 
-  const stats = Array.from(statsMap.values()).sort((a, b) =>
-    a.id.localeCompare(b.id)
-  );
+    return Array.from(statsMap.values()).sort((a, b) => a.id.localeCompare(b.id));
+  }, [patients]);
 
   if (stats.length === 0) {
     return (

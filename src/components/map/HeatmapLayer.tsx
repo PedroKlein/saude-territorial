@@ -4,6 +4,13 @@ import { useMap } from "react-leaflet";
 import { useEffect } from "react";
 import type L from "leaflet";
 
+type LeafletHeatMod = typeof L & {
+  heatLayer: (
+    data: [number, number, number][],
+    opts: { radius?: number; blur?: number; maxZoom?: number },
+  ) => { addTo: (m: unknown) => unknown; remove: () => void };
+};
+
 interface HeatmapPoint {
   lat: number;
   lng: number;
@@ -34,22 +41,19 @@ export function HeatmapLayer({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let heatLayer: any = null;
 
-    import("leaflet.heat").then(() => {
-      const heatData: [number, number, number][] = points.map((p) => [
-        p.lat,
-        p.lng,
-        p.intensity,
-      ]);
+    void Promise.all([import("leaflet"), import("leaflet.heat")]).then(
+      ([leafletMod]) => {
+        const heatData: [number, number, number][] = points.map((p) => [
+          p.lat,
+          p.lng,
+          p.intensity,
+        ]);
 
-      // leaflet.heat adds L.heatLayer to the L namespace
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const L = require("leaflet") as typeof import("leaflet") & { heatLayer: any };
-      heatLayer = L.heatLayer(heatData, {
-        radius,
-        blur,
-        maxZoom,
-      }).addTo(map);
-    });
+        // leaflet.heat augments the default export with `heatLayer` at runtime.
+        const LeafletHeat = leafletMod.default as LeafletHeatMod;
+        heatLayer = LeafletHeat.heatLayer(heatData, { radius, blur, maxZoom }).addTo(map);
+      },
+    );
 
     return () => {
       if (heatLayer) {

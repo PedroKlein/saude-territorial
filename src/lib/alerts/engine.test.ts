@@ -199,3 +199,95 @@ describe("getHighestAlert", () => {
     expect(getHighestAlert("verde", "verde")).toBe("verde");
   });
 });
+
+/**
+ * The LOCKED MVP alert-rule set (see `src/config/alert-rules.config.ts`).
+ * One hit + one miss per rule to guard against config drift.
+ */
+describe("ALERT_RULES (LOCKED MVP set)", () => {
+  const rules: AlertRule[] = [
+    { layer: "gestantes", column: "ig", operator: ">", value: 40, level: "vermelho" },
+    { layer: "gestantes", column: "risco", operator: "=", value: "alto", level: "amarelo" },
+    { layer: "tuberculose", column: "dataUltimaAtualizacao", operator: "older_than_days", value: 30, level: "vermelho" },
+    { layer: "hipertensao", column: "dataUltimaConsulta", operator: "older_than_days", value: 180, level: "amarelo" },
+  ];
+
+  // Deterministic "recent" date relative to today. `older_than_days` compares
+  // against `Date.now()`; a fresh string keeps the tests off any clock.
+  const yesterday = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  })();
+
+  it("Gestantes IG > 40 → vermelho (hit)", () => {
+    const r = evaluatePatient(rules, { cns: "000000000000000", ig: 41 }, "gestantes");
+    expect(r.level).toBe("vermelho");
+    expect(r.triggeredRules.some((x) => x.column === "ig")).toBe(true);
+  });
+
+  it("Gestantes IG ≤ 40 → not triggered by IG rule (miss)", () => {
+    const r = evaluatePatient(rules, { cns: "000000000000000", ig: 40 }, "gestantes");
+    expect(r.triggeredRules.some((x) => x.column === "ig")).toBe(false);
+  });
+
+  it("Gestantes risco = alto → amarelo (hit)", () => {
+    const r = evaluatePatient(rules, { cns: "000000000000000", risco: "alto" }, "gestantes");
+    expect(r.level).toBe("amarelo");
+    expect(r.triggeredRules.some((x) => x.column === "risco")).toBe(true);
+  });
+
+  it("Gestantes risco = habitual → miss", () => {
+    const r = evaluatePatient(rules, { cns: "000000000000000", risco: "habitual" }, "gestantes");
+    expect(r.triggeredRules.some((x) => x.column === "risco")).toBe(false);
+  });
+
+  it("Tuberculose dataUltimaAtualizacao > 30 dias → vermelho (hit)", () => {
+    const r = evaluatePatient(
+      rules,
+      { cns: "000000000000000", dataUltimaAtualizacao: "01/01/2020" },
+      "tuberculose",
+    );
+    expect(r.level).toBe("vermelho");
+    expect(r.triggeredRules).toHaveLength(1);
+  });
+
+  it("Tuberculose dataUltimaAtualizacao recente → miss", () => {
+    const r = evaluatePatient(
+      rules,
+      { cns: "000000000000000", dataUltimaAtualizacao: yesterday },
+      "tuberculose",
+    );
+    expect(r.triggeredRules).toHaveLength(0);
+  });
+
+  it("Hipertensão dataUltimaConsulta > 180 dias → amarelo (hit)", () => {
+    const r = evaluatePatient(
+      rules,
+      { cns: "000000000000000", dataUltimaConsulta: "01/01/2020" },
+      "hipertensao",
+    );
+    expect(r.level).toBe("amarelo");
+    expect(r.triggeredRules).toHaveLength(1);
+  });
+
+  it("Hipertensão dataUltimaConsulta recente → miss", () => {
+    const r = evaluatePatient(
+      rules,
+      { cns: "000000000000000", dataUltimaConsulta: yesterday },
+      "hipertensao",
+    );
+    expect(r.triggeredRules).toHaveLength(0);
+  });
+
+  it("No cross-layer leak: TB rule doesn't fire on a gestante", () => {
+    // Gestante with an old dataUltimaAtualizacao field must not trigger the
+    // TB rule, which is scoped to layer=tuberculose.
+    const r = evaluatePatient(
+      rules,
+      { cns: "000000000000000", dataUltimaAtualizacao: "01/01/2020", ig: 30 },
+      "gestantes",
+    );
+    expect(r.triggeredRules).toHaveLength(0);
+  });
+});

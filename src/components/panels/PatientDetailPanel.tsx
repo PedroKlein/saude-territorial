@@ -91,7 +91,7 @@ export function PatientDetailPanel({ layerData }: PatientDetailPanelProps) {
         <>
           <dl className="space-y-2">
             {visibleColumns.map((col) => {
-              const value = patientData![col];
+              const value = patientData[col];
               return (
                 <div key={col}>
                   <dt className="text-xs font-medium uppercase text-muted-foreground">
