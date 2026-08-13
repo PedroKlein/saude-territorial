@@ -54,7 +54,7 @@ From the grilling session and cleanup planning:
 |---|----------|--------------|
 | 1 | Supabase = source of truth | ADR-001 |
 | 2 | Drizzle ORM = data access layer | ADR-002 |
-| 3 | `@supabase/ssr` for auth boundary ONLY (no data queries) | ADR-002 |
+| 3 | Better Auth (SQLite via `better-sqlite3`) for auth boundary | ADR-002 |
 | 4 | Base `patients` + extension tables per condition | SPEC.md §Modelo de Dados |
 | 5 | 3 priority layers for MVP: **Gestantes, Tuberculose, HAS** | SPEC.md §Milestones |
 | 6 | 4 static alert criteria (locked list) | SPEC.md §Sistema de Alertas |
