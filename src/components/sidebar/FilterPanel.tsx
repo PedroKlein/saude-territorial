@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
+import type { AlertLevel } from "@/types/alerts";
+import { AlertShape } from "@/components/ui/AlertShape";
 import { useFilterStore } from "@/stores/filterStore";
 
 const MICROAREAS = ["MA1", "MA2", "MA3", "MA4", "MA5"];
-const ALERT_LEVELS = [
-  { id: "vermelho", label: "Crítico", dotClass: "bg-alert-red" },
-  { id: "amarelo", label: "Atenção", dotClass: "bg-alert-amber" },
-  { id: "verde", label: "Normal", dotClass: "bg-ok-green" },
+const ALERT_LEVELS: { id: AlertLevel; label: string }[] = [
+  { id: "vermelho", label: "Crítico" },
+  { id: "amarelo", label: "Atenção" },
+  { id: "verde", label: "Normal" },
 ];
 
 /**
@@ -108,10 +110,7 @@ export function FilterPanel() {
                       : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                   }`}
                 >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${level.dotClass}`}
-                    aria-hidden
-                  />
+                  <AlertShape level={level.id} size={10} />
                   {level.label}
                 </button>
               ))}

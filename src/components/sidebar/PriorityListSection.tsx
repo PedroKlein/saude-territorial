@@ -9,6 +9,7 @@ import { ALERT_RULES } from "@/config/alert-rules.config";
 import type { PatientRecord, LayeredPatientData } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
+import { AlertShape } from "@/components/ui/AlertShape";
 import type { LucideIcon } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -33,11 +34,8 @@ const LAYER_ABBR: Partial<Record<LayerId, string>> = {
   hipertensao: "HAS",
 };
 
-const ALERT_DOT_CLASS: Record<AlertLevel, string> = {
-  vermelho: "bg-alert-red",
-  amarelo: "bg-alert-amber",
-  verde: "bg-ok-green",
-};
+// Alert level is rendered via <AlertShape> (see components/ui/AlertShape.tsx)
+// so shape + color both encode severity — deuteranopia-safe.
 
 const URGENCY_ORDER: Record<AlertLevel, number> = {
   vermelho: 0,
@@ -175,10 +173,9 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
                 {/* Text block */}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${ALERT_DOT_CLASS[item.alertLevel]}`}
-                      aria-hidden
-                    />
+                    <span className="shrink-0 leading-none">
+                      <AlertShape level={item.alertLevel} size={10} />
+                    </span>
                     <span className="truncate text-sm font-medium text-neutral-900">
                       {item.name ?? "Sem nome"}
                     </span>
