@@ -213,7 +213,7 @@ function PlannerDrawer({ onClose }: { onClose: () => void }) {
         <button
           className="flex w-full items-center justify-center gap-2 rounded-md border border-neutral-200 bg-gradient-to-br from-white to-neutral-50 px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm transition hover:border-[oklch(58%_0.10_195/0.4)] hover:from-[oklch(97%_0.02_195)]"
         >
-          <I.Sparkles className="!h-4 !w-4" style={{ color: TEAL }} />
+          <I.Sparkles className="!h-4 !w-4 text-[oklch(58%_0.10_195)]" />
           Sugerir plano para hoje
           <span className="ml-auto text-[10px] font-medium text-neutral-500">
             baseado em alertas + última visita

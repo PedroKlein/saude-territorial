@@ -1,46 +1,215 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
-  /* Brand */
-  --color-primary: #1B5E20;
-  --color-primary-light: #4CAF50;
+/* -----------------------------------------------------------------------------
+ * Design tokens — DS-11 (UI polish plan)
+ *
+ * Tokens fall in two families:
+ *  1. Semantic shadcn tokens (background, foreground, primary, ...) — consumed
+ *     by generated primitives and referenced through `@theme inline` so that
+ *     `.dark` overrides propagate.
+ *  2. Product tokens — brand teal, condition accents (rose/terracotta/indigo),
+ *     alert states, layer accents. Palette follows the OKLCH values locked in
+ *     the design session (plans/ui-polish.md DS-11).
+ *
+ * `@source inline(...)` keeps dynamically-assembled `bg-*` / `text-*` classes
+ * alive under Tailwind v4 tree-shaking.
+ * --------------------------------------------------------------------------- */
 
-  /* Urgency categories — badges, markers, priority list */
-  --color-urgency-critico: oklch(0.55 0.22 25);
-  --color-urgency-atencao: oklch(0.7 0.18 70);
-  --color-urgency-normal: oklch(0.6 0.16 145);
+@custom-variant dark (&:is(.dark *));
 
-  /* Semantic alert aliases (hex kept for compatibility with legacy references) */
-  --color-urgent-red: #D32F2F;
-  --color-alert-yellow: #F9A825;
-  --color-safe-green: #388E3C;
+@theme inline {
+  /* shadcn semantic — reference :root so .dark can override */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-  /* Layer accents — one per sheet tab, sidebar toggles + map legend */
-  --color-layer-gestantes: oklch(0.6 0.2 340);
-  --color-layer-tuberculose: oklch(0.65 0.15 60);
-  --color-layer-diabetes: oklch(0.6 0.18 280);
-  --color-layer-hipertensao: oklch(0.55 0.2 25);
-  --color-layer-acamados: oklch(0.5 0.15 200);
-  --color-layer-pse: oklch(0.65 0.12 150);
-  --color-layer-ilpi: oklch(0.6 0.1 300);
+  /* Product tokens */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-alert-red: var(--alert-red);
+  --color-alert-amber: var(--alert-amber);
+  --color-ok-green: var(--ok-green);
+
+  --color-gestante: var(--gestante);
+  --color-tuberculose: var(--tuberculose);
+  --color-hipertensao: var(--hipertensao);
+
+  /* Deferred layer accents — kept defined but muted; not seeded */
+  --color-diabetes: var(--diabetes);
+  --color-acamados: var(--acamados);
+  --color-pse: var(--pse);
+  --color-ilpi: var(--ilpi);
+
+  /* Backward-compat aliases — legacy layer/urgency tokens still referenced
+   * across map/panel/sidebar. Point at new palette rather than duplicate hex.
+   * Delete once every consumer migrates. */
+  --color-layer-gestantes: var(--gestante);
+  --color-layer-tuberculose: var(--tuberculose);
+  --color-layer-hipertensao: var(--hipertensao);
+  --color-layer-diabetes: var(--diabetes);
+  --color-layer-acamados: var(--acamados);
+  --color-layer-pse: var(--pse);
+  --color-layer-ilpi: var(--ilpi);
+
+  --color-urgency-critico: var(--alert-red);
+  --color-urgency-atencao: var(--alert-amber);
+  --color-urgency-normal: var(--ok-green);
+  --color-urgent-red: var(--alert-red);
+  --color-alert-yellow: var(--alert-amber);
+  --color-safe-green: var(--ok-green);
+  --color-primary-light: var(--brand-hover);
+
+  /* Radius scale — 4/6/10/pill */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 999px;
+  --radius: 10px;
+
+  /* Elevation — three-tier */
+  --shadow-xs: 0 1px 2px oklch(20% 0.02 260 / 0.04);
+  --shadow-sm: 0 2px 6px oklch(20% 0.02 260 / 0.06);
+  --shadow-md: 0 8px 24px oklch(20% 0.02 260 / 0.08);
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
-/* Ensure dynamically-assembled layer classes survive Tailwind v4 tree-shaking */
-@source inline("bg-layer-gestantes bg-layer-tuberculose bg-layer-diabetes bg-layer-hipertensao bg-layer-acamados bg-layer-pse bg-layer-ilpi border-layer-gestantes border-layer-tuberculose border-layer-diabetes border-layer-hipertensao text-layer-gestantes text-layer-tuberculose text-layer-diabetes text-layer-hipertensao bg-urgency-critico bg-urgency-atencao bg-urgency-normal");
+:root {
+  /* DS-11 palette — OKLCH */
+  --brand: oklch(58% 0.10 195);
+  --brand-hover: oklch(52% 0.10 195);
+  --alert-red: oklch(58% 0.19 25);
+  --alert-amber: oklch(75% 0.14 75);
+  --ok-green: oklch(65% 0.14 155);
 
-/* Global interactive element defaults */
+  --gestante: oklch(72% 0.11 15);
+  --tuberculose: oklch(60% 0.09 40);
+  --hipertensao: oklch(60% 0.13 275);
+
+  /* Deferred layers */
+  --diabetes: oklch(60% 0.10 280);
+  --acamados: oklch(55% 0.08 210);
+  --pse: oklch(60% 0.10 150);
+  --ilpi: oklch(60% 0.08 300);
+
+  /* Surface + text (warm off-white background per DS-11) */
+  --background: oklch(98.5% 0.005 90);
+  --foreground: oklch(20% 0.02 260);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(20% 0.02 260);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(20% 0.02 260);
+  --muted: oklch(96% 0.005 90);
+  --muted-foreground: oklch(48% 0.02 260);
+  --accent: oklch(94% 0.02 195);
+  --accent-foreground: oklch(20% 0.02 260);
+  --border: oklch(92% 0.01 90);
+  --input: oklch(92% 0.01 90);
+  --ring: oklch(58% 0.10 195);
+
+  --primary: oklch(58% 0.10 195);
+  --primary-foreground: oklch(99% 0.005 90);
+  --secondary: oklch(96% 0.005 90);
+  --secondary-foreground: oklch(20% 0.02 260);
+  --destructive: oklch(58% 0.19 25);
+  --destructive-foreground: oklch(99% 0.005 90);
+
+  --sidebar: oklch(99% 0.005 90);
+  --sidebar-foreground: oklch(20% 0.02 260);
+  --sidebar-border: oklch(92% 0.01 90);
+  --sidebar-accent: oklch(94% 0.02 195);
+  --sidebar-accent-foreground: oklch(20% 0.02 260);
+  --sidebar-primary: oklch(58% 0.10 195);
+  --sidebar-primary-foreground: oklch(99% 0.005 90);
+  --sidebar-ring: oklch(58% 0.10 195);
+
+  --chart-1: oklch(58% 0.10 195);
+  --chart-2: oklch(72% 0.11 15);
+  --chart-3: oklch(60% 0.09 40);
+  --chart-4: oklch(60% 0.13 275);
+  --chart-5: oklch(65% 0.14 155);
+}
+
+.dark {
+  /* Dark scaffold — palette not yet audited; kept so a future dark toggle
+   * does not blow up. Not exposed via any UI in this pass. */
+  --background: oklch(14% 0.01 260);
+  --foreground: oklch(96% 0.005 90);
+  --card: oklch(18% 0.01 260);
+  --card-foreground: oklch(96% 0.005 90);
+  --popover: oklch(18% 0.01 260);
+  --popover-foreground: oklch(96% 0.005 90);
+  --muted: oklch(22% 0.01 260);
+  --muted-foreground: oklch(68% 0.02 260);
+  --accent: oklch(24% 0.02 195);
+  --accent-foreground: oklch(96% 0.005 90);
+  --border: oklch(28% 0.01 260);
+  --input: oklch(28% 0.01 260);
+  --ring: oklch(58% 0.10 195);
+  --primary: oklch(65% 0.10 195);
+  --primary-foreground: oklch(12% 0.01 260);
+  --secondary: oklch(22% 0.01 260);
+  --secondary-foreground: oklch(96% 0.005 90);
+  --destructive: oklch(60% 0.20 25);
+  --destructive-foreground: oklch(96% 0.005 90);
+}
+
+/* Dynamically-assembled class survival list (Tailwind v4 tree-shaking guard) */
+@source inline("bg-layer-gestantes bg-layer-tuberculose bg-layer-diabetes bg-layer-hipertensao bg-layer-acamados bg-layer-pse bg-layer-ilpi border-layer-gestantes border-layer-tuberculose border-layer-diabetes border-layer-hipertensao text-layer-gestantes text-layer-tuberculose text-layer-diabetes text-layer-hipertensao bg-gestante bg-tuberculose bg-hipertensao bg-diabetes bg-acamados bg-pse bg-ilpi text-gestante text-tuberculose text-hipertensao border-gestante border-tuberculose border-hipertensao bg-urgency-critico bg-urgency-atencao bg-urgency-normal bg-alert-red bg-alert-amber bg-ok-green text-alert-red text-alert-amber text-ok-green bg-brand text-brand border-brand");
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Global interactive element defaults — preserved from pre-DS-11 setup */
 button,
 a,
 [role="button"],
 input[type="submit"],
 select {
   cursor: pointer;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--color-primary-light);
-  border-color: var(--color-primary);
 }
