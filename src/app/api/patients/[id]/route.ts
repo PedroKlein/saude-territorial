@@ -368,6 +368,64 @@ export async function DELETE(
   }
 }
 
+// ---------------------------------------------------------------------------
+// GET handler — unified single-patient shape
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/patients/[id] — one patient with all attached condition rows.
+ *
+ * Powers the unified `PatientDetailPanel` (UP-2.2): the panel renders one
+ * identity card plus N condition cards, and needs identity + every attached
+ * extension in a single response. Layer-scoped fetches (`usePatientData`)
+ * remain unchanged; this endpoint is additive.
+ *
+ * Returns:
+ *   200 { patient: UnifiedPatient }
+ *   401 { error }  — unauthenticated (SPEC LOCKED §10)
+ *   404 { error }  — no row with that id
+ *
+ * LGPD: no patient values in logs; only the error code path is echoed.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
+    return NextResponse.json(
+      { error: "Autenticação necessária." },
+      { status: 401 },
+    );
+  }
+
+  const { id } = await params;
+
+  try {
+    const row = await db.query.patients.findFirst({
+      where: eq(patients.id, id),
+      with: { gestantes: true, tuberculose: true, has: true },
+    });
+
+    if (!row) {
+      return NextResponse.json(
+        { error: "Paciente não encontrado." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ patient: shapeUnified(row) });
+  } catch (err) {
+    const code = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[api/patients:GET] failed (${code})`);
+    return NextResponse.json(
+      { error: "Erro ao carregar paciente. Tente novamente." },
+      { status: 500 },
+    );
+  }
+}
+
+
 
 // ---------------------------------------------------------------------------
 // Response shape — mirrors the flat "dd/MM/yyyy + computed IG" GET envelope.
@@ -488,4 +546,121 @@ function shape(p: Loaded): {
   }
 
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Unified shape — one identity block, N nullable condition blocks
+// ---------------------------------------------------------------------------
+
+/**
+ * Envelope for the unified GET response. `gestante` / `tuberculose` / `has`
+ * are non-null exactly when the corresponding extension row exists — this is
+ * the "a patient is a patient" model (`plans/ui-polish.md` DS-3/DS-4).
+ *
+ * Date columns are emitted as `dd/MM/yyyy` for direct rendering. IG is
+ * emitted as a rounded number of weeks — the same convention `shape()` uses,
+ * so priority-list callers can share the alert evaluator without adjustment.
+ */
+export type UnifiedPatient = {
+  id: string;
+  cns: string;
+  nomeCompleto: string;
+  dataNascimento: string | null;
+  idade: number | null;
+  telefone: string | null;
+  rua: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  microarea: string | null;
+  lat: number | null;
+  lng: number | null;
+  geocodeStatus: string | null;
+  geocodeReference: string | null;
+  vulnerabilidades: string | null;
+  updatedAt: string | null;
+  gestante: Record<string, unknown> | null;
+  tuberculose: Record<string, unknown> | null;
+  has: Record<string, unknown> | null;
+};
+
+function shapeUnified(p: Loaded): UnifiedPatient {
+  return {
+    id: p.id,
+    cns: p.cns,
+    nomeCompleto: p.nomeCompleto,
+    dataNascimento: toBRDate(p.dataNascimento),
+    idade: p.idade,
+    telefone: p.telefone,
+    rua: p.rua,
+    numero: p.numero,
+    complemento: p.complemento,
+    bairro: p.bairro,
+    microarea: p.microarea,
+    lat: p.lat,
+    lng: p.lng,
+    geocodeStatus: p.geocodeStatus,
+    geocodeReference: p.geocodeReference,
+    vulnerabilidades: p.vulnerabilidades,
+    updatedAt: timestampToBRDate(p.updatedAt),
+    gestante: p.gestantes
+      ? {
+          dum: toBRDate(p.gestantes.dum),
+          dpp: toBRDate(p.gestantes.dpp),
+          risco: p.gestantes.risco,
+          ig: computeIg(p.gestantes.dum),
+          igAbertura: p.gestantes.igAbertura,
+          dataUltimaConsulta: toBRDate(p.gestantes.dataUltimaConsulta),
+          dataProximaConsulta: toBRDate(p.gestantes.dataProximaConsulta),
+          numeroConsultas: p.gestantes.numeroConsultas,
+          hasPreviaTag: p.gestantes.hasPreviaTag,
+          diabetesPreviaTag: p.gestantes.diabetesPreviaTag,
+          pressaoArterial: p.gestantes.pressaoArterial,
+          acompanhamentoPesoAltura: p.gestantes.acompanhamentoPesoAltura,
+          numeroVisitasDomiciliares: p.gestantes.numeroVisitasDomiciliares,
+          avaliacaoOdontoStatus: p.gestantes.avaliacaoOdontoStatus,
+          vacinaDtpa: p.gestantes.vacinaDtpa,
+          trPrimeiroTri: p.gestantes.trPrimeiroTri,
+          trSegundoTri: p.gestantes.trSegundoTri,
+          trTerceiroTri: p.gestantes.trTerceiroTri,
+          resultadoTr: p.gestantes.resultadoTr,
+          isPuerpera: p.gestantes.isPuerpera,
+          isExposta: p.gestantes.isExposta,
+          updatedAt: timestampToBRDate(p.gestantes.updatedAt),
+        }
+      : null,
+    tuberculose: p.tuberculose
+      ? {
+          tipo: p.tuberculose.tipo,
+          galRegistro: p.tuberculose.galRegistro,
+          baciloscopiaPrimeiraData: toBRDate(p.tuberculose.baciloscopiaPrimeiraData),
+          baciloscopiaSegundaData: toBRDate(p.tuberculose.baciloscopiaSegundaData),
+          baciloscopiaResultado: p.tuberculose.baciloscopiaResultado,
+          trmPrimeiraData: toBRDate(p.tuberculose.trmPrimeiraData),
+          trmSegundaData: toBRDate(p.tuberculose.trmSegundaData),
+          trmResultado: p.tuberculose.trmResultado,
+          culturaMTuberculosis: p.tuberculose.culturaMTuberculosis,
+          formaClinica: p.tuberculose.formaClinica,
+          tipoEntrada: p.tuberculose.tipoEntrada,
+          esquema: p.tuberculose.esquema,
+          dataInicio: toBRDate(p.tuberculose.dataInicio),
+          tdoStatus: p.tuberculose.tdoStatus,
+          encerramentoMotivo: p.tuberculose.encerramentoMotivo,
+          encerramentoData: toBRDate(p.tuberculose.encerramentoData),
+          outrosExames: p.tuberculose.outrosExames,
+          updatedAt: timestampToBRDate(p.tuberculose.updatedAt),
+        }
+      : null,
+    has: p.has
+      ? {
+          dataUltimaConsulta: toBRDate(p.has.dataUltimaConsulta),
+          dataProximaConsulta: toBRDate(p.has.dataProximaConsulta),
+          dataUltimaAfericaoPa: toBRDate(p.has.dataUltimaAfericaoPa),
+          pressaoArterial: p.has.pressaoArterial,
+          registroNotas: p.has.registroNotas,
+          encaminhamentos: p.has.encaminhamentos,
+          updatedAt: timestampToBRDate(p.has.updatedAt),
+        }
+      : null,
+  };
 }
