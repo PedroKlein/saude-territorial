@@ -206,8 +206,6 @@ export function PatientMarker({
   alertLevel,
   layerId,
   coincidenceCount,
-  // confidence kept in signature for future uncertain-marker styling
-  confidence: _confidence,
 }: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const selectedPatient = useMapStore((s) => s.selectedPatient);

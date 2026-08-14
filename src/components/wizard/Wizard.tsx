@@ -16,7 +16,7 @@
  * LGPD: ctx values are never logged here.
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { z } from "zod";
@@ -98,7 +98,9 @@ export function Wizard<Ctx>({
 
   // Keep a ref so async callbacks (onFinish) always see the latest ctx.
   const ctxRef = useRef(ctx);
-  ctxRef.current = ctx;
+  useEffect(() => {
+    ctxRef.current = ctx;
+  }, [ctx]);
 
   const setCtx = useCallback((patch: Partial<Ctx>) => {
     setCtxState((prev) => ({ ...prev, ...patch }));

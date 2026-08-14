@@ -86,9 +86,9 @@ const MICROAREA_OPTIONS = (
   MICROAREAS_GEOJSON.features as Array<{
     properties: { id: string; nome: string } | null;
   }>
-)
-  .filter((f) => f.properties != null)
-  .map((f) => ({ value: f.properties!.id, label: f.properties!.nome }));
+).flatMap((f) =>
+  f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
+);
 
 // ---------------------------------------------------------------------------
 // Form type — the Zod schema's INPUT shape (before transforms)
@@ -698,7 +698,8 @@ function PanelContent({
           >
             <AnimatePresence>
               {activeCards.map((card) => {
-                const data = card.data!;
+                if (card.data == null) return null;
+                const data = card.data;
                 const isAdvanced = showAdvanced[card.key] ?? false;
                 const errors = form.formState.errors;
 

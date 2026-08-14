@@ -45,10 +45,15 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch list whenever dialog opens.
+  // Fetch list whenever dialog opens. React Compiler flags setState in
+  // effects as "cascading renders"; the pattern is intentional here (kick
+  // off the request as soon as the dialog opens), so the rule is suppressed
+  // for this effect only.
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
 
     fetch("/api/plans?limit=30")

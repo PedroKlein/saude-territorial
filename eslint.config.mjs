@@ -30,6 +30,12 @@ export default tseslint.config(
       // choice we haven't made; when we do, we'll add a useSyncExternalStore
       // ticker and re-enable this rule.
       "react-hooks/purity": "off",
+      // Allow `_prefixed` args to be intentionally ignored (common in wrapper
+      // and stub signatures where the callback shape is imposed externally).
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" },
+      ],
     },
   },
   {

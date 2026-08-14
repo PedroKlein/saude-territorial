@@ -21,7 +21,6 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import { format } from "date-fns";
 
 import { Wizard } from "@/components/wizard/Wizard";
 import type { WizardStep } from "@/components/wizard/Wizard";
@@ -39,7 +38,6 @@ import {
   isCreatePatientError,
 } from "@/hooks/useCreatePatient";
 import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
-import type { LayerId } from "@/config/layers.config";
 
 // ---------------------------------------------------------------------------
 // Public types

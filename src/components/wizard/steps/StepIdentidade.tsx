@@ -17,13 +17,6 @@ import { format } from "date-fns";
 import { isValidCns } from "@/lib/patients/cns";
 import { CnsInput, PhoneInput } from "@/components/ui/masked-input";
 import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/panels/Field";
@@ -56,7 +49,7 @@ type IdentidadeValues = z.infer<typeof IdentidadeSchema>;
 
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 
-export function StepIdentidade({ ctx, setCtx, goNext, goBack: _goBack }: Props) {
+export function StepIdentidade({ ctx, setCtx, goNext }: Props) {
   const {
     register,
     handleSubmit,

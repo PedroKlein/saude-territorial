@@ -19,7 +19,6 @@ import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { usePlannerStore } from "@/stores/plannerStore";
 
-import { useMapEvents } from "react-leaflet";
 import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { evaluatePatient } from "@/lib/alerts/engine";

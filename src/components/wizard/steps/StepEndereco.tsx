@@ -56,9 +56,9 @@ const MICROAREA_OPTIONS = (
   MICROAREAS_GEOJSON.features as Array<{
     properties: { id: string; nome: string } | null;
   }>
-)
-  .filter((f) => f.properties != null)
-  .map((f) => ({ value: f.properties!.id, label: f.properties!.nome }));
+).flatMap((f) =>
+  f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
+);
 
 // ---------------------------------------------------------------------------
 // Schema
