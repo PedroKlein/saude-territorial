@@ -28,13 +28,13 @@ describe("mapStore", () => {
     expect(useMapStore.getState().activeLayers.gestantes).toBe(true);
   });
 
-  it("setSelectedPatient sets and clears selected patient", () => {
+  it("setSelectedPatient sets and clears selected patient (accepts patient UUID)", () => {
     const { setSelectedPatient } = useMapStore.getState();
 
     expect(useMapStore.getState().selectedPatient).toBeNull();
 
-    setSelectedPatient("123456789012345");
-    expect(useMapStore.getState().selectedPatient).toBe("123456789012345");
+    setSelectedPatient("550e8400-e29b-41d4-a716-446655440000");
+    expect(useMapStore.getState().selectedPatient).toBe("550e8400-e29b-41d4-a716-446655440000");
 
     setSelectedPatient(null);
     expect(useMapStore.getState().selectedPatient).toBeNull();

@@ -350,5 +350,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json({ patient: shape(created) }, { status: 201 });
+  return NextResponse.json({ patient: { id: newId, ...shape(created) } }, { status: 201 });
 }

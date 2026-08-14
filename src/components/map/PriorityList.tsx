@@ -32,6 +32,7 @@ interface PriorityListProps {
 }
 
 interface PriorityItem {
+  id: string;
   cns: string;
   name: string | null;
   alertLevel: AlertLevel;
@@ -84,6 +85,7 @@ export function PriorityList({ data }: PriorityListProps) {
         return b.triggeredCount - a.triggeredCount;
       })
       .map((p) => ({
+        id: p.id,
         cns: p.cns,
         name: p.nomeCompleto,
         alertLevel: p.alertLevel,
@@ -117,7 +119,7 @@ export function PriorityList({ data }: PriorityListProps) {
           {items.map((item) => (
             <button
               key={item.cns}
-              onClick={() => setSelectedPatient(item.cns)}
+            onClick={() => setSelectedPatient(item.id)}
               className="flex w-full cursor-pointer items-start gap-2 border-b border-gray-50 px-3 py-2 text-left transition-colors hover:bg-blue-50"
               style={{ borderLeft: `3px solid ${URGENCY_BORDER_COLORS[item.alertLevel]}` }}
             >

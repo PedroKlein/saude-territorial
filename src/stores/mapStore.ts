@@ -40,7 +40,7 @@ interface MapState {
 
 interface MapActions {
   toggleLayer: (id: LayerId) => void;
-  setSelectedPatient: (cns: string | null) => void;
+  setSelectedPatient: (id: string | null) => void;
   setMapView: (center: [number, number], zoom: number) => void;
   setActiveRoute: (route: ActiveRoute | null) => void;
   setShowTerritories: (show: boolean) => void;
@@ -89,7 +89,8 @@ export const useMapStore = create<MapStore>()(persist(
       },
     })),
 
-  setSelectedPatient: (cns) => set({ selectedPatient: cns }),
+  /** Sets the currently selected patient by **patient UUID** (not CNS). */
+  setSelectedPatient: (id) => set({ selectedPatient: id }),
 
   setMapView: (center, zoom) => set({ mapCenter: center, mapZoom: zoom }),
 

@@ -140,7 +140,7 @@ export function MapWithData() {
         {/* Stats dashboard (bottom center) */}
         <StatsDashboard data={data} />
         {/* Detail panel (right side, shows on marker click) */}
-        <PatientDetailPanel layerData={data} />
+        <PatientDetailPanel />
       </div>
     </div>
   );

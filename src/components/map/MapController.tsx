@@ -31,7 +31,7 @@ export function MapController({ data }: MapControllerProps) {
     // Find the patient's coordinates across all layers
     for (const patients of Object.values(data)) {
       if (!patients) continue;
-      const patient = patients.find((p) => p.cns === selectedPatient);
+      const patient = patients.find((p) => p.id === selectedPatient);
       if (patient) {
         // Only fly if the patient is not already visible in the current viewport
         const patientLatLng = { lat: patient.lat, lng: patient.lng };

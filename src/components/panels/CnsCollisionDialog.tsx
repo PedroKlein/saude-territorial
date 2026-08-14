@@ -50,7 +50,6 @@ export function CnsCollisionDialog({
     attach.mutate(
       {
         patientId: existing.id,
-        cns: existing.cns,
         body: { condicao, data: extensionData } as ConditionAttach,
       },
       { onSuccess },

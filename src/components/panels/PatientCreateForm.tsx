@@ -165,7 +165,7 @@ export function PatientCreateForm() {
     };
 
     create.mutate(
-      { body: body as Parameters<typeof create.mutate>[0]["body"], cns: body.cns },
+      { body: body as Parameters<typeof create.mutate>[0]["body"] },
       {
         onSuccess: () => close(),
         onError: (err) => {

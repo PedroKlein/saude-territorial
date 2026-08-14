@@ -96,7 +96,7 @@ export function PatientMarker({
   const update = useUpdatePatient();
   const circleRef = useRef<LeafletCircleMarker>(null);
 
-  const isSelected = selectedPatient === cns;
+  const isSelected = selectedPatient === id;
   // Drag is off by default. It only unlocks when the user explicitly
   // enters reposition mode from the detail panel — otherwise a stray
   // click-and-hold on a selected marker would drift the coord silently.
@@ -192,7 +192,7 @@ export function PatientMarker({
           if (isPlanning) {
             addWaypoint({ cns, lat, lng, name: name ?? "Sem nome" });
           } else {
-            setSelectedPatient(cns);
+          setSelectedPatient(id);
           }
         },
       }}

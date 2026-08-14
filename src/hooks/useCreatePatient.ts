@@ -80,7 +80,8 @@ async function postJson<TBody>(
  * POST /api/patients — creates a new patient with one extension row.
  *
  * On success: invalidates `patientKeys.all` and opens the detail panel for
- * the newly created patient via `setSelectedPatient(cns)`.
+ * the newly created patient via `setSelectedPatient(id)` (patient UUID from
+ * the response envelope).
  *
  * On 4xx: propagates `CreatePatientError` without retrying.
  * On 5xx network: one automatic retry.
@@ -92,16 +93,18 @@ export function useCreatePatient() {
   return useMutation<
     { status: number; data: unknown },
     CreatePatientError,
-    { body: PatientCreate; cns: string }
+    { body: PatientCreate }
   >({
     mutationFn: ({ body }) => postJson("/api/patients", body),
     retry: (failureCount, error) => {
       if (isCreatePatientError(error) && error.status < 500) return false;
       return failureCount < 1;
     },
-    onSuccess: (_result, variables) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      setSelectedPatient(variables.cns);
+      const d = result.data as { patient?: { id?: string } } | undefined;
+      const id = d?.patient?.id;
+      if (id) setSelectedPatient(id);
     },
   });
 }
@@ -125,7 +128,7 @@ export function useAttachCondition() {
   return useMutation<
     { status: number; data: unknown },
     CreatePatientError,
-    { patientId: string; cns: string; body: ConditionAttach }
+    { patientId: string; body: ConditionAttach }
   >({
     mutationFn: ({ patientId, body }) =>
       postJson(`/api/patients/${patientId}/conditions`, body),
@@ -135,7 +138,7 @@ export function useAttachCondition() {
     },
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      setSelectedPatient(variables.cns);
+      setSelectedPatient(variables.patientId);
     },
   });
 }

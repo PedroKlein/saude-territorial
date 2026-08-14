@@ -153,9 +153,17 @@ export default function MapView() {
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
       >
+        {/*
+         * CartoDB Positron basemap (DS-8): muted light-grey canvas lets
+         * coloured condition markers (gestante/tuberculose/hipertensao) visually
+         * dominate without competing background noise. High-contrast OSM tiles
+         * would fight the marker palette. maxZoom 20 matches CartoDB's tile set.
+         */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
         />
         <Marker position={US_MOAB_CALDAS} icon={US_ICON}>
           <Tooltip direction="top" offset={[0, -18]}>

@@ -44,6 +44,7 @@ function createWrapper(qc: QueryClient) {
 }
 
 const SYNTH_CNS = "000000000000020";
+const SYNTH_PATIENT_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -55,14 +56,14 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("useCreatePatient", () => {
-  it("on 201 — invalidates patientKeys.all and opens the panel", async () => {
+  it("on 201 — invalidates patientKeys.all and opens the panel with patient id", async () => {
     const qc = createQueryClient();
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
     fetchMock.mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ patient: { gestantes: { cns: SYNTH_CNS } } }),
+      json: async () => ({ patient: { id: SYNTH_PATIENT_ID } }),
     });
 
     const { result } = renderHook(() => useCreatePatient(), {
@@ -71,7 +72,6 @@ describe("useCreatePatient", () => {
 
     await act(async () => {
       result.current.mutate({
-        cns: SYNTH_CNS,
         body: {
           cns: SYNTH_CNS,
           base: { nomeCompleto: "PACIENTE_SINTETICO_HOOK" },
@@ -87,7 +87,7 @@ describe("useCreatePatient", () => {
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: patientKeys.all }),
     );
-    expect(setSelectedPatientMock).toHaveBeenCalledWith(SYNTH_CNS);
+    expect(setSelectedPatientMock).toHaveBeenCalledWith(SYNTH_PATIENT_ID);
   });
 
   it("on 409 — propagates structured error with status and body", async () => {
@@ -106,7 +106,6 @@ describe("useCreatePatient", () => {
     });
 
     result.current.mutate({
-      cns: SYNTH_CNS,
       body: {
         cns: SYNTH_CNS,
         base: { nomeCompleto: "PACIENTE_SINTETICO_HOOK" },
@@ -139,7 +138,6 @@ describe("useCreatePatient", () => {
 
     act(() => {
       result.current.mutate({
-        cns: SYNTH_CNS,
         body: {
           cns: SYNTH_CNS,
           base: { nomeCompleto: "PACIENTE_SINTETICO_HOOK" },
@@ -160,14 +158,14 @@ describe("useCreatePatient", () => {
 // ---------------------------------------------------------------------------
 
 describe("useAttachCondition", () => {
-  it("on 201 — invalidates cache and opens the panel", async () => {
+  it("on 201 — invalidates cache and opens the panel with patientId", async () => {
     const qc = createQueryClient();
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
     fetchMock.mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ patient: { hipertensao: { cns: SYNTH_CNS } } }),
+      json: async () => ({ patient: { id: "existing-id" } }),
     });
 
     const { result } = renderHook(() => useAttachCondition(), {
@@ -177,7 +175,6 @@ describe("useAttachCondition", () => {
     await act(async () => {
       result.current.mutate({
         patientId: "existing-id",
-        cns: SYNTH_CNS,
         body: { condicao: "hipertensao", data: {} },
       });
     });
@@ -186,6 +183,6 @@ describe("useAttachCondition", () => {
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: patientKeys.all }),
     );
-    expect(setSelectedPatientMock).toHaveBeenCalledWith(SYNTH_CNS);
+    expect(setSelectedPatientMock).toHaveBeenCalledWith("existing-id");
   });
 });
