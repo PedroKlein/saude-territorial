@@ -15,6 +15,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMapStore } from "@/stores/mapStore";
 import { patientKeys } from "@/hooks/usePatientData";
+import { patientDetailKeys } from "@/hooks/usePatient";
 import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
 
 // ---------------------------------------------------------------------------
@@ -137,7 +138,16 @@ export function useAttachCondition() {
       return failureCount < 1;
     },
     onSuccess: (_result, variables) => {
+      // Invalidate BOTH keys:
+      //   - patientKeys.all  ("patients")   -> the layered map/list data
+      //   - patientDetailKeys.detail(id)    -> the unified patient panel view
+      // The panel reads from usePatient(id), which is a distinct query;
+      // without this second invalidation, adding a condition doesn't reflect
+      // in the open panel until a manual refresh.
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: patientDetailKeys.detail(variables.patientId),
+      });
       setSelectedPatient(variables.patientId);
     },
   });

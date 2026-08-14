@@ -35,8 +35,19 @@ function AccordionItem({
 function AccordionTrigger({
   className,
   children,
+  /**
+   * When true, suppress the default lucide ChevronDown/ChevronUp icons.
+   * Use this whenever the consumer renders its own chevron inside
+   * `children` — otherwise both indicators show up at once and specificity
+   * shootouts with `[&>svg]:hidden` are fragile. The panel condition
+   * card uses this so the chevron sits next to its title, not at the
+   * button's inline-end.
+   */
+  hideDefaultIcon = false,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
+  hideDefaultIcon?: boolean
+}) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
@@ -48,8 +59,12 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDownIcon data-slot="accordion-trigger-icon" className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden" />
-        <ChevronUpIcon data-slot="accordion-trigger-icon" className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline" />
+        {!hideDefaultIcon && (
+          <>
+            <ChevronDownIcon data-slot="accordion-trigger-icon" className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden" />
+            <ChevronUpIcon data-slot="accordion-trigger-icon" className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline" />
+          </>
+        )}
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )

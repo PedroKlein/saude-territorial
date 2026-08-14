@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X, Trash2 } from "lucide-react";
+import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X, Trash2, Wand2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -233,6 +233,58 @@ export function PlannerDrawer() {
     setStops(next.map((s, i) => ({ ...s, order: i + 1 })));
   }
 
+  /**
+   * Reorder stops via OSRM /trip. Preserves the current first and last
+   * stops (source=first, destination=last on the API side) so the user's
+   * chosen anchors don't jump — only the middle stops get shuffled to
+   * minimise total travel. No-op when < 3 stops.
+   */
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizeError, setOptimizeError] = useState<string | null>(null);
+
+  const handleOptimize = useCallback(async () => {
+    if (stops.length < 3) return;
+    setOptimizeError(null);
+    setIsOptimizing(true);
+
+    // Build the coord list in the current visit order.
+    const ordered = [...stops].sort((a, b) => a.order - b.order);
+    const coords: { lat: number; lng: number }[] = [];
+    for (const s of ordered) {
+      const entry = patientMap.get(s.patientId);
+      if (entry?.record.lat && entry.record.lng) {
+        coords.push({ lat: entry.record.lat, lng: entry.record.lng });
+      } else {
+        setIsOptimizing(false);
+        setOptimizeError("Um paciente do plano está sem coordenadas.");
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/routes/optimize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ waypoints: coords, profile }),
+      });
+      if (!res.ok) {
+        setOptimizeError("Falha ao otimizar rota.");
+        return;
+      }
+      const body = (await res.json()) as { order: number[] };
+      // `order[j]` is the input index that should now sit at position j.
+      const reordered: Stop[] = body.order.map((inputIdx, j) => ({
+        patientId: ordered[inputIdx].patientId,
+        order: j + 1,
+      }));
+      setStops(reordered);
+    } catch {
+      setOptimizeError("Falha ao conectar ao servidor de rotas.");
+    } finally {
+      setIsOptimizing(false);
+    }
+  }, [stops, patientMap, profile, setStops]);
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -341,14 +393,43 @@ export function PlannerDrawer() {
 
             {/* Stop list */}
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex items-center justify-between px-3 pb-1 pt-3">
+              <div className="flex items-center justify-between gap-2 px-3 pb-1 pt-3">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
                   Ordem da rota
                 </div>
-                <span className="text-[11px] text-neutral-400">
-                  {stops.length} parada{stops.length !== 1 ? "s" : ""}
-                </span>
+                <div className="flex items-center gap-2">
+                  {/*
+                   * Otimizar via OSRM /trip. Disabled when < 3 stops (first
+                   * and last stay pinned, so 2 is a no-op) or while the
+                   * request is in flight.
+                   */}
+                  <button
+                    type="button"
+                    onClick={() => void handleOptimize()}
+                    disabled={stops.length < 3 || isOptimizing}
+                    className="inline-flex items-center gap-1 rounded-md border border-brand/30 bg-white px-2 py-0.5 text-[11px] font-medium text-brand transition hover:bg-brand/5 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:text-neutral-400 disabled:hover:bg-white"
+                    title={
+                      stops.length < 3
+                        ? "Adicione ao menos 3 paradas para otimizar"
+                        : "Reordena as paradas intermediárias para minimizar o trajeto"
+                    }
+                  >
+                    <Wand2 className="h-3 w-3" />
+                    {isOptimizing ? "Otimizando…" : "Otimizar"}
+                  </button>
+                  <span className="text-[11px] text-neutral-400">
+                    {stops.length} parada{stops.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
+              {optimizeError && (
+                <div
+                  role="alert"
+                  className="mx-3 mb-1 rounded border border-alert-red/30 bg-alert-red/5 px-2 py-1 text-[11px] text-red-800"
+                >
+                  {optimizeError}
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto px-1 pb-2">
                 <StopList patientMap={patientMap} />
               </div>

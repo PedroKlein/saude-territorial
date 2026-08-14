@@ -6,6 +6,7 @@ import {
   type LayeredPatientData,
   type PatientRecord,
 } from "@/hooks/usePatientData";
+import { patientDetailKeys } from "@/hooks/usePatient";
 import type { ExtensionLayer } from "@/lib/patients/schemas";
 import { useMapStore } from "@/stores/mapStore";
 
@@ -154,8 +155,11 @@ export function useDeleteCondition() {
       }
     },
 
-    onSettled: () => {
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: patientDetailKeys.detail(variables.id),
+      });
     },
 
     retry: (failureCount, error) => {

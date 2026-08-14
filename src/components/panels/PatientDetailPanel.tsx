@@ -707,7 +707,10 @@ function PanelContent({
                         borderLeftWidth: "3px",
                       }}
                     >
-                      <AccordionTrigger className="px-4 py-3 pr-4 hover:bg-neutral-50 hover:no-underline [&>svg]:hidden">
+                      <AccordionTrigger
+                        hideDefaultIcon
+                        className="px-4 py-3 pr-4 hover:bg-neutral-50 hover:no-underline"
+                      >
                         <div className="flex flex-1 items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             {/* Colored icon circle */}

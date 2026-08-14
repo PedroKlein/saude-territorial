@@ -6,6 +6,7 @@ import {
   type LayeredPatientData,
   type PatientRecord,
 } from "@/hooks/usePatientData";
+import { patientDetailKeys } from "@/hooks/usePatient";
 import type { PatientPatch } from "@/lib/patients/schemas";
 
 /**
@@ -121,8 +122,14 @@ export function useUpdatePatient() {
       }
     },
 
-    onSettled: () => {
+    onSettled: (_data, _err, variables) => {
+      // Invalidate the list AND this patient's detail so the open panel
+      // hydrates from the authoritative server envelope (recomputed ig,
+      // updated dataUltimaAtualizacao, merged fields).
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: patientDetailKeys.detail(variables.id),
+      });
     },
 
     retry: false,

@@ -54,9 +54,99 @@ export async function getRoute(
 
   const route = data.routes[0];
 
+  // OSRM demo server (router.project-osrm.org) only runs the driving
+  // profile; a `foot` request URL returns driving-time results verbatim.
+  // Verified by hand: same distance/duration for both. When our caller
+  // asked for foot, override the duration using a realistic walking
+  // speed so the UI reflects the profile choice.
+  //
+  // 4.5 km/h assumes flat-ish urban terrain with occasional stops at
+  // doors/gates during ACS visits. If we later host our own OSRM with
+  // the foot profile enabled, drop the override and trust the response.
+  const WALKING_SPEED_MPS = 4500 / 3600; // 1.25 m/s
+  const duration =
+    profile === "foot" ? route.distance / WALKING_SPEED_MPS : route.duration;
+
   return {
     distance: route.distance,
-    duration: route.duration,
+    duration,
     geometry: route.geometry,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Trip (TSP) optimization
+// ---------------------------------------------------------------------------
+
+/**
+ * Result of an OSRM /trip call: the input-order indices in the OPTIMIZED
+ * visit order. Callers should reorder their stop list by `order[i]`.
+ *
+ * The trip service is a heuristic TSP solver — good for <= ~25 stops which
+ * is well within ACS-visit-plan scale.
+ */
+export interface TripResult {
+  /**
+   * Permutation of input indices in optimized order. `order[0]` = index of
+   * the stop that should be visited first, etc.
+   */
+  order: number[];
+  /** Total optimized distance in meters. */
+  distance: number;
+  /** Total optimized duration in seconds (recomputed for foot below). */
+  duration: number;
+  /** GeoJSON LineString for the whole optimized trip. */
+  geometry: RouteResult["geometry"];
+}
+
+/**
+ * Ask OSRM to reorder waypoints for minimum travel time. Uses
+ * `roundtrip=false` with source=first and destination=last so the caller's
+ * first stop stays first and the last stays last — the middle is optimized.
+ * If callers want a fully-free permutation, swap to `source=any&destination=any`.
+ */
+export async function getTrip(
+  waypoints: Coord[],
+  profile: RouteProfile,
+): Promise<TripResult> {
+  if (waypoints.length < 3) {
+    // Nothing to optimize with < 3 stops (first and last are fixed).
+    throw new Error("getTrip requires at least 3 waypoints");
+  }
+
+  const osrmProfile = OSRM_PROFILE_MAP[profile];
+  const coordinates = waypoints.map((w) => `${w.lng},${w.lat}`).join(";");
+  const url =
+    `${OSRM_BASE_URL}/trip/v1/${osrmProfile}/${coordinates}` +
+    `?source=first&destination=last&roundtrip=false&overview=full&geometries=geojson`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.code !== "Ok") {
+    throw new Error(`OSRM trip error: ${data.code} — ${data.message ?? "unknown"}`);
+  }
+
+  // `waypoints[i].waypoint_index` = the position in the optimized order for
+  // the INPUT-order coordinate i. Invert to `order[j] = i` where the j-th
+  // stop to visit is input index i.
+  const wps = data.waypoints as Array<{ waypoint_index: number }>;
+  const order: number[] = new Array(wps.length).fill(0);
+  wps.forEach((wp, inputIdx) => {
+    order[wp.waypoint_index] = inputIdx;
+  });
+
+  const trip = data.trips[0];
+
+  // Same foot-profile override as getRoute: the demo OSRM ignores `foot`.
+  const WALKING_SPEED_MPS = 4500 / 3600;
+  const duration =
+    profile === "foot" ? trip.distance / WALKING_SPEED_MPS : trip.duration;
+
+  return {
+    order,
+    distance: trip.distance,
+    duration,
+    geometry: trip.geometry,
   };
 }
