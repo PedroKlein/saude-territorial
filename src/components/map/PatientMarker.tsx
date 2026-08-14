@@ -8,7 +8,6 @@ import { Baby, Wind, HeartPulse } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { useMapStore } from "@/stores/mapStore";
-import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
 import type { AlertLevel } from "@/types/alerts";
 import type { LayerId } from "@/config/layers.config";
@@ -180,7 +179,6 @@ function buildChipIcon(
 export interface PatientMarkerProps {
   /** DB UUID — required for mutations and selection. */
   id: string;
-  cns: string;
   name: string | null;
   lat: number;
   lng: number;
@@ -199,7 +197,6 @@ export interface PatientMarkerProps {
 
 export function PatientMarker({
   id,
-  cns,
   name,
   lat,
   lng,
@@ -210,8 +207,6 @@ export function PatientMarker({
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const selectedPatient = useMapStore((s) => s.selectedPatient);
   const pinningPatient = useMapStore((s) => s.pinningPatient);
-  const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
-  const addWaypoint = useRoutePlannerStore((s) => s.addWaypoint);
   const update = useUpdatePatient();
 
   const isSelected = selectedPatient === id;
@@ -251,13 +246,7 @@ export function PatientMarker({
       zIndexOffset={isSelected || isRepositioning ? 1000 : 0}
       draggable={isRepositioning}
       eventHandlers={{
-        click: () => {
-          if (isPlanning) {
-            addWaypoint({ cns, lat, lng, name: name ?? "Sem nome" });
-          } else {
-            setSelectedPatient(id);
-          }
-        },
+        click: () => setSelectedPatient(id),
         dragend: (e: LeafletEvent) => {
           if (!isRepositioning) return;
           const marker = e.target as L.Marker;

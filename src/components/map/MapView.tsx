@@ -16,7 +16,6 @@ import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
-import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { usePlannerStore } from "@/stores/plannerStore";
 
 import { useFilterStore } from "@/stores/filterStore";
@@ -92,7 +91,6 @@ export default function MapView() {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const pinningPatient = useMapStore((s) => s.pinningPatient);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
-  const optimizedRoute = useRoutePlannerStore((s) => s.optimizedRoute);
   const plannerDrawerOpen = usePlannerStore((s) => s.drawerOpen);
   const plannerStops = usePlannerStore((s) => s.stops);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
@@ -249,17 +247,9 @@ export default function MapView() {
         />
 
       </MapContainer>
-      {/* Show optimized planner route OR single-patient route (not both) */}
-      {/* Planner route (via activeRoute set by PlannerDrawer) takes priority;
-          fall back to legacy optimizedRoute then single-patient activeRoute. */}
-      <ActiveRouteLayer
-        route={
-          !plannerDrawerOpen && optimizedRoute
-            ? { result: optimizedRoute, profile: "foot" }
-            : activeRoute
-        }
-        mapRef={mapRef}
-      />
+      {/* activeRoute is written by PlannerDrawer's OSRM debouncer when the
+          drawer is open; ActiveRouteLayer clears the map polyline when null. */}
+      <ActiveRouteLayer route={activeRoute} mapRef={mapRef} />
       <ManualPinOverlay
         target={pinningPatient}
         pendingCoords={pendingCoords}

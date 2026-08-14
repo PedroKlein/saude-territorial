@@ -53,7 +53,6 @@ export function LayerGroup({
       <PatientMarker
         key={p.cns}
         id={p.id}
-        cns={p.cns}
         name={p.nomeCompleto}
         lat={p.lat}
         lng={p.lng}

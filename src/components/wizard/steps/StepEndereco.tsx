@@ -158,8 +158,12 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
     debounceRef.current = setTimeout(() => {
       void fetchGeocode(rua, numero ?? "", bairro ?? "").then((result) => {
         setGeoResult((prev) => {
-          // Don't clobber manual coords with a failed geocode
-          if (result.status !== "found" && prev.status === "manual") return prev;
+          // Once the user has placed a pin manually (right-click prefill or
+          // click-to-drop), that pin is the source of truth. The debounced
+          // geocode still runs so we can validate the address exists, but
+          // it never overrides the user's explicit placement. To move the
+          // pin, drag the marker or clear the manual mode explicitly.
+          if (prev.status === "manual") return prev;
           return result;
         });
       });
@@ -177,11 +181,9 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
       bairro: values.bairro ?? "",
       microarea: values.microarea ?? "",
       geocodedCoords:
-        geoResult.status === "manual"
+        geoResult.status === "manual" || geoResult.status === "found"
           ? { lat: geoResult.lat, lng: geoResult.lng }
-          : geoResult.status === "found"
-            ? { lat: geoResult.lat, lng: geoResult.lng }
-            : null,
+          : null,
     });
     goNext();
   });
