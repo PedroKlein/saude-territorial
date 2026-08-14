@@ -6,6 +6,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { useFilterStore } from "@/stores/filterStore";
 import { useAlerts } from "@/hooks/useAlerts";
 import { ALERT_RULES } from "@/config/alert-rules.config";
+import { coincidenceKey } from "@/components/map/markerHelpers";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
@@ -13,32 +14,37 @@ import type { AlertLevel } from "@/types/alerts";
 interface LayerGroupProps {
   layerId: LayerId;
   patients: PatientRecord[];
+  /** Cross-layer coincidence map (coord key → total count). */
+  coincidenceMap: Map<string, number>;
 }
 
-export function LayerGroup({ layerId, patients }: LayerGroupProps) {
+export function LayerGroup({
+  layerId,
+  patients,
+  coincidenceMap,
+}: LayerGroupProps) {
   const isActive = useMapStore((s) => s.activeLayers[layerId]);
   const alertsOnly = useMapStore((s) => s.alertsOnly);
 
-  // Subscribe to filter state so component re-renders on changes
+  // Subscribe to filter state so the component re-renders on changes.
   const microareas = useFilterStore((s) => s.microareas);
   const alertLevels = useFilterStore((s) => s.alertLevels);
   const searchText = useFilterStore((s) => s.searchText);
   const hideUncertain = useFilterStore((s) => s.hideUncertain);
   const applyFilters = useFilterStore((s) => s.applyFilters);
 
-  // Evaluate alert rules for all patients in this layer
   const alertResults = useAlerts(patients, ALERT_RULES, layerId);
 
-  // Enrich patients with alertLevel then apply filters
   const visibleMarkers = useMemo(() => {
     const enriched = patients.map((p) => ({
       ...p,
       alertLevel: (alertResults.get(p.cns)?.level ?? "verde") as AlertLevel,
     }));
 
-    // Apply alertsOnly meta-filter before regular filters
     const alertFiltered = alertsOnly
-      ? enriched.filter((p) => p.alertLevel === "vermelho" || p.alertLevel === "amarelo")
+      ? enriched.filter(
+          (p) => p.alertLevel === "vermelho" || p.alertLevel === "amarelo",
+        )
       : enriched;
 
     const filtered = applyFilters(alertFiltered);
@@ -52,10 +58,23 @@ export function LayerGroup({ layerId, patients }: LayerGroupProps) {
         lat={p.lat}
         lng={p.lng}
         alertLevel={p.alertLevel}
+        layerId={layerId}
+        coincidenceCount={coincidenceMap.get(coincidenceKey(p.lat, p.lng)) ?? 1}
         confidence={p.confidence}
       />
     ));
-  }, [patients, alertResults, applyFilters, microareas, alertLevels, searchText, hideUncertain, alertsOnly]);
+  }, [
+    patients,
+    alertResults,
+    applyFilters,
+    coincidenceMap,
+    layerId,
+    microareas,
+    alertLevels,
+    searchText,
+    hideUncertain,
+    alertsOnly,
+  ]);
 
   if (!isActive) return null;
 

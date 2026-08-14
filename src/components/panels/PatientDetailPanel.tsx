@@ -72,6 +72,7 @@ import { ConfirmDialog } from "@/components/panels/ConfirmDialog";
 import { Field } from "@/components/panels/Field";
 import { Computed } from "@/components/panels/Computed";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
+import { PatientWizard } from "@/components/wizard/PatientWizard";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -343,6 +344,7 @@ function PanelContent({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState<
     Partial<Record<string, boolean>>
   >({});
@@ -876,6 +878,7 @@ function PanelContent({
               variant="outline"
               size="sm"
               className="flex-1 border-dashed text-neutral-500"
+              onClick={() => setWizardOpen(true)}
             >
               <Plus className="mr-1 size-3.5" />
               Adicionar condição
@@ -932,6 +935,20 @@ function PanelContent({
           onCancel={() => setConfirmState(null)}
         />
       )}
+
+      <PatientWizard
+        open={wizardOpen}
+        mode={{
+          kind: "add-condition",
+          patientId: patient.id,
+          alreadyAttached: [
+            patient.gestante ? "gestantes" : null,
+            patient.tuberculose ? "tuberculose" : null,
+            patient.has ? "hipertensao" : null,
+          ].filter((v): v is "gestantes" | "tuberculose" | "hipertensao" => v !== null),
+        }}
+        onClose={() => setWizardOpen(false)}
+      />
     </aside>
   );
 }

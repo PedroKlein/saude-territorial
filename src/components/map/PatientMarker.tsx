@@ -1,83 +1,201 @@
 "use client";
 
-import { CircleMarker, Marker, Tooltip } from "react-leaflet";
-import L, {
-  type CircleMarker as LeafletCircleMarker,
-  type LeafletEvent,
-} from "leaflet";
-import { useEffect, useMemo, useRef } from "react";
+import { Marker, Tooltip } from "react-leaflet";
+import L, { type LeafletEvent } from "leaflet";
+import { useMemo } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Baby, Wind, HeartPulse } from "lucide-react";
+import type { ComponentType } from "react";
 
 import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
 import type { AlertLevel } from "@/types/alerts";
+import type { LayerId } from "@/config/layers.config";
 
-/** PoC-matching urgency colors */
-export const URGENCY_COLORS: Record<AlertLevel, string> = {
-  vermelho: "#dc2626",
-  amarelo: "#d97706",
-  verde: "#16a34a",
+// ---------------------------------------------------------------------------
+// Layer → icon/color tables (static literals → Record per project rule)
+// ---------------------------------------------------------------------------
+
+type IconComponent = ComponentType<{ size?: number; color?: string }>;
+
+const LAYER_ICON: Partial<Record<LayerId, IconComponent>> = {
+  gestantes: Baby,
+  // Lungs is unavailable in lucide-react v1.31; Wind is the spec-approved sub.
+  tuberculose: Wind,
+  hipertensao: HeartPulse,
 };
 
-/** PoC-matching urgency radii */
-const URGENCY_RADIUS: Record<AlertLevel, number> = {
-  vermelho: 10,
-  amarelo: 8,
-  verde: 6,
+const LAYER_FILL: Partial<Record<LayerId, string>> = {
+  gestantes: "var(--color-gestante)",
+  tuberculose: "var(--color-tuberculose)",
+  hipertensao: "var(--color-hipertensao)",
 };
 
-/** Selected marker style constants (matches PoC) */
-const SELECTED_BORDER_COLOR = "#1e3a8a";
-const SELECTED_WEIGHT = 4;
-const SELECTED_RADIUS_BOOST = 4;
+const ALERT_DOT_COLOR: Record<AlertLevel, string | null> = {
+  vermelho: "var(--color-alert-red)",
+  amarelo: "var(--color-alert-amber)",
+  verde: null,
+};
 
-interface PatientMarkerProps {
-  /** DB UUID — required to save drag-to-fix coordinates. */
+/** Brand teal ring for selected state (DS-11). */
+const SELECTED_RING = "oklch(58% 0.10 195)";
+
+// ---------------------------------------------------------------------------
+// Chip HTML — pure component, no hooks: safe for renderToStaticMarkup
+// ---------------------------------------------------------------------------
+
+interface ChipProps {
+  layerId: LayerId;
+  alertLevel: AlertLevel;
+  coincidenceCount: number;
+  isSelected: boolean;
+  isDraggable: boolean;
+}
+
+function ChipHtml({
+  layerId,
+  alertLevel,
+  coincidenceCount,
+  isSelected,
+  isDraggable,
+}: ChipProps) {
+  const Icon: IconComponent = LAYER_ICON[layerId] ?? HeartPulse;
+  const fill = LAYER_FILL[layerId] ?? "var(--color-brand)";
+  const dotColor = ALERT_DOT_COLOR[alertLevel];
+
+  const pillShadow = isSelected
+    ? `0 2px 6px rgba(0,0,0,0.22), 0 0 0 2px white, 0 0 0 4px ${SELECTED_RING}`
+    : "0 2px 6px rgba(0,0,0,0.18), 0 0 0 2px white";
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: 38,
+        height: 38,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* Main pill */}
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          backgroundColor: fill,
+          boxShadow: pillShadow,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: isDraggable ? "grab" : "pointer",
+        }}
+      >
+        <Icon size={14} color="white" />
+      </div>
+
+      {/* Alert dot — top-right corner.
+          DS-16 redundant encoding: solid fill + outer ring = visible in
+          monochrome / deuteranopia simulation. */}
+      {dotColor !== null && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 2,
+            right: 2,
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            // Inner fill + white gap ring + outer color ring → two channels
+            boxShadow: `0 0 0 1.5px white, 0 0 0 3px ${dotColor}`,
+          }}
+        />
+      )}
+
+      {/* Coincidence badge — bottom-right corner */}
+      {coincidenceCount > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            backgroundColor: "#1c1917",
+            color: "white",
+            fontSize: 9,
+            fontWeight: 600,
+            borderRadius: 999,
+            padding: "0 3px",
+            minWidth: 14,
+            height: 14,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 0 1.5px white",
+            lineHeight: "1",
+            boxSizing: "border-box",
+          }}
+        >
+          {coincidenceCount}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// divIcon builder — called at render time, not module init
+// ---------------------------------------------------------------------------
+
+function buildChipIcon(
+  layerId: LayerId,
+  alertLevel: AlertLevel,
+  coincidenceCount: number,
+  isSelected: boolean,
+  isDraggable: boolean,
+): L.DivIcon {
+  return L.divIcon({
+    className: "",
+    html: renderToStaticMarkup(
+      <ChipHtml
+        layerId={layerId}
+        alertLevel={alertLevel}
+        coincidenceCount={coincidenceCount}
+        isSelected={isSelected}
+        isDraggable={isDraggable}
+      />,
+    ),
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+export interface PatientMarkerProps {
+  /** DB UUID — required for mutations and selection. */
   id: string;
   cns: string;
   name: string | null;
   lat: number;
   lng: number;
   alertLevel: AlertLevel;
-  /** Geocoding confidence 0-1. Below 0.5 shows dashed border */
+  /** Which condition layer this marker belongs to. */
+  layerId: LayerId;
+  /** How many markers (across all layers) share this exact coordinate. */
+  coincidenceCount: number;
+  /** Geocoding confidence 0-1. Below 0.5 means uncertain placement. */
   confidence?: number;
 }
 
-/**
- * Build a CircleMarker-look-alike divIcon for the selected patient.
- *
- * The selected marker needs to be a `Marker` (not `CircleMarker`) so that
- * Leaflet's native `draggable: true` support kicks in — `CircleMarker`
- * extends `Path`, which has no dragging affordance without a plugin.
- * Unselected markers stay as CircleMarker for performance (Path is cheaper
- * than a DOM Marker for hundreds of pins).
- */
-function selectedIcon(alertLevel: AlertLevel, draggable: boolean): L.DivIcon {
-  const fillColor = URGENCY_COLORS[alertLevel];
-  const radius = URGENCY_RADIUS[alertLevel] + SELECTED_RADIUS_BOOST;
-  const size = (radius + SELECTED_WEIGHT) * 2;
-  // Dashed border + grab cursor make it visually obvious that the marker
-  // is in reposition mode. Selected-only markers keep the solid border.
-  const border = draggable
-    ? `${SELECTED_WEIGHT}px dashed ${SELECTED_BORDER_COLOR}`
-    : `${SELECTED_WEIGHT}px solid ${SELECTED_BORDER_COLOR}`;
-  const cursor = draggable ? "grab" : "pointer";
-  const html = `<div style="
-    width: ${radius * 2}px;
-    height: ${radius * 2}px;
-    background: ${fillColor};
-    border: ${border};
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-    cursor: ${cursor};
-  "></div>`;
-  return L.divIcon({
-    className: "",
-    html,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function PatientMarker({
   id,
@@ -86,7 +204,10 @@ export function PatientMarker({
   lat,
   lng,
   alertLevel,
-  confidence,
+  layerId,
+  coincidenceCount,
+  // confidence kept in signature for future uncertain-marker styling
+  confidence: _confidence,
 }: PatientMarkerProps) {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const selectedPatient = useMapStore((s) => s.selectedPatient);
@@ -94,110 +215,74 @@ export function PatientMarker({
   const isPlanning = useRoutePlannerStore((s) => s.isPlanning);
   const addWaypoint = useRoutePlannerStore((s) => s.addWaypoint);
   const update = useUpdatePatient();
-  const circleRef = useRef<LeafletCircleMarker>(null);
 
   const isSelected = selectedPatient === id;
-  // Drag is off by default. It only unlocks when the user explicitly
-  // enters reposition mode from the detail panel — otherwise a stray
-  // click-and-hold on a selected marker would drift the coord silently.
+  // Drag unlocks ONLY in explicit reposition mode from the detail panel.
   const isRepositioning = pinningPatient?.id === id;
-  const isUncertain = confidence !== undefined && confidence < 0.5;
-  const fillColor = URGENCY_COLORS[alertLevel];
-  const baseRadius = URGENCY_RADIUS[alertLevel];
-  const radius = isSelected || isRepositioning ? baseRadius + SELECTED_RADIUS_BOOST : baseRadius;
+
+  const icon = useMemo(
+    () =>
+      buildChipIcon(
+        layerId,
+        alertLevel,
+        coincidenceCount,
+        isSelected || isRepositioning,
+        isRepositioning,
+      ),
+    [layerId, alertLevel, coincidenceCount, isSelected, isRepositioning],
+  );
+
   const emoji =
     alertLevel === "vermelho" ? "🔴" : alertLevel === "amarelo" ? "🟡" : "🟢";
 
-  // Bring selected CircleMarker to front (unselected fallback path).
-  useEffect(() => {
-    if (isSelected && circleRef.current) {
-      circleRef.current.bringToFront();
-    }
-  }, [isSelected]);
-
-  const icon = useMemo(
-    () => selectedIcon(alertLevel, isRepositioning),
-    [alertLevel, isRepositioning],
-  );
-
-  const tooltip = (
-    <Tooltip direction="top" offset={[0, -8]}>
-      <strong>{name ?? "Sem nome"}</strong>
-      <br />
-      <span style={{ fontSize: "11px" }}>
-        {emoji}{" "}
-        {alertLevel === "vermelho"
-          ? "Crítico"
-          : alertLevel === "amarelo"
-            ? "Atenção"
-            : "Normal"}
-      </span>
-    </Tooltip>
-  );
-
-  // The visually-emphasised Marker+divIcon variant renders in two cases:
-  //  1. `isSelected` — the user opened the detail panel for this patient.
-  //  2. `isRepositioning` — the user hit "Reposicionar no mapa"; native
-  //     dragging is enabled ONLY in this case.
-  if (isSelected || isRepositioning) {
-    return (
-      <Marker
-        position={[lat, lng]}
-        icon={icon}
-        draggable={isRepositioning}
-        eventHandlers={{
-          click: () => {
-            if (isPlanning) {
-              addWaypoint({ cns, lat, lng, name: name ?? "Sem nome" });
-            }
-            // else already selected — no-op.
-          },
-          dragend: (e: LeafletEvent) => {
-            if (!isRepositioning) return;
-            // Leaflet marker's dragend target is the Marker instance.
-            const marker = e.target as L.Marker;
-            const { lat: newLat, lng: newLng } = marker.getLatLng();
-            update.mutate({
-              id,
-              body: { base: { lat: newLat, lng: newLng } },
-              optimisticPatch: {
-                lat: newLat,
-                lng: newLng,
-                geocodeStatus: "manual",
-              },
-            });
-          },
-        }}
-      >
-        {tooltip}
-      </Marker>
-    );
-  }
+  const label =
+    alertLevel === "vermelho"
+      ? "Crítico"
+      : alertLevel === "amarelo"
+        ? "Atenção"
+        : "Normal";
 
   return (
-    <CircleMarker
-      ref={circleRef}
-      center={[lat, lng]}
-      radius={radius}
-      pathOptions={{
-        fillColor,
-        color: "#ffffff",
-        weight: 2,
-        fillOpacity: isUncertain ? 0.45 : 0.85,
-        opacity: isUncertain ? 0.6 : 1,
-        dashArray: isUncertain ? "4 3" : undefined,
-      }}
+    <Marker
+      position={[lat, lng]}
+      icon={icon}
+      // `alt` carries the alert level so ClusteredLayer's iconCreateFunction
+      // can walk child markers and determine cluster ring color without
+      // parsing HTML. Accessible as marker.options.alt in Leaflet.
+      alt={alertLevel}
+      zIndexOffset={isSelected || isRepositioning ? 1000 : 0}
+      draggable={isRepositioning}
       eventHandlers={{
         click: () => {
           if (isPlanning) {
             addWaypoint({ cns, lat, lng, name: name ?? "Sem nome" });
           } else {
-          setSelectedPatient(id);
+            setSelectedPatient(id);
           }
+        },
+        dragend: (e: LeafletEvent) => {
+          if (!isRepositioning) return;
+          const marker = e.target as L.Marker;
+          const { lat: newLat, lng: newLng } = marker.getLatLng();
+          update.mutate({
+            id,
+            body: { base: { lat: newLat, lng: newLng } },
+            optimisticPatch: {
+              lat: newLat,
+              lng: newLng,
+              geocodeStatus: "manual",
+            },
+          });
         },
       }}
     >
-      {tooltip}
-    </CircleMarker>
+      <Tooltip direction="top" offset={[0, -8]}>
+        <strong>{name ?? "Sem nome"}</strong>
+        <br />
+        <span style={{ fontSize: "11px" }}>
+          {emoji} {label}
+        </span>
+      </Tooltip>
+    </Marker>
   );
 }

@@ -1,27 +1,32 @@
 "use client";
 
 /**
- * `AddPatientButton` — primary button in the dashboard header that opens the
- * `PatientCreateForm` modal.
+ * `AddPatientButton` — dashboard-header CTA that opens `PatientWizard`
+ * in `new` mode. The old standalone `PatientCreateForm` was retired in
+ * UP-3.4; the wizard now owns the create-patient flow end-to-end.
  */
 
-import { useCreateFormStore } from "@/stores/createFormStore";
-import { PatientCreateForm } from "@/components/panels/PatientCreateForm";
+import { useState } from "react";
+
+import { PatientWizard } from "@/components/wizard/PatientWizard";
 
 export function AddPatientButton() {
-  const open = useCreateFormStore((s) => s.open);
-  const isOpen = useCreateFormStore((s) => s.isOpen);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => open()}
-        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        onClick={() => setOpen(true)}
+        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         + Adicionar paciente
       </button>
-      {isOpen && <PatientCreateForm />}
+      <PatientWizard
+        open={open}
+        mode={{ kind: "new" }}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }

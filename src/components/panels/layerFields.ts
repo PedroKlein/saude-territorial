@@ -5,7 +5,7 @@
  * the visibleColumns list mixes stale keys from the pre-pivot mock. The schema
  * files are the ground truth.
  *
- * Imported by both `PatientEditForm` and `PatientCreateForm` so edits and
+ * Imported by the wizard's per-condition data steps and the panel's edit
  * creates share the same field set.
  */
 

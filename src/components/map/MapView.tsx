@@ -10,21 +10,21 @@ import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
+import { MicroareaOutlines } from "./MicroareaOutlines";
 import { HeatmapLayer } from "./HeatmapLayer";
 import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
-import { useCreateFormStore } from "@/stores/createFormStore";
-import { PatientCreateForm } from "@/components/panels/PatientCreateForm";
+
 import { useMapEvents } from "react-leaflet";
 import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
+import { buildCoincidenceMap } from "@/components/map/markerHelpers";
 import type { AlertLevel } from "@/types/alerts";
-
 // Fix default marker icon paths broken by bundlers (webpack/turbopack)
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -50,39 +50,9 @@ const US_ICON = L.divIcon({
 // Map-event child components (must render inside <MapContainer>)
 // ---------------------------------------------------------------------------
 
-/** Opens the create form with the right-click coordinates. */
-function RightClickCatcher({
-  onRightClick,
-}: {
-  onRightClick: (coords: { lat: number; lng: number }) => void;
-}) {
-  useMapEvents({
-    contextmenu: (e) => {
-      onRightClick({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
-  });
-  return null;
-}
 
-/**
- * Left-click catcher for the 422 pin-drop recovery flow.
- * Active only while `pinDropPending` is true in `createFormStore`.
- */
-function CreatePinCatcher({
-  active,
-  onPick,
-}: {
-  active: boolean;
-  onPick: (coords: { lat: number; lng: number }) => void;
-}) {
-  useMapEvents({
-    click: (e) => {
-      if (!active) return;
-      onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
-  });
-  return null;
-}
+
+
 
 export default function MapView() {
   const mapRef = useRef<LeafletMap>(null);
@@ -98,11 +68,7 @@ export default function MapView() {
   const currentMicroareas = useFilterStore((s) => s.microareas);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Create-form store — right-click to open form; pin-drop after 422.
-  const openCreateForm = useCreateFormStore((s) => s.open);
-  const pinDropPending = useCreateFormStore((s) => s.pinDropPending);
-  const completePinDrop = useCreateFormStore((s) => s.completePinDrop);
-  const isCreateOpen = useCreateFormStore((s) => s.isOpen);
+
 
   const handleMicroareaClick = useCallback(
     (id: string) => {
@@ -145,6 +111,17 @@ export default function MapView() {
     return points;
   }, [data, vizMode, activeLayers, layerIds]);
 
+  // Cross-layer coincidence map: coord key → total marker count across all layers.
+  // Memoised so the stable Map reference avoids re-rendering every LayerGroup.
+  const coincidenceMap = useMemo(() => {
+    if (!data) return new Map<string, number>();
+    const all: Array<{ lat: number; lng: number }> = [];
+    for (const patients of Object.values(data)) {
+      if (patients) all.push(...patients);
+    }
+    return buildCoincidenceMap(all);
+  }, [data]);
+
   return (
     <>
       <MapContainer
@@ -172,10 +149,16 @@ export default function MapView() {
         </Marker>
         <MapController data={data} />
         {showTerritories && (
-          <TerritoryLayer
-            geojson={MICROAREAS_GEOJSON}
-            onMicroareaClick={handleMicroareaClick}
-          />
+          <>
+            <TerritoryLayer
+              geojson={MICROAREAS_GEOJSON}
+              onMicroareaClick={handleMicroareaClick}
+            />
+            <MicroareaOutlines
+              geojson={MICROAREAS_GEOJSON}
+              filteredIds={currentMicroareas}
+            />
+          </>
         )}
         <ClusteredLayer>
           {vizMode === "markers" &&
@@ -188,6 +171,7 @@ export default function MapView() {
                   key={layerId}
                   layerId={layerId}
                   patients={patients}
+                  coincidenceMap={coincidenceMap}
                 />
               );
             })}
@@ -199,11 +183,7 @@ export default function MapView() {
           active={pinningPatient !== null}
           onPick={setPendingCoords}
         />
-        <RightClickCatcher onRightClick={(coords) => openCreateForm(coords)} />
-        <CreatePinCatcher
-          active={pinDropPending}
-          onPick={completePinDrop}
-        />
+
       </MapContainer>
       {/* Show optimized planner route OR single-patient route (not both) */}
       <ActiveRouteLayer
@@ -223,7 +203,6 @@ export default function MapView() {
           setPendingCoords(null);
         }}
       />
-      {isCreateOpen && <PatientCreateForm />}
     </>
   );
 }

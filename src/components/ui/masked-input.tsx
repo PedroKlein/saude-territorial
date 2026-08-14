@@ -44,6 +44,8 @@ type BaseProps = Omit<
   /** Forwarded onBlur — used by react-hook-form for touched tracking. */
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
+  /** Aria-label alias (camelCase) for consistency with our other primitives. */
+  ariaLabel?: string;
 };
 
 type MaskedInputInternalProps = BaseProps & {
