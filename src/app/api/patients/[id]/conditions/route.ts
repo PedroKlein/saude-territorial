@@ -22,6 +22,7 @@ import { tuberculoseData } from "@/db/schema/tuberculose";
 import { hasData } from "@/db/schema/has";
 import { ConditionAttachSchema } from "@/lib/patients/schemas";
 import { shape } from "@/lib/patients/shape";
+import { isPgUniqueViolation, isUuid } from "@/lib/db/errors";
 
 export async function POST(
   request: NextRequest,
@@ -34,8 +35,13 @@ export async function POST(
       { status: 401 },
     );
   }
-
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { error: "Paciente não encontrado." },
+      { status: 404 },
+    );
+  }
 
   let raw: unknown;
   try {
@@ -105,6 +111,16 @@ export async function POST(
     });
   } catch (err) {
     const code = err instanceof Error ? err.name : "UnknownError";
+    // Race: our findFirst() said the extension wasn't attached yet, but a
+    // concurrent POST attached it before we could insert. Extension tables
+    // use patient_id as PRIMARY KEY, so we hit a unique_violation. Surface
+    // as 409 with the same shape as the pre-tx duplicate check.
+    if (isPgUniqueViolation(err)) {
+      return NextResponse.json(
+        { error: "condition_exists" },
+        { status: 409 },
+      );
+    }
     console.error(`[api/patients/conditions:POST] failed (${code})`);
     return NextResponse.json(
       { error: "Erro ao adicionar condição. Tente novamente." },

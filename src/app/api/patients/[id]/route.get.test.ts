@@ -24,7 +24,7 @@ vi.mock("@/db/client", () => ({
 import { GET } from "@/app/api/patients/[id]/route";
 import { NextRequest } from "next/server";
 
-const PATIENT_ID = "synth-get-uuid-1";
+const PATIENT_ID = "11111111-1111-4111-8111-111111111111";
 
 const BASE = {
   id: PATIENT_ID,

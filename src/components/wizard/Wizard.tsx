@@ -93,6 +93,7 @@ export function Wizard<Ctx>({
   const [currentIdx, setCurrentIdx] = useState(0);
   const [ctx, setCtxState] = useState<Ctx>(initialCtx);
   const [isPending, setIsPending] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   // 1 = forward slide, -1 = backward slide
   const [dir, setDir] = useState<1 | -1>(1);
 
@@ -133,20 +134,34 @@ export function Wizard<Ctx>({
   );
 
   const advance = useCallback(() => {
+    setFinishError(null);
     setDir(1);
     setCurrentIdx((i) => nextIdx(i));
   }, [nextIdx]);
 
   const goBack = useCallback(() => {
+    setFinishError(null);
     setDir(-1);
     setCurrentIdx((i) => prevIdx(i));
   }, [prevIdx]);
 
   const handleFinalize = useCallback(async () => {
+    setFinishError(null);
     setIsPending(true);
     try {
       await onFinish(ctxRef.current);
       advance();
+    } catch (err) {
+      // Surface the failure inline instead of swallowing it as an unhandled
+      // rejection. `onFinish` may re-throw a rich error object (see
+      // `PatientWizard`'s 409-collision handling) or a plain Error; either
+      // way we show the message. LGPD: `err.message` here is a
+      // server-sanitized string, never patient PII.
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Ocorreu um erro ao finalizar. Tente novamente.";
+      setFinishError(message);
     } finally {
       setIsPending(false);
     }
@@ -254,6 +269,17 @@ export function Wizard<Ctx>({
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Inline finalize error — surfaces onFinish throws. Cleared on
+            next step transition (see advance/goBack). */}
+        {finishError && (
+          <div
+            role="alert"
+            className="mx-5 mb-3 rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs text-red-900"
+          >
+            {finishError}
+          </div>
+        )}
 
         {/* ---------------------------------------------------------------- */}
         {/* Footer                                                            */}

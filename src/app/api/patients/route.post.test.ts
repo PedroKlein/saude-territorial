@@ -87,7 +87,7 @@ const CNS_TB = makeCns(2);
 const CNS_HAS = makeCns(3);
 const CNS_COORD = makeCns(4);
 
-const PATIENT_UUID = "synth-create-uuid-1";
+const PATIENT_UUID = "11111111-1111-4111-8111-111111111111";
 
 const BASE_GESTANTE_BODY = {
   cns: CNS_GESTANTE,
@@ -336,6 +336,12 @@ describe("POST /api/patients", () => {
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.requiresManualPin).toBe(true);
+    // LGPD regression: 422 response MUST NOT echo the request body
+    // (CNS, nomeCompleto, address, coords). The client already holds
+    // the draft locally.
+    expect(body.draft).toBeUndefined();
+    expect(body.cns).toBeUndefined();
+    expect(body.base).toBeUndefined();
     expect(mocks.transactionSpy).not.toHaveBeenCalled();
   });
 
@@ -377,5 +383,21 @@ describe("POST /api/patients", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(Array.isArray(body.issues)).toBe(true);
+  });
+
+  it("409 — pg unique_violation race falls through to cns_exists (not 500)", async () => {
+    // findFirst says no collision — a concurrent POST slipped through
+    // between the check and our insert.
+    mocks.findFirst.mockResolvedValueOnce(null);
+    // Simulate postgres-js unique violation escaping the tx.
+    const pgErr = Object.assign(new Error("duplicate key value violates unique constraint"), {
+      code: "23505",
+    });
+    mocks.transactionSpy.mockRejectedValueOnce(pgErr);
+
+    const res = await POST(makeRequest(BASE_GESTANTE_BODY));
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("cns_exists");
   });
 });

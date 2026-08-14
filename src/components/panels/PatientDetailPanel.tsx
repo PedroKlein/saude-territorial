@@ -36,7 +36,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { usePatient } from "@/hooks/usePatient";
 import { useDeletePatient, useDeleteCondition } from "@/hooks/useDeletePatient";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
-import { PatientPatchSchema, type ExtensionLayer } from "@/lib/patients/schemas";
+import { PatientPatchSchema, type PatientPatch, type ExtensionLayer } from "@/lib/patients/schemas";
 import { type z } from "zod";
 import type { UnifiedPatient } from "@/app/api/patients/[id]/route";
 import { evaluatePatient } from "@/lib/alerts/engine";
@@ -360,7 +360,7 @@ function PanelContent({
   // Form
   // ---------------------------------------------------------------------------
 
-  const form = useForm<PanelFormValues>({
+  const form = useForm<PanelFormValues, unknown, PatientPatch>({
     resolver: zodResolver(PatientPatchSchema),
     defaultValues: buildDefaults(patient),
   });
@@ -447,8 +447,8 @@ function PanelContent({
 
   const handleSave = form.handleSubmit(async (values) => {
     const dirty = form.formState.dirtyFields;
-     
-    const body: Record<string, unknown> = {};
+
+    const body: PatientPatch = {};
     if (hasDirty(dirty.base)) body.base = values.base;
     if (hasDirty(dirty.gestantes)) body.gestantes = values.gestantes;
     if (hasDirty(dirty.tuberculose)) body.tuberculose = values.tuberculose;
@@ -462,8 +462,7 @@ function PanelContent({
     try {
       await updatePatient.mutateAsync({
         id: patient.id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        body: body as any,
+        body,
       });
       setIsEditing(false);
     } catch {

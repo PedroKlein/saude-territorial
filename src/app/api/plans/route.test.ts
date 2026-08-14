@@ -90,7 +90,7 @@ const VALID_BODY = {
 };
 
 const PLAN_ROW = {
-  id: "plan-uuid-1",
+  id: "22222222-2222-4222-8222-222222222222",
   date: "2025-08-13",
   acsName: "João ACS",
   profile: "foot",
@@ -182,7 +182,7 @@ describe("POST /api/plans", () => {
     const res = await POST(makePost(VALID_BODY));
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.plan.id).toBe("plan-uuid-1");
+    expect(body.plan.id).toBe("22222222-2222-4222-8222-222222222222");
     expect(body.plan.profile).toBe("foot");
   });
 });
@@ -226,7 +226,7 @@ describe("GET /api/plans/[id]", () => {
   it("returns 401 when unauthenticated", async () => {
     mocks.getSession.mockResolvedValueOnce(null);
     const res = await GET_ONE(makeGet("http://localhost/api/plans/plan-uuid-1"), {
-      params: Promise.resolve({ id: "plan-uuid-1" }),
+      params: Promise.resolve({ id: "22222222-2222-4222-8222-222222222222" }),
     });
     expect(res.status).toBe(401);
   });
@@ -239,7 +239,7 @@ describe("GET /api/plans/[id]", () => {
     );
 
     const res = await GET_ONE(makeGet("http://localhost/api/plans/nonexistent"), {
-      params: Promise.resolve({ id: "nonexistent" }),
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000000" }),
     });
     expect(res.status).toBe(404);
   });
@@ -260,11 +260,11 @@ describe("GET /api/plans/[id]", () => {
       );
 
     const res = await GET_ONE(makeGet("http://localhost/api/plans/plan-uuid-1"), {
-      params: Promise.resolve({ id: "plan-uuid-1" }),
+      params: Promise.resolve({ id: "22222222-2222-4222-8222-222222222222" }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.plan.id).toBe("plan-uuid-1");
+    expect(body.plan.id).toBe("22222222-2222-4222-8222-222222222222");
     expect(Array.isArray(body.plan.stops)).toBe(true);
     expect(body.plan.stops).toHaveLength(1);
   });
@@ -285,7 +285,7 @@ describe("DELETE /api/plans/[id]", () => {
     mocks.getSession.mockResolvedValueOnce(null);
     const res = await DELETE_ONE(
       makeDelete("http://localhost/api/plans/plan-uuid-1"),
-      { params: Promise.resolve({ id: "plan-uuid-1" }) },
+      { params: Promise.resolve({ id: "22222222-2222-4222-8222-222222222222" }) },
     );
     expect(res.status).toBe(401);
     expect(mocks.deleteFn).not.toHaveBeenCalled();
@@ -297,18 +297,18 @@ describe("DELETE /api/plans/[id]", () => {
 
     const res = await DELETE_ONE(
       makeDelete("http://localhost/api/plans/nonexistent"),
-      { params: Promise.resolve({ id: "nonexistent" }) },
+      { params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000000" }) },
     );
     expect(res.status).toBe(404);
   });
 
   it("returns 204 on happy path", async () => {
     mocks.getSession.mockResolvedValueOnce({ user: { id: "u1" } });
-    mocks.deleteReturning.mockResolvedValueOnce([{ id: "plan-uuid-1" }]);
+    mocks.deleteReturning.mockResolvedValueOnce([{ id: "22222222-2222-4222-8222-222222222222" }]);
 
     const res = await DELETE_ONE(
       makeDelete("http://localhost/api/plans/plan-uuid-1"),
-      { params: Promise.resolve({ id: "plan-uuid-1" }) },
+      { params: Promise.resolve({ id: "22222222-2222-4222-8222-222222222222" }) },
     );
     expect(res.status).toBe(204);
     expect(mocks.deleteFn).toHaveBeenCalledTimes(1);

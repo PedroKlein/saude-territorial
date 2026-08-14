@@ -11,6 +11,7 @@ import { PatientCreateSchema } from "@/lib/patients/schemas";
 import { normalizeAddress } from "@/lib/geocoding/normalize";
 import { geocodeWithCache } from "@/lib/geocoding/cache";
 import { shape } from "@/lib/patients/shape";
+import { isPgUniqueViolation } from "@/lib/db/errors";
 
 /**
  * GET /api/patients — read all seeded patients joined with their condition
@@ -274,11 +275,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
     const result = await geocodeWithCache(addr);
     if (!result) {
+      // LGPD: never echo the request body (CNS, name, address) in the
+      // response — the client already holds the draft locally and can
+      // resubmit with manually-picked coords via basePatch.lat/lng.
       return NextResponse.json(
         {
           error: "Endereço não encontrado.",
           requiresManualPin: true,
-          draft: data,
         },
         { status: 422 },
       );
@@ -335,6 +338,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (err) {
     const code = err instanceof Error ? err.name : "UnknownError";
+    // Postgres unique_violation (23505) reaches us when a concurrent POST
+    // squeezed in between our findFirst() collision check and this insert.
+    // Surface as 409 so the client's normal collision-handler path takes
+    // over instead of the generic 500 "try again" toast. LGPD-safe: the
+    // response doesn't echo the request body — the client already has
+    // the CNS locally to render the collision UI.
+    if (isPgUniqueViolation(err)) {
+      return NextResponse.json(
+        { error: "cns_exists" },
+        { status: 409 },
+      );
+    }
     console.error(`[api/patients:POST] failed (${code})`);
     return NextResponse.json(
       { error: "Erro ao criar. Tente novamente." },

@@ -8,6 +8,7 @@ import { gestantesData } from "@/db/schema/gestantes";
 import { hasData } from "@/db/schema/has";
 import { tuberculoseData } from "@/db/schema/tuberculose";
 import { EXTENSION_LAYERS, type ExtensionLayer } from "@/lib/patients/schemas";
+import { isUuid } from "@/lib/db/errors";
 
 /**
  * DELETE /api/patients/[id]/conditions/[condicao]
@@ -39,6 +40,12 @@ export async function DELETE(
   }
 
   const { id, condicao } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { error: "Paciente não encontrado." },
+      { status: 404 },
+    );
+  }
 
   if (!(EXTENSION_LAYERS as readonly string[]).includes(condicao)) {
     return NextResponse.json(

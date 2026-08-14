@@ -72,7 +72,7 @@ import { NextRequest } from "next/server";
 // Synthetic data — LGPD: fictitious patient
 // ---------------------------------------------------------------------------
 
-const PATIENT_ID = "synthetic-uuid-1";
+const PATIENT_ID = "11111111-1111-4111-8111-111111111111";
 
 const SYNTHETIC_CURRENT = {
   id: PATIENT_ID,
@@ -208,9 +208,20 @@ describe("PATCH /api/patients/[id]", () => {
     mocks.findFirst.mockResolvedValueOnce(undefined);
     const res = await PATCH(
       makeRequest({ base: { nomeCompleto: "Nova" } }),
-      makeParams("missing"),
+      makeParams("00000000-0000-4000-8000-000000000000"),
     );
     expect(res.status).toBe(404);
+    expect(mocks.transactionSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 for malformed UUID param (no DB call)", async () => {
+    const res = await PATCH(
+      makeRequest({ base: { nomeCompleto: "Nova" } }),
+      makeParams("not-a-uuid"),
+    );
+    expect(res.status).toBe(404);
+    // The guard fires before Drizzle is touched — no findFirst, no tx.
+    expect(mocks.findFirst).not.toHaveBeenCalled();
     expect(mocks.transactionSpy).not.toHaveBeenCalled();
   });
 

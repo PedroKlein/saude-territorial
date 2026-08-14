@@ -14,6 +14,7 @@ import {
   PatientPatchSchema,
   type BasePatch,
 } from "@/lib/patients/schemas";
+import { isUuid } from "@/lib/db/errors";
 
 /**
  * PATCH /api/patients/[id] — partial update of a patient (base + extension).
@@ -89,6 +90,12 @@ export async function PATCH(
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { error: "Paciente não encontrado." },
+      { status: 404 },
+    );
+  }
 
   // Parse body first so an invalid shape short-circuits before any DB read.
   let raw: unknown;
@@ -343,6 +350,12 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { error: "Paciente não encontrado." },
+      { status: 404 },
+    );
+  }
 
   try {
     const deleted = await db
@@ -400,6 +413,12 @@ export async function GET(
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { error: "Paciente não encontrado." },
+      { status: 404 },
+    );
+  }
 
   try {
     const row = await db.query.patients.findFirst({

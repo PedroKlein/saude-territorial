@@ -11,10 +11,10 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { eq, asc } from "drizzle-orm";
-
+import { dailyPlans, dailyPlanStops } from "@/db/schema/plans";
+import { isUuid } from "@/lib/db/errors";
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
-import { dailyPlans, dailyPlanStops } from "@/db/schema/plans";
 
 export async function GET(
   request: NextRequest,
@@ -27,8 +27,10 @@ export async function GET(
       { status: 401 },
     );
   }
-
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json({ error: "Plano não encontrado." }, { status: 404 });
+  }
 
   const plan = await db
     .select()
@@ -63,6 +65,9 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json({ error: "Plano não encontrado." }, { status: 404 });
+  }
 
   // Rely on the ON DELETE CASCADE on daily_plan_stops.plan_id to sweep
   // stop rows atomically at the database level.

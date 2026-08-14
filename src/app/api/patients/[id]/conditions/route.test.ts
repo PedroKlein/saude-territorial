@@ -65,7 +65,7 @@ import { NextRequest } from "next/server";
 // Synthetic data
 // ---------------------------------------------------------------------------
 
-const PATIENT_ID = "synth-conditions-uuid-1";
+const PATIENT_ID = "11111111-1111-4111-8111-111111111111";
 
 const PATIENT_NO_HAS = {
   id: PATIENT_ID,
@@ -204,7 +204,7 @@ describe("POST /api/patients/[id]/conditions", () => {
   it("404 — returns not found for unknown patient id", async () => {
     mocks.findFirst.mockResolvedValueOnce(null);
 
-    const [req, params] = makeRequest({ condicao: "hipertensao", data: {} }, "nonexistent-id");
+    const [req, params] = makeRequest({ condicao: "hipertensao", data: {} }, "00000000-0000-4000-8000-000000000000");
     const res = await POST(req, params);
     expect(res.status).toBe(404);
   });

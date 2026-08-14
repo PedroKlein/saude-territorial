@@ -44,7 +44,7 @@ import { NextRequest } from "next/server";
 // Synthetic data — LGPD: fictitious patient id
 // ---------------------------------------------------------------------------
 
-const PATIENT_ID = "synthetic-uuid-delete-1";
+const PATIENT_ID = "11111111-1111-4111-8111-111111111111";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,7 +90,7 @@ describe("DELETE /api/patients/[id]", () => {
 
   it("returns 404 with PT-BR error when the patient does not exist", async () => {
     mocks.returningSpy.mockResolvedValue([]);
-    const res = await DELETE(makeRequest(), makeParams("nonexistent-uuid"));
+    const res = await DELETE(makeRequest(), makeParams("00000000-0000-4000-8000-000000000000"));
     expect(res.status).toBe(404);
     const json = await res.json();
     expect(json.error).toBe("Paciente não encontrado.");
