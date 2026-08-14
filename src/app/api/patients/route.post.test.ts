@@ -70,11 +70,27 @@ import { NextRequest } from "next/server";
 // ---------------------------------------------------------------------------
 // Synthetic data — LGPD: fictitious
 // ---------------------------------------------------------------------------
+/**
+ * Valid synthetic CNS values — the create schema now enforces the DATASUS
+ * checksum (UP-1.4), so bare `0000...` strings no longer parse. Computing
+ * the tail from `computeCnsChecksum` gives us deterministic, unique CNS
+ * values that satisfy the schema without pinning to any real card.
+ */
+import { computeCnsChecksum } from "@/lib/patients/cns";
+
+const makeCns = (suffix: number): string => {
+  const prefix = `100000000${suffix.toString().padStart(2, "0")}`;
+  return prefix + computeCnsChecksum(prefix);
+};
+const CNS_GESTANTE = makeCns(1);
+const CNS_TB = makeCns(2);
+const CNS_HAS = makeCns(3);
+const CNS_COORD = makeCns(4);
 
 const PATIENT_UUID = "synth-create-uuid-1";
 
 const BASE_GESTANTE_BODY = {
-  cns: "000000000000002",
+  cns: CNS_GESTANTE,
   base: {
     nomeCompleto: "PACIENTE_SINTETICO_CREATE",
     rua: "Rua Fictícia",
@@ -87,7 +103,7 @@ const BASE_GESTANTE_BODY = {
 
 const CREATED_GESTANTE = {
   id: PATIENT_UUID,
-  cns: "000000000000002",
+  cns: CNS_GESTANTE,
   nomeCompleto: "PACIENTE_SINTETICO_CREATE",
   dataNascimento: null,
   idade: null,
@@ -141,7 +157,7 @@ const CREATED_GESTANTE = {
 
 const CREATED_TB = {
   ...CREATED_GESTANTE,
-  cns: "000000000000003",
+  cns: CNS_TB,
   gestantes: null,
   tuberculose: {
     patientId: PATIENT_UUID,
@@ -176,7 +192,7 @@ const CREATED_TB = {
 
 const CREATED_HAS = {
   ...CREATED_GESTANTE,
-  cns: "000000000000004",
+  cns: CNS_HAS,
   lat: null,
   lng: null,
   geocodeStatus: "unresolved" as const,
@@ -261,7 +277,7 @@ describe("POST /api/patients", () => {
       .mockResolvedValueOnce(CREATED_TB);
 
     const tbBody = {
-      cns: "000000000000003",
+      cns: CNS_TB,
       base: { nomeCompleto: "PACIENTE_SINTETICO_TB" },
       condicao: "tuberculose" as const,
       tuberculose: { tipo: "Pulmonar" },
@@ -281,7 +297,7 @@ describe("POST /api/patients", () => {
       .mockResolvedValueOnce(CREATED_HAS);
 
     const hasBody = {
-      cns: "000000000000004",
+      cns: CNS_HAS,
       base: { nomeCompleto: "PACIENTE_SINTETICO_HAS" },
       condicao: "hipertensao" as const,
       hipertensao: {},
@@ -319,7 +335,7 @@ describe("POST /api/patients", () => {
 
   it("201 — direct-coord path skips geocoding, geocodeStatus=manual", async () => {
     const directBody = {
-      cns: "000000000000005",
+      cns: CNS_COORD,
       base: {
         nomeCompleto: "PACIENTE_SINTETICO_COORD",
         lat: -30.05,

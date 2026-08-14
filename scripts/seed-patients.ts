@@ -22,6 +22,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { computeCnsChecksum } from "@/lib/patients/cns";
+
 import postgres from "postgres";
 
 import { enforceNonProdGate } from "./lib/non-prod-gate";
@@ -253,16 +255,20 @@ interface PacienteCsvRow {
   observacao: string;
 }
 
-/** Deterministic 15-digit CNS from a source id. Leading `8` guarantees
- * non-collision with JSON gestantes CNS (which start with 1..5). */
+/**
+ * Deterministic 15-digit CNS from a source id, valid under the DATASUS
+ * checksum. Leading `1` places these in the definitive-CNS family; the
+ * 11-digit prefix comes from hashing the source id, and the 4-digit tail
+ * is the checksum produced by `computeCnsChecksum`.
+ */
 function synthesiseCns(sourceId: string): string {
   const hex = createHash("sha256").update(sourceId).digest("hex");
-  // Take the first 14 hex chars, mod each into a decimal digit, prepend `8`.
   let digits = "";
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 10; i++) {
     digits += (parseInt(hex[i], 16) % 10).toString();
   }
-  return `8${digits}`;
+  const prefix = `1${digits}`;
+  return prefix + computeCnsChecksum(prefix);
 }
 
 function parseCsv(source: string): PacienteCsvRow[] {

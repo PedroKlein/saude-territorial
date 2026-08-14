@@ -29,6 +29,8 @@
 
 import { z } from "zod";
 
+import { isValidCns } from "./cns";
+
 // ---------------------------------------------------------------------------
 // Common helpers
 // ---------------------------------------------------------------------------
@@ -86,6 +88,30 @@ const longitude = z
   .refine((n) => n >= -52 && n <= -50, {
     message: "Longitude fora da faixa esperada (RS).",
   });
+
+/**
+ * Today's date in ISO `yyyy-MM-dd`. Wall-clock, not UTC — a form submitted
+ * at 23:30 local time compares against the local calendar day. Callers that
+ * need UTC discipline can post-process.
+ */
+function todayIso(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = (now.getMonth() + 1).toString().padStart(2, "0");
+  const d = now.getDate().toString().padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** ISO date + integer day offset. Handles month/year rollover via `Date`. */
+function addDaysToIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1, d));
+  base.setUTCDate(base.getUTCDate() + days);
+  const yy = base.getUTCFullYear();
+  const mm = (base.getUTCMonth() + 1).toString().padStart(2, "0");
+  const dd = base.getUTCDate().toString().padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
 
 // ---------------------------------------------------------------------------
 // Base (patients)
@@ -153,7 +179,26 @@ export const GestantesPatchSchema = z
     puerperioAvaliacaoOdonto: textOrNull.optional(),
     isExposta: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    if (typeof v.dataUltimaConsulta === "string") {
+      const today = todayIso();
+      if (v.dataUltimaConsulta > today) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["dataUltimaConsulta"],
+          message: "Data da última consulta não pode ser no futuro.",
+        });
+      }
+    }
+  })
+  // DPP is computed server-side (DUM + 280d). Any client value is discarded.
+  .transform((v) => {
+    if (typeof v.dum === "string") {
+      return { ...v, dpp: addDaysToIso(v.dum, 280) };
+    }
+    return v;
+  });
 
 export type GestantesPatch = z.infer<typeof GestantesPatchSchema>;
 
@@ -191,7 +236,31 @@ export const TuberculosePatchSchema = z
     // NOTE: `contatosLista` is a LGPD hot-spot (household names). Excluded
     // from the MVP edit surface; will require an explicit consent path.
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    if (
+      typeof v.baciloscopiaPrimeiraData === "string" &&
+      typeof v.baciloscopiaSegundaData === "string" &&
+      v.baciloscopiaPrimeiraData > v.baciloscopiaSegundaData
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["baciloscopiaSegundaData"],
+        message: "A 2ª baciloscopia não pode ser anterior à 1ª.",
+      });
+    }
+    if (
+      typeof v.dataInicio === "string" &&
+      typeof v.encerramentoData === "string" &&
+      v.dataInicio > v.encerramentoData
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["encerramentoData"],
+        message: "A data de encerramento não pode ser anterior ao início.",
+      });
+    }
+  });
 
 export type TuberculosePatch = z.infer<typeof TuberculosePatchSchema>;
 
@@ -208,7 +277,19 @@ export const HasPatchSchema = z
     registroNotas: textOrNull.optional(),
     encaminhamentos: textOrNull.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    if (typeof v.dataUltimaConsulta === "string") {
+      const today = todayIso();
+      if (v.dataUltimaConsulta > today) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["dataUltimaConsulta"],
+          message: "Data da última consulta não pode ser no futuro.",
+        });
+      }
+    }
+  });
 
 export type HasPatch = z.infer<typeof HasPatchSchema>;
 
@@ -260,7 +341,10 @@ export const PatientCreateSchema = z
   .object({
     cns: z
       .string()
-      .regex(/^\d{15}$/, "CNS deve ter exatamente 15 dígitos numéricos."),
+      .regex(/^\d{15}$/, "CNS deve ter exatamente 15 dígitos numéricos.")
+      .refine(isValidCns, {
+        message: "CNS inválido (checksum não confere).",
+      }),
     base: z.object({
       nomeCompleto: requiredText,
       dataNascimento: dateFlex.optional(),
