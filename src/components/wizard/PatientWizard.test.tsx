@@ -146,7 +146,7 @@ function Wrapper({ children }: { children: ReactNode }) {
  * Synthetic CNS that passes the Luhn checksum used by isValidCns.
  * LGPD: fictitious — not a real patient identifier.
  */
-const VALID_CNS = "898001457000009";
+const VALID_CNS = "100000000000007";
 
 /** Submit the wizard step form (footer button uses form="wizard-step-form"). */
 function submitStep() {

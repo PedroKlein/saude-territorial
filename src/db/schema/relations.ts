@@ -4,6 +4,7 @@ import { gestantesData } from "./gestantes";
 import { hasData } from "./has";
 import { patients } from "./patients";
 import { tuberculoseConsultas, tuberculoseData } from "./tuberculose";
+import { dailyPlans, dailyPlanStops } from "./plans";
 
 /**
  * Drizzle relations — centralised so schema files stay import-cycle free.
@@ -15,7 +16,7 @@ import { tuberculoseConsultas, tuberculoseData } from "./tuberculose";
  * { with: { consultas: true } } } })` is the natural read shape.
  */
 
-export const patientsRelations = relations(patients, ({ one }) => ({
+export const patientsRelations = relations(patients, ({ one, many }) => ({
   gestantes: one(gestantesData, {
     fields: [patients.id],
     references: [gestantesData.patientId],
@@ -28,6 +29,7 @@ export const patientsRelations = relations(patients, ({ one }) => ({
     fields: [patients.id],
     references: [hasData.patientId],
   }),
+  planStops: many(dailyPlanStops),
 }));
 
 export const gestantesDataRelations = relations(gestantesData, ({ one }) => ({
@@ -59,6 +61,21 @@ export const tuberculoseConsultasRelations = relations(tuberculoseConsultas, ({ 
 export const hasDataRelations = relations(hasData, ({ one }) => ({
   patient: one(patients, {
     fields: [hasData.patientId],
+    references: [patients.id],
+  }),
+}));
+
+export const dailyPlansRelations = relations(dailyPlans, ({ many }) => ({
+  stops: many(dailyPlanStops),
+}));
+
+export const dailyPlanStopsRelations = relations(dailyPlanStops, ({ one }) => ({
+  plan: one(dailyPlans, {
+    fields: [dailyPlanStops.planId],
+    references: [dailyPlans.id],
+  }),
+  patient: one(patients, {
+    fields: [dailyPlanStops.patientId],
     references: [patients.id],
   }),
 }));

@@ -16,7 +16,7 @@ import { MapPin, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMapStore } from "@/stores/mapStore";
 import type { PatientWizardMode } from "@/components/wizard/PatientWizard";
-import successAnimation from "@/components/wizard/successAnimation.json";
+import successAnimation from "@/lottie-success.json";
 
 // ---------------------------------------------------------------------------
 // Props

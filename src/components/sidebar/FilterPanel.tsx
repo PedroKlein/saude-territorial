@@ -1,29 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { useFilterStore } from "@/stores/filterStore";
 
 const MICROAREAS = ["MA1", "MA2", "MA3", "MA4", "MA5"];
 const ALERT_LEVELS = [
-  { id: "vermelho", label: "Vermelho (Crítico)", color: "#EF4444" },
-  { id: "amarelo", label: "Amarelo (Atenção)", color: "#F59E0B" },
-  { id: "verde", label: "Verde (Normal)", color: "#22C55E" },
+  { id: "vermelho", label: "Crítico", dotClass: "bg-alert-red" },
+  { id: "amarelo", label: "Atenção", dotClass: "bg-alert-amber" },
+  { id: "verde", label: "Normal", dotClass: "bg-ok-green" },
 ];
 
+/**
+ * Filtros section — microárea + alert-level chip filters.
+ *
+ * The search input that used to live here has been moved to the sidebar
+ * header (`SearchInput`). Active chips use brand-teal fill.
+ */
 export function FilterPanel() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const microareas = useFilterStore((s) => s.microareas);
   const alertLevels = useFilterStore((s) => s.alertLevels);
-  const searchText = useFilterStore((s) => s.searchText);
   const hideUncertain = useFilterStore((s) => s.hideUncertain);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const setAlertFilter = useFilterStore((s) => s.setAlertFilter);
-  const setSearch = useFilterStore((s) => s.setSearch);
   const setHideUncertain = useFilterStore((s) => s.setHideUncertain);
   const clearFilters = useFilterStore((s) => s.clearFilters);
 
   const activeCount =
-    microareas.length + alertLevels.length + (searchText ? 1 : 0) + (hideUncertain ? 1 : 0);
+    microareas.length + alertLevels.length + (hideUncertain ? 1 : 0);
 
   function toggleMicroarea(id: string) {
     if (microareas.includes(id)) {
@@ -42,47 +47,42 @@ export function FilterPanel() {
   }
 
   return (
-    <div className="border-t pt-3">
+    <div>
+      {/* Collapsible header */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+        className="flex w-full items-center justify-between py-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-700"
       >
-        <span>
+        <span className="flex items-center gap-1.5">
+          <SlidersHorizontal className="h-3 w-3" />
           Filtros
           {activeCount > 0 && (
-            <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white">
               {activeCount}
             </span>
           )}
         </span>
-        <span className="text-xs">{isOpen ? "▲" : "▼"}</span>
+        <span className="text-[10px]">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {isOpen && (
-        <div className="mt-3 space-y-4">
-          {/* Search */}
-          <input
-            type="text"
-            placeholder="Buscar paciente..."
-            value={searchText}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded border px-2 py-1.5 text-sm"
-          />
-
-          {/* Microáreas */}
+        <div className="mt-2 space-y-3">
+          {/* Microárea chips */}
           <div>
-            <p className="mb-1 text-xs font-medium text-muted-foreground">
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-neutral-400">
               Microárea
             </p>
             <div className="flex flex-wrap gap-1">
               {MICROAREAS.map((ma) => (
                 <button
                   key={ma}
+                  type="button"
                   onClick={() => toggleMicroarea(ma)}
-                  className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
                     microareas.includes(ma)
-                      ? "bg-primary text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-brand text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                   }`}
                 >
                   {ma}
@@ -91,52 +91,51 @@ export function FilterPanel() {
             </div>
           </div>
 
-          {/* Alert Levels */}
+          {/* Alert level chips */}
           <div>
-            <p className="mb-1 text-xs font-medium text-muted-foreground">
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-neutral-400">
               Nível de Alerta
             </p>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap gap-1">
               {ALERT_LEVELS.map((level) => (
-                <label
+                <button
                   key={level.id}
-                  className="flex cursor-pointer items-center gap-2 text-sm"
+                  type="button"
+                  onClick={() => toggleAlertLevel(level.id)}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
+                    alertLevels.includes(level.id)
+                      ? "bg-brand text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={alertLevels.includes(level.id)}
-                    onChange={() => toggleAlertLevel(level.id)}
-                    className="h-3.5 w-3.5 rounded border-gray-300"
-                  />
                   <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: level.color }}
+                    className={`h-1.5 w-1.5 rounded-full ${level.dotClass}`}
+                    aria-hidden
                   />
-                  <span>{level.label}</span>
-                </label>
+                  {level.label}
+                </button>
               ))}
             </div>
           </div>
 
           {/* Geocoding confidence */}
-          <div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={hideUncertain}
-                onChange={(e) => setHideUncertain(e.target.checked)}
-                className="h-3.5 w-3.5 rounded border-gray-300"
-              />
-              <span>Ocultar incertos</span>
-              <span className="text-xs text-muted-foreground">(confiança &lt; 50%)</span>
-            </label>
-          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-neutral-600">
+            <input
+              type="checkbox"
+              checked={hideUncertain}
+              onChange={(e) => setHideUncertain(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-neutral-300 accent-brand"
+            />
+            <span>Ocultar incertos</span>
+            <span className="text-neutral-400">(confiança &lt; 50%)</span>
+          </label>
 
-          {/* Clear button */}
+          {/* Clear */}
           {activeCount > 0 && (
             <button
+              type="button"
               onClick={clearFilters}
-              className="w-full rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+              className="w-full rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50"
             >
               Limpar filtros
             </button>

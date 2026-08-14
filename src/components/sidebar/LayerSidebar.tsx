@@ -1,41 +1,90 @@
 "use client";
 
+import { useMemo } from "react";
+import {
+  Baby,
+  Wind,
+  HeartPulse,
+  Layers,
+  AlertTriangle,
+  Droplets,
+  BedSingle,
+  School,
+  Building2,
+  ChevronDown,
+} from "lucide-react";
 import { useMapStore } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
-import { useMemo } from "react";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
 import type { AlertLevel } from "@/types/alerts";
+import { SearchInput } from "./SearchInput";
+import { LayerToggleRow } from "./LayerToggleRow";
+import { PriorityListSection } from "./PriorityListSection";
+import { FilterPanel } from "./FilterPanel";
+import { PlanejarVisitaButton } from "./PlanejarVisitaButton";
+import type { LucideIcon } from "lucide-react";
 
-// Layer colors for the visual dot indicator
-const LAYER_COLORS: Record<LayerId, string> = {
-  gestantes: "#E91E63",
-  tuberculose: "#FF5722",
-  diabetes: "#2196F3",
-  hipertensao: "#9C27B0",
-  acamados: "#795548",
-  pse: "#4CAF50",
-  ilpi: "#607D8B",
+// ---------------------------------------------------------------------------
+// Layer icon / color mapping
+// ---------------------------------------------------------------------------
+
+const PRIMARY_LAYER_IDS: LayerId[] = ["gestantes", "tuberculose", "hipertensao"];
+const DEFERRED_LAYER_IDS: LayerId[] = ["diabetes", "acamados", "pse", "ilpi"];
+
+const LAYER_ICON: Record<LayerId, LucideIcon> = {
+  gestantes: Baby,
+  tuberculose: Wind,
+  hipertensao: HeartPulse,
+  diabetes: Droplets,
+  acamados: BedSingle,
+  pse: School,
+  ilpi: Building2,
 };
+
+const LAYER_COLOR_CLASS: Record<LayerId, string> = {
+  gestantes: "bg-gestante",
+  tuberculose: "bg-tuberculose",
+  hipertensao: "bg-hipertensao",
+  diabetes: "bg-diabetes",
+  acamados: "bg-acamados",
+  pse: "bg-pse",
+  ilpi: "bg-ilpi",
+};
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface LayerSidebarProps {
   data?: LayeredPatientData;
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+/**
+ * Left sidebar — rebuilt per the validated proto/map sketch (UP-5).
+ *
+ * Sections (top → bottom):
+ *   1. Search input row
+ *   2. Alertas meta-filter (total alert count + alertsOnly toggle)
+ *   3. Camadas toggles — primary layers (GES/TB/HAS) + deferred subsection
+ *   4. Precisam atenção — priority patient list (scrollable)
+ *   5. Filtros — microárea + alert-level chip filters
+ *   6. Footer — "Planejar visita" CTA
+ */
 export function LayerSidebar({ data }: LayerSidebarProps) {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
-  const showTerritories = useMapStore((s) => s.showTerritories);
-  const setShowTerritories = useMapStore((s) => s.setShowTerritories);
-  const vizMode = useMapStore((s) => s.vizMode);
-  const setVizMode = useMapStore((s) => s.setVizMode);
   const alertsOnly = useMapStore((s) => s.alertsOnly);
   const setAlertsOnly = useMapStore((s) => s.setAlertsOnly);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
-  // Count urgent patients (vermelho + amarelo) across active layers
+  // Total alert count across all active layers.
   const alertCount = useMemo(() => {
     if (!data) return 0;
     let count = 0;
@@ -53,110 +102,112 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
   }, [data, activeLayers, layerIds]);
 
   return (
-    <div className="p-4">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Camadas
-      </h2>
+    <aside className="flex h-full flex-col overflow-hidden border-r border-neutral-200 bg-white">
+      {/* ------------------------------------------------------------------ */}
+      {/* 1. Search                                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-b border-neutral-200 p-3">
+        <SearchInput />
+      </div>
 
-      {/* Alertas meta-filter */}
-      <button
-        onClick={() => setAlertsOnly(!alertsOnly)}
-        className={`mb-3 flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-          alertsOnly
-            ? "bg-red-50 text-red-700 ring-1 ring-red-200"
-            : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-        }`}
-      >
-        <span>🚨 Alertas</span>
-        <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-          alertsOnly ? "bg-red-600 text-white" : "bg-gray-200 text-gray-600"
-        }`}>
-          {alertCount}
-        </span>
-      </button>
+      {/* ------------------------------------------------------------------ */}
+      {/* 2. Alertas meta-filter                                              */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-b border-neutral-200 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setAlertsOnly(!alertsOnly)}
+          className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium transition ${
+            alertsOnly
+              ? "bg-red-50 text-alert-red ring-1 ring-alert-red/30"
+              : "text-neutral-700 hover:bg-neutral-50"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <AlertTriangle
+              className={`h-3.5 w-3.5 ${
+                alertsOnly ? "text-alert-red" : "text-neutral-400"
+              }`}
+            />
+            <span>Alertas</span>
+          </span>
+          <span
+            className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+              alertsOnly
+                ? "bg-alert-red text-white"
+                : "bg-neutral-100 text-neutral-600"
+            }`}
+          >
+            {alertCount}
+          </span>
+        </button>
+      </div>
 
-      <ul className="flex flex-col gap-1">
-        {layerIds.map((id) => {
-          const config = LAYER_CONFIG[id];
-          const count = data?.[id]?.length ?? 0;
-          const isActive = activeLayers[id];
-
-          return (
-            <li key={id}>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={() => toggleLayer(id)}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <span
-                  className="h-3 w-3 shrink-0 rounded-full"
-                  style={{ backgroundColor: LAYER_COLORS[id] }}
-                />
-                <span className="flex-1 text-sm">{config.label}</span>
-                <span className="text-xs text-muted-foreground">{count}</span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* Visualization mode toggle */}
-      <div className="mt-4 border-t pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Visualização
-        </p>
-        <div className="flex gap-1 rounded-md bg-gray-100 p-1">
-          <VizButton
-            active={vizMode === "markers"}
-            onClick={() => setVizMode("markers")}
-            label="Marcadores"
-          />
-          <VizButton
-            active={vizMode === "heatmap"}
-            onClick={() => setVizMode("heatmap")}
-            label="Heatmap"
-          />
+      {/* ------------------------------------------------------------------ */}
+      {/* 3. Camadas                                                          */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-b border-neutral-200 p-3">
+        <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+          <Layers className="h-3 w-3" />
+          Camadas
         </div>
+
+        {/* Primary layers */}
+        <div className="space-y-0.5">
+          {PRIMARY_LAYER_IDS.map((id) => (
+            <LayerToggleRow
+              key={id}
+              icon={LAYER_ICON[id]}
+              colorClass={LAYER_COLOR_CLASS[id]}
+              label={LAYER_CONFIG[id].label}
+              count={data?.[id]?.length ?? 0}
+              active={activeLayers[id]}
+              onToggle={() => toggleLayer(id)}
+            />
+          ))}
+        </div>
+
+        {/* Deferred layers — muted, non-functional, collapsed by default */}
+        <details className="mt-2 group">
+          <summary className="flex cursor-pointer list-none items-center gap-1 py-1 text-xs text-neutral-400 hover:text-neutral-500">
+            <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+            Mais camadas
+          </summary>
+          <div className="mt-1 space-y-0.5">
+            {DEFERRED_LAYER_IDS.map((id) => (
+              <LayerToggleRow
+                key={id}
+                icon={LAYER_ICON[id]}
+                colorClass={LAYER_COLOR_CLASS[id]}
+                label={LAYER_CONFIG[id].label}
+                count={data?.[id]?.length ?? 0}
+                active={activeLayers[id]}
+                onToggle={() => toggleLayer(id)}
+                muted
+              />
+            ))}
+          </div>
+        </details>
       </div>
 
-      {/* Territory layer toggle */}
-      <div className="mt-4 border-t pt-4">
-        <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50">
-          <input
-            type="checkbox"
-            checked={showTerritories}
-            onChange={() => setShowTerritories(!showTerritories)}
-            className="h-4 w-4 rounded border-gray-300"
-          />
-          <span className="h-3 w-3 shrink-0 rounded-full border-2 border-purple-500 bg-purple-200" />
-          <span className="flex-1 text-sm">Microáreas</span>
-        </label>
-      </div>
-    </div>
-  );
-}
+      {/* ------------------------------------------------------------------ */}
+      {/* 4. Priority list — flex-1, scrolls internally                      */}
+      {/* ------------------------------------------------------------------ */}
+      <PriorityListSection data={data} />
 
-function VizButton({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 rounded px-3 py-1 text-xs font-medium transition-colors ${
-        active
-          ? "bg-white text-gray-800 shadow-sm"
-          : "text-gray-500 hover:text-gray-700"
-      }`}
-    >
-      {label}
-    </button>
+      {/* ------------------------------------------------------------------ */}
+      {/* 5. Filtros                                                          */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-t border-neutral-200 px-3 py-2">
+        <FilterPanel />
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 6. Footer — Planejar visita CTA                                     */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-t border-neutral-200 bg-neutral-50 p-3">
+        <PlanejarVisitaButton />
+      </div>
+    </aside>
   );
 }

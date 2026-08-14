@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker } from "react-leaflet";
 import { useRef, useCallback, useMemo, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
@@ -17,6 +17,7 @@ import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { useRoutePlannerStore } from "@/stores/routePlannerStore";
+import { usePlannerStore } from "@/stores/plannerStore";
 
 import { useMapEvents } from "react-leaflet";
 import { useFilterStore } from "@/stores/filterStore";
@@ -64,10 +65,11 @@ export default function MapView() {
   const pinningPatient = useMapStore((s) => s.pinningPatient);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
   const optimizedRoute = useRoutePlannerStore((s) => s.optimizedRoute);
+  const plannerDrawerOpen = usePlannerStore((s) => s.drawerOpen);
+  const plannerStops = usePlannerStore((s) => s.stops);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
-
 
 
   const handleMicroareaClick = useCallback(
@@ -121,6 +123,22 @@ export default function MapView() {
     }
     return buildCoincidenceMap(all);
   }, [data]);
+
+  // Planner stop coordinates — resolved from patient data by stop.patientId.
+  const plannerMarkerData = useMemo(() => {
+    if (!plannerDrawerOpen || plannerStops.length === 0 || !data) return [];
+    const out: { order: number; lat: number; lng: number }[] = [];
+    for (const stop of plannerStops) {
+      for (const patients of Object.values(data)) {
+        const p = patients?.find((q) => q.id === stop.patientId);
+        if (p && typeof p.lat === "number" && typeof p.lng === "number") {
+          out.push({ order: stop.order, lat: p.lat, lng: p.lng });
+          break;
+        }
+      }
+    }
+    return out;
+  }, [plannerDrawerOpen, plannerStops, data]);
 
   return (
     <>
@@ -176,6 +194,26 @@ export default function MapView() {
               );
             })}
         </ClusteredLayer>
+        {/* Numbered planner stop markers — rendered above patient markers,   */}
+        {/* outside ClusteredLayer so they never cluster away.                */}
+        {plannerDrawerOpen &&
+          plannerMarkerData.map(({ order, lat, lng }) => (
+            <CircleMarker
+              key={`planner-stop-${order}`}
+              center={[lat, lng]}
+              radius={14}
+              pathOptions={{
+                fillColor: "oklch(58% 0.10 195)",
+                color: "#fff",
+                weight: 3,
+                fillOpacity: 0.95,
+              }}
+            >
+              <Tooltip permanent direction="center" className="planner-stop-badge">
+                {String(order)}
+              </Tooltip>
+            </CircleMarker>
+          ))}
         {vizMode === "heatmap" && heatmapPoints.length > 0 && (
           <HeatmapLayer points={heatmapPoints} />
         )}
@@ -186,8 +224,14 @@ export default function MapView() {
 
       </MapContainer>
       {/* Show optimized planner route OR single-patient route (not both) */}
+      {/* Planner route (via activeRoute set by PlannerDrawer) takes priority;
+          fall back to legacy optimizedRoute then single-patient activeRoute. */}
       <ActiveRouteLayer
-        route={optimizedRoute ? { result: optimizedRoute, profile: "foot" } : activeRoute}
+        route={
+          !plannerDrawerOpen && optimizedRoute
+            ? { result: optimizedRoute, profile: "foot" }
+            : activeRoute
+        }
         mapRef={mapRef}
       />
       <ManualPinOverlay
