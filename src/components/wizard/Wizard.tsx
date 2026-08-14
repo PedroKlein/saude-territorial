@@ -57,8 +57,14 @@ export type WizardStep<Ctx> = {
   render: (props: {
     ctx: Ctx;
     setCtx: (patch: Partial<Ctx>) => void;
-    /** Navigate to the next non-skipped step. */
-    goNext: () => void;
+    /**
+     * Navigate to the next non-skipped step. Callers that have just applied
+     * a ctx patch (e.g. StepEscolherCondicoes storing chosenConditions) MUST
+     * pass that same patch here so `shouldSkip` evaluates against the fresh
+     * ctx synchronously — setCtx enqueues an async state update, so the
+     * pre-patch value would otherwise skip newly-chosen condition data pages.
+     */
+    goNext: (patch?: Partial<Ctx>) => void;
     /** Navigate to the previous non-skipped step. */
     goBack: () => void;
   }) => React.ReactNode;
@@ -97,7 +103,10 @@ export function Wizard<Ctx>({
   // 1 = forward slide, -1 = backward slide
   const [dir, setDir] = useState<1 | -1>(1);
 
-  // Keep a ref so async callbacks (onFinish) always see the latest ctx.
+  // ctxRef mirrors state for async callbacks (onFinish) that MUST see the
+  // latest ctx after the wizard has been left dormant. The setter itself
+  // stays pure (no ref mutation) so React lint/refs rules stay clean; the
+  // navigation callbacks accept an optional patch hint instead — see advance.
   const ctxRef = useRef(ctx);
   useEffect(() => {
     ctxRef.current = ctx;
@@ -109,12 +118,18 @@ export function Wizard<Ctx>({
 
   // -------------------------------------------------------------------------
   // Navigation helpers
+  //
+  // shouldSkip decisions used to read `ctxRef.current`, which is a render
+  // after setCtx enqueues its update. On a step that both applies a patch
+  // (chosenConditions) and immediately advances, the pre-patch ctx would
+  // skip the newly-chosen data pages. Callers now hand the same patch to
+  // goNext, which merges it with `ctx` before evaluating shouldSkip.
   // -------------------------------------------------------------------------
 
   const nextIdx = useCallback(
-    (from: number) => {
+    (from: number, hintCtx: Ctx) => {
       let next = from + 1;
-      while (next < steps.length && steps[next].shouldSkip?.(ctxRef.current)) {
+      while (next < steps.length && steps[next].shouldSkip?.(hintCtx)) {
         next++;
       }
       return Math.min(next, steps.length - 1);
@@ -123,9 +138,9 @@ export function Wizard<Ctx>({
   );
 
   const prevIdx = useCallback(
-    (from: number) => {
+    (from: number, hintCtx: Ctx) => {
       let prev = from - 1;
-      while (prev > 0 && steps[prev].shouldSkip?.(ctxRef.current)) {
+      while (prev > 0 && steps[prev].shouldSkip?.(hintCtx)) {
         prev--;
       }
       return Math.max(0, prev);
@@ -133,17 +148,21 @@ export function Wizard<Ctx>({
     [steps],
   );
 
-  const advance = useCallback(() => {
-    setFinishError(null);
-    setDir(1);
-    setCurrentIdx((i) => nextIdx(i));
-  }, [nextIdx]);
+  const advance = useCallback(
+    (patch?: Partial<Ctx>) => {
+      setFinishError(null);
+      setDir(1);
+      const hintCtx = patch ? { ...ctx, ...patch } : ctx;
+      setCurrentIdx((i) => nextIdx(i, hintCtx));
+    },
+    [nextIdx, ctx],
+  );
 
   const goBack = useCallback(() => {
     setFinishError(null);
     setDir(-1);
-    setCurrentIdx((i) => prevIdx(i));
-  }, [prevIdx]);
+    setCurrentIdx((i) => prevIdx(i, ctx));
+  }, [prevIdx, ctx]);
 
   const handleFinalize = useCallback(async () => {
     setFinishError(null);
@@ -176,8 +195,14 @@ export function Wizard<Ctx>({
   const isFinalize = Boolean(step.isFinalize);
   const canBack = currentIdx > 0 && !isNoFooter;
 
-  // Progress bar: exclude the sucesso step (noFooter).
-  const progressSteps = steps.filter((s) => !s.noFooter);
+  // Progress bar: exclude noFooter (sucesso) AND any step that will be
+  // skipped by the current ctx (e.g. data pages for unchosen conditions).
+  // Always keep the CURRENT step even if its own shouldSkip would technically
+  // trigger — that guarantees the bar always contains the step being rendered
+  // and prevents progressIdx from going -1.
+  const progressSteps = steps.filter(
+    (s) => !s.noFooter && (s.id === step.id || !s.shouldSkip?.(ctx)),
+  );
   const progressIdx = progressSteps.findIndex((s) => s.id === step.id);
 
   return (

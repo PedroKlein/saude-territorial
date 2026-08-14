@@ -99,8 +99,12 @@ export function StepEscolherCondicoes({
   });
 
   const onSubmit = handleSubmit((values) => {
-    setCtx({ chosenConditions: values.chosen });
-    goNext();
+    // Hand the same patch to both setCtx (for render) and goNext (for the
+    // synchronous shouldSkip decision that decides which data pages appear
+    // next). See Wizard.tsx nav docs — setCtx alone would race.
+    const patch = { chosenConditions: values.chosen };
+    setCtx(patch);
+    goNext(patch);
   });
 
   return (

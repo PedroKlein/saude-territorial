@@ -21,7 +21,6 @@ import {
   MapPin,
   Phone,
   User,
-  MoreVertical,
   Plus,
   Pencil,
   X,
@@ -51,12 +50,6 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -714,7 +707,7 @@ function PanelContent({
                         borderLeftWidth: "3px",
                       }}
                     >
-                      <AccordionTrigger className="px-4 py-3 pr-14 hover:bg-neutral-50 hover:no-underline [&>svg]:hidden">
+                      <AccordionTrigger className="px-4 py-3 pr-4 hover:bg-neutral-50 hover:no-underline [&>svg]:hidden">
                         <div className="flex flex-1 items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             {/* Colored icon circle */}
@@ -763,37 +756,11 @@ function PanelContent({
                       </AccordionTrigger>
 
                       {/*
-                       * Card action menu lives OUTSIDE the AccordionTrigger to
-                       * avoid a nested <button> hydration error. It's absolutely
-                       * positioned into the space reserved by pr-14 on the
-                       * trigger.
+                       * No card-level dropdown here. The old kebab menu held a
+                       * single "Remover condição" action, which visually
+                       * competed with the collapse chevron. The remove action
+                       * lives inline at the bottom of the expanded card body.
                        */}
-                      <div className="absolute right-10 top-3 z-10">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                              aria-label="Ações da condição"
-                            >
-                              <MoreVertical className="size-3.5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() =>
-                                setConfirmState({
-                                  type: "condition",
-                                  layer: card.layer,
-                                })
-                              }
-                            >
-                              <Trash2 className="mr-2 size-3.5" />
-                              Remover condição
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
 
                       <AccordionContent className="border-t border-neutral-100">
                         <div className="px-4 py-4">
@@ -842,6 +809,31 @@ function PanelContent({
                             />
                           )}
                         </div>
+                        {/*
+                         * Card-scoped destructive action lives here — visually
+                         * separated from the data grid by a border, muted
+                         * background and text style, so it doesn't compete
+                         * with the collapse chevron in the header. Hidden
+                         * during edit mode where Cancelar/Salvar own the
+                         * footer.
+                         */}
+                        {!isEditing && (
+                          <div className="flex justify-end border-t border-neutral-100 bg-neutral-50/60 px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setConfirmState({
+                                  type: "condition",
+                                  layer: card.layer,
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-neutral-500 hover:bg-red-50 hover:text-destructive"
+                            >
+                              <Trash2 className="size-3" />
+                              Remover condição
+                            </button>
+                          </div>
+                        )}
                       </AccordionContent>
                     </AccordionItem>
                   </motion.div>

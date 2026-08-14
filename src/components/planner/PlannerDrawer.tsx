@@ -239,11 +239,19 @@ export function PlannerDrawer() {
 
   return (
     <>
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen} modal={false}>
         <SheetContent
           side="right"
           showCloseButton={false}
-          className="flex w-[420px] max-w-full flex-col p-0"
+          modal={false}
+          className="flex w-[420px] max-w-full flex-col p-0 sm:max-w-[420px]"
+          /* Non-modal drawer: no backdrop, no focus trap, map stays live.
+           * Radix Dialog will still try to close on outside-pointer-down
+           * (leftovers from Dialog root) — the map counts as "outside", so
+           * we block those specific dismissals below and let the user close
+           * via the explicit X, Esc, or the "Fechar" affordance. */
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
         >
           {/* Header */}
           <SheetHeader className="border-b border-neutral-200 p-4">
