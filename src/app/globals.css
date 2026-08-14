@@ -213,3 +213,36 @@ input[type="submit"],
 select {
   cursor: pointer;
 }
+
+/* -----------------------------------------------------------------------------
+ * Leaflet popup polish
+ *
+ * Leaflet ships a serviceable but dated popup: sharp shadow, tight padding,
+ * heavy triangle pointer. Nudge it toward the app's card/dialog vocabulary
+ * (soft radius, muted shadow, restrained pointer) without a full rebuild.
+ * The us-popup class narrows this to popups we style ourselves so third-party
+ * popups (if ever added) still render with the leaflet defaults.
+ * --------------------------------------------------------------------------- */
+.us-popup .leaflet-popup-content-wrapper {
+  padding: 4px;
+  border-radius: 10px;
+  box-shadow:
+    0 8px 24px -8px rgba(15, 23, 42, 0.18),
+    0 2px 4px rgba(15, 23, 42, 0.06);
+  ring: 1px solid oklch(93% 0.005 260);
+}
+.us-popup .leaflet-popup-content {
+  margin: 8px 10px;
+  line-height: 1.4;
+}
+.us-popup .leaflet-popup-tip {
+  box-shadow: none;
+}
+.us-popup .leaflet-popup-close-button {
+  color: oklch(55% 0.01 260);
+  padding: 6px 8px 0 0;
+  font-size: 18px;
+}
+.us-popup .leaflet-popup-close-button:hover {
+  color: oklch(28% 0.01 260);
+}

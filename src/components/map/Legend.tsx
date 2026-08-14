@@ -25,7 +25,7 @@ export function Legend() {
         Normal
       </span>
       <span className="flex items-center gap-1">
-        <span className="inline-block h-3 w-3 rounded-full bg-brand" />
+        <span className="inline-block h-3 w-3 rounded-[3px] bg-brand" />
         US
       </span>
     </div>

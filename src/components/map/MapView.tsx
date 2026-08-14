@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, Popup, CircleMarker, useMapEvents } from "react-leaflet";
 import { useRef, useCallback, useMemo, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
@@ -35,14 +35,23 @@ L.Icon.Default.mergeOptions({
 
 import { US_MOAB_CALDAS, DEFAULT_ZOOM } from "@/config/geo.constants";
 
-// US divIcon matching the PoC style
+// US Moab Caldas landmark marker. Visually distinct from patient chips:
+// larger (44×44), squircle shape (rounded-[14px]) instead of circle, brand
+// teal fill with a white medical cross, and a heavier drop shadow so it
+// reads as a fixed anchor rather than another data point. The color pulls
+// from the CSS custom property so a future theme change stays in sync.
+//
+// LGPD: no patient data ever renders here.
 const US_ICON = L.divIcon({
   className: "",
-  html: `<div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
-    <span style="color:white;font-size:10px;font-weight:bold">US</span>
+  html: `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:var(--brand,oklch(58% 0.10 195));border-radius:14px;border:3px solid white;box-shadow:0 6px 16px -4px rgba(15,23,42,0.35),0 2px 4px rgba(15,23,42,0.15);">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="white" aria-hidden="true">
+      <rect x="10" y="4" width="4" height="16" rx="1"/>
+      <rect x="4" y="10" width="16" height="4" rx="1"/>
+    </svg>
   </div>`,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
+  iconSize: [44, 44],
+  iconAnchor: [22, 22],
 });
 
 // Alert-level → heatmap-intensity weighting. Module-scope so useMemo's
@@ -179,10 +188,33 @@ export default function MapView() {
           subdomains="abcd"
           maxZoom={20}
         />
+        {/*
+         * US Moab Caldas — the anchor of the whole territory. Click opens a
+         * small info popup with unit details; hover keeps the compact
+         * "US Moab Caldas" tooltip. Any richer action (schedule / team /
+         * dashboard) can wire onto the popup body later.
+         */}
         <Marker position={US_MOAB_CALDAS} icon={US_ICON}>
-          <Tooltip direction="top" offset={[0, -18]}>
+          <Tooltip direction="top" offset={[0, -26]}>
             US Moab Caldas
           </Tooltip>
+          <Popup className="us-popup" offset={[0, -6]} maxWidth={260}>
+            <div className="min-w-[220px] px-1 py-0.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                Unidade de Saúde
+              </div>
+              <div className="mt-0.5 text-sm font-semibold text-neutral-900">
+                US Moab Caldas
+              </div>
+              <div className="mt-2 space-y-1 text-xs text-neutral-600">
+                <div>Av. Moab Caldas, 400</div>
+                <div>Porto Alegre · RS</div>
+                <div className="mt-2 text-[11px] text-neutral-500">
+                  Local âncora do território. Rotas de visita partem daqui.
+                </div>
+              </div>
+            </div>
+          </Popup>
         </Marker>
         <MapController data={data} />
         {showTerritories && (
