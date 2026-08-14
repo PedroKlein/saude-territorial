@@ -59,6 +59,17 @@ const MaskedInputInternal = React.forwardRef<HTMLInputElement, MaskedInputIntern
     { value, onValueChange, onBlur, mask, className, placeholder, ariaLabel, ...rest },
     ref,
   ) {
+    // With `unmask=true`, react-imask expects the incoming `value` to be
+    // the raw unmasked digits (e.g. "51919104707" for phone). Legacy DB
+    // rows sometimes contain formatting like "51 919104707" or "(51)
+    // 91910-4707" — feeding those directly makes the mask parser bail
+    // after the first invalid character, leaving the field looking empty.
+    // Normalizing to digits here keeps every existing row round-trippable
+    // without a data migration.
+    const normalized = React.useMemo(
+      () => (value == null ? "" : String(value).replace(/\D/g, "")),
+      [value],
+    );
     return (
       <IMaskInput
         mask={mask}
@@ -68,7 +79,7 @@ const MaskedInputInternal = React.forwardRef<HTMLInputElement, MaskedInputIntern
         placeholderChar="_"
         // react-imask forwards to a plain <input>; the ref hop lets RHF focus it.
         inputRef={ref as React.Ref<HTMLInputElement>}
-        value={value ?? ""}
+        value={normalized}
         onAccept={(unmasked: string, maskRef) => {
           onValueChange?.(unmasked, maskRef.value);
         }}

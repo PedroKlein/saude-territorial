@@ -186,6 +186,9 @@ export function Wizard<Ctx>({
         className="max-w-2xl gap-0 overflow-hidden p-0"
         /* Prevent accidental close on overlay click — user must use X */
         onInteractOutside={(e) => e.preventDefault()}
+        /* Wizard renders its own X in the header (line ~208). Disable the
+         * default shadcn close so there's exactly one close affordance. */
+        showCloseButton={false}
       >
         <DialogTitle className="sr-only">{headline ?? "Assistente"}</DialogTitle>
 

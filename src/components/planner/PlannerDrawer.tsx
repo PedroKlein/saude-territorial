@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X } from "lucide-react";
+import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X, Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -394,7 +394,7 @@ export function PlannerDrawer() {
                 aria-label="Limpar plano"
                 title="Limpar plano"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           </div>

@@ -484,11 +484,6 @@ function PanelContent({
     await deleteCondition.mutateAsync({ id: patient.id, condicao: layer });
     setConfirmState(null);
   };
-
-  const toggleAdvanced = (key: string) => {
-    setShowAdvanced((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
   // ---------------------------------------------------------------------------
   // Computed display strings
   // ---------------------------------------------------------------------------
@@ -701,7 +696,6 @@ function PanelContent({
                 if (card.data == null) return null;
                 const data = card.data;
                 const isAdvanced = showAdvanced[card.key] ?? false;
-                const errors = form.formState.errors;
 
                 return (
                   <motion.div
@@ -714,13 +708,13 @@ function PanelContent({
                   >
                     <AccordionItem
                       value={card.key}
-                      className="overflow-hidden rounded-[10px] border border-neutral-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                      className="relative overflow-hidden rounded-[10px] border border-neutral-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
                       style={{
                         borderLeftColor: card.color,
                         borderLeftWidth: "3px",
                       }}
                     >
-                      <AccordionTrigger className="px-4 py-3 hover:bg-neutral-50 hover:no-underline [&>svg]:hidden">
+                      <AccordionTrigger className="px-4 py-3 pr-14 hover:bg-neutral-50 hover:no-underline [&>svg]:hidden">
                         <div className="flex flex-1 items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             {/* Colored icon circle */}
@@ -759,43 +753,47 @@ function PanelContent({
                             </div>
                           </div>
 
-                          {/* Card actions */}
-                          <div className="flex items-center gap-1">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label="Ações da condição"
-                                >
-                                  <MoreVertical className="size-3.5" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setConfirmState({
-                                      type: "condition",
-                                      layer: card.layer,
-                                    });
-                                  }}
-                                >
-                                  <Trash2 className="mr-2 size-3.5" />
-                                  Remover condição
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            {/* Chevron indicator (manual since AccordionTrigger's default is hidden) */}
-                            {openCards.includes(card.key) ? (
-                              <ChevronUp className="size-4 text-neutral-400" />
-                            ) : (
-                              <ChevronDown className="size-4 text-neutral-400" />
-                            )}
-                          </div>
+                          {/* Chevron indicator (dropdown lives outside the button, see below) */}
+                          {openCards.includes(card.key) ? (
+                            <ChevronUp className="size-4 text-neutral-400" />
+                          ) : (
+                            <ChevronDown className="size-4 text-neutral-400" />
+                          )}
                         </div>
                       </AccordionTrigger>
+
+                      {/*
+                       * Card action menu lives OUTSIDE the AccordionTrigger to
+                       * avoid a nested <button> hydration error. It's absolutely
+                       * positioned into the space reserved by pr-14 on the
+                       * trigger.
+                       */}
+                      <div className="absolute right-10 top-3 z-10">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                              aria-label="Ações da condição"
+                            >
+                              <MoreVertical className="size-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() =>
+                                setConfirmState({
+                                  type: "condition",
+                                  layer: card.layer,
+                                })
+                              }
+                            >
+                              <Trash2 className="mr-2 size-3.5" />
+                              Remover condição
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
 
                       <AccordionContent className="border-t border-neutral-100">
                         <div className="px-4 py-4">
@@ -804,10 +802,15 @@ function PanelContent({
                               data={data}
                               isEditing={isEditing}
                               isAdvanced={isAdvanced}
+                              onToggleAdvanced={() =>
+                                setShowAdvanced((s) => ({
+                                  ...s,
+                                  [card.key]: !s[card.key],
+                                }))
+                              }
                               form={form}
-                              liveDpp={liveDpp}
                               liveIg={liveIg}
-                              errors={errors}
+                              liveDpp={liveDpp}
                             />
                           )}
                           {card.key === "tuberculose" && (
@@ -815,8 +818,13 @@ function PanelContent({
                               data={data}
                               isEditing={isEditing}
                               isAdvanced={isAdvanced}
+                              onToggleAdvanced={() =>
+                                setShowAdvanced((s) => ({
+                                  ...s,
+                                  [card.key]: !s[card.key],
+                                }))
+                              }
                               form={form}
-                              errors={errors}
                             />
                           )}
                           {card.key === "has" && (
@@ -824,20 +832,15 @@ function PanelContent({
                               data={data}
                               isEditing={isEditing}
                               isAdvanced={isAdvanced}
+                              onToggleAdvanced={() =>
+                                setShowAdvanced((s) => ({
+                                  ...s,
+                                  [card.key]: !s[card.key],
+                                }))
+                              }
                               form={form}
-                              errors={errors}
                             />
                           )}
-
-                          <button
-                            type="button"
-                            onClick={() => toggleAdvanced(card.key)}
-                            className="mt-3 text-xs font-medium text-neutral-500 hover:text-neutral-700"
-                          >
-                            {isAdvanced
-                              ? "Ocultar campos avançados ↑"
-                              : "Mostrar campos avançados →"}
-                          </button>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -962,9 +965,34 @@ type CardBodyProps = {
   data: Record<string, unknown>;
   isEditing: boolean;
   isAdvanced: boolean;
+  onToggleAdvanced: () => void;
   form: UseFormReturn<PanelFormValues>;
-  errors: UseFormReturn<PanelFormValues>["formState"]["errors"];
 };
+
+/**
+ * "Mostrar mais / Mostrar menos" toggle rendered at the bottom of each
+ * condition card body. Keeps the surface calm by default and lets the
+ * ACS reveal secondary fields (advanced clinical detail) on demand.
+ */
+function AdvancedToggle({
+  isAdvanced,
+  onToggle,
+}: {
+  isAdvanced: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="col-span-2 mt-2 flex justify-center">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="text-[11px] font-medium text-neutral-500 underline-offset-2 hover:text-neutral-800 hover:underline"
+      >
+        {isAdvanced ? "Mostrar menos" : "Mostrar mais"}
+      </button>
+    </div>
+  );
+}
 
 function GestanteCardBody({
   data,
@@ -973,8 +1001,9 @@ function GestanteCardBody({
   form,
   liveDpp,
   liveIg,
-  errors,
+  onToggleAdvanced,
 }: CardBodyProps & { liveDpp: string | null; liveIg: string | null }) {
+  const errors = form.formState.errors;
   if (!isEditing) {
     return (
       <>
@@ -1054,6 +1083,7 @@ function GestanteCardBody({
             </Field>
           </div>
         )}
+        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
       </>
     );
   }
@@ -1160,6 +1190,7 @@ function GestanteCardBody({
             </Field>
           </>
         )}
+        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
       </div>
     </>
   );
@@ -1170,8 +1201,9 @@ function TuberculoseCardBody({
   isEditing,
   isAdvanced,
   form,
-  errors,
+  onToggleAdvanced,
 }: CardBodyProps) {
+  const errors = form.formState.errors;
   if (!isEditing) {
     return (
       <>
@@ -1231,6 +1263,7 @@ function TuberculoseCardBody({
             </Field>
           </div>
         )}
+        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
       </>
     );
   }
@@ -1304,6 +1337,7 @@ function TuberculoseCardBody({
           </Field>
         </>
       )}
+      <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
     </div>
   );
 }
@@ -1313,8 +1347,9 @@ function HasCardBody({
   isEditing,
   isAdvanced,
   form,
-  errors,
+  onToggleAdvanced,
 }: CardBodyProps) {
+  const errors = form.formState.errors;
   if (!isEditing) {
     return (
       <>
@@ -1360,6 +1395,7 @@ function HasCardBody({
             )}
           </div>
         )}
+        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
       </>
     );
   }
@@ -1442,6 +1478,7 @@ function HasCardBody({
           </Field>
         </>
       )}
+      <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
     </div>
   );
 }
