@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useForm, Controller, type UseFormReturn } from "react-hook-form";
+import { useForm, useWatch, Controller, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -370,8 +370,9 @@ function PanelContent({
     form.reset(buildDefaults(patient));
   }, [patient, form]);
 
-  // Watch DUM for live DPP/IG computation
-  const watchedDum = form.watch("gestantes.dum");
+  // Watch DUM for live DPP/IG computation. useWatch (not `form.watch`) so
+  // React Compiler can memoize this component safely.
+  const watchedDum = useWatch({ control: form.control, name: "gestantes.dum" });
   const dumDate = parseBrDate(watchedDum as string | undefined);
   const liveDpp = dumDate ? format(computeDpp(dumDate), "dd/MM/yyyy") : null;
   const liveIg = dumDate ? formatIg(computeIg(dumDate)) : null;
@@ -446,7 +447,7 @@ function PanelContent({
 
   const handleSave = form.handleSubmit(async (values) => {
     const dirty = form.formState.dirtyFields;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const body: Record<string, unknown> = {};
     if (hasDirty(dirty.base)) body.base = values.base;
     if (hasDirty(dirty.gestantes)) body.gestantes = values.gestantes;

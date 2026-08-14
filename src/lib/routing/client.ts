@@ -17,28 +17,32 @@ const OSRM_PROFILE_MAP: Record<RouteProfile, string> = {
   car: "driving",
 };
 
-interface Coord {
+export interface Coord {
   lat: number;
   lng: number;
 }
 
 /**
- * Calculate a route between two points using OSRM.
+ * Calculate a route through an ordered list of waypoints using OSRM.
  *
- * @param from - Origin coordinate (lat/lng)
- * @param to - Destination coordinate (lat/lng)
+ * @param waypoints - Ordered coordinates (min 2). Route follows the sequence.
  * @param profile - Travel mode: 'foot' or 'car'
  * @returns Route result with distance (m), duration (s), and geometry
  */
 export async function getRoute(
-  from: Coord,
-  to: Coord,
-  profile: RouteProfile
+  waypoints: Coord[],
+  profile: RouteProfile,
 ): Promise<RouteResult> {
+  if (waypoints.length < 2) {
+    throw new Error("getRoute requires at least 2 waypoints");
+  }
+
   const osrmProfile = OSRM_PROFILE_MAP[profile];
 
-  // OSRM expects lng,lat order!
-  const coordinates = `${from.lng},${from.lat};${to.lng},${to.lat}`;
+  // OSRM expects lng,lat order and semicolon-separated coordinates.
+  const coordinates = waypoints
+    .map((w) => `${w.lng},${w.lat}`)
+    .join(";");
   const url = `${OSRM_BASE_URL}/route/v1/${osrmProfile}/${coordinates}?overview=full&geometries=geojson`;
 
   const response = await fetch(url);

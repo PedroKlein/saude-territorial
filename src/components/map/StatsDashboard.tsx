@@ -52,6 +52,10 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
       amarelo: filtered.filter((p) => p.alertLevel === "amarelo").length,
       verde: filtered.filter((p) => p.alertLevel === "verde").length,
     };
+    // `applyFilters` closes over the Zustand filter state via get(); the
+    // state slices below are load-bearing (they drive re-renders on change)
+    // even though eslint can't see through the closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, activeLayers, applyFilters, microareas, alertLevels, searchText]);
 
   if (!data) return null;

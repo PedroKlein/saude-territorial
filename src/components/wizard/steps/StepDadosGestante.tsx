@@ -13,7 +13,7 @@
  */
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -83,7 +83,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
   const {
     handleSubmit,
     control,
-    watch,
     register,
     formState: { errors },
   } = useForm<StepValues>({
@@ -98,8 +97,10 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
     },
   });
 
-  const watchedDum = watch("dum");
-  const watchedRisco = watch("risco");
+  // useWatch (not `watch()`) — React Compiler-compatible and no perf tax.
+  const watchedDum = useWatch({ control, name: "dum" });
+  const watchedRisco = useWatch({ control, name: "risco" });
+
 
   const liveDpp = watchedDum ? format(computeDpp(watchedDum), "dd/MM/yyyy") : null;
   const liveIg = watchedDum ? formatIg(computeIg(watchedDum)) : null;

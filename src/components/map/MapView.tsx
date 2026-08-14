@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, useMapEvents } from "react-leaflet";
 import { useRef, useCallback, useMemo, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
@@ -25,6 +25,7 @@ import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
 import { buildCoincidenceMap } from "@/components/map/markerHelpers";
 import type { AlertLevel } from "@/types/alerts";
+import { PatientWizard } from "@/components/wizard/PatientWizard";
 // Fix default marker icon paths broken by bundlers (webpack/turbopack)
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -45,14 +46,42 @@ const US_ICON = L.divIcon({
   iconAnchor: [18, 18],
 });
 
+// Alert-level → heatmap-intensity weighting. Module-scope so useMemo's
+// dep array stays clean (React Compiler flagged the in-component variant).
+const INTENSITY_MAP: Record<AlertLevel, number> = {
+  vermelho: 1.0,
+  amarelo: 0.6,
+  verde: 0.3,
+};
+
 
 // ---------------------------------------------------------------------------
 // Map-event child components (must render inside <MapContainer>)
 // ---------------------------------------------------------------------------
 
-
-
-
+/**
+ * Suppresses the browser context menu and fires onRightClick with the
+ * clicked map coord. No-ops when pinningPatient is active or the planner
+ * drawer is open.
+ */
+function RightClickCatcher({
+  pinningPatient,
+  plannerDrawerOpen,
+  onRightClick,
+}: {
+  pinningPatient: unknown;
+  plannerDrawerOpen: boolean;
+  onRightClick: (c: { lat: number; lng: number }) => void;
+}) {
+  useMapEvents({
+    contextmenu(e) {
+      if (pinningPatient !== null || plannerDrawerOpen) return;
+      e.originalEvent.preventDefault();
+      onRightClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return null;
+}
 
 export default function MapView() {
   const mapRef = useRef<LeafletMap>(null);
@@ -69,6 +98,7 @@ export default function MapView() {
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [rightClickCoords, setRightClickCoords] = useState<{ lat: number; lng: number } | null>(null);
 
 
   const handleMicroareaClick = useCallback(
@@ -84,14 +114,6 @@ export default function MapView() {
   );
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
-
-  // Compute heatmap points from data when in heatmap mode
-  const INTENSITY_MAP: Record<AlertLevel, number> = {
-    vermelho: 1.0,
-    amarelo: 0.6,
-    verde: 0.3,
-  };
-
   const heatmapPoints = useMemo(() => {
     if (vizMode !== "heatmap" || !data) return [];
     const points: { lat: number; lng: number; intensity: number }[] = [];
@@ -220,6 +242,11 @@ export default function MapView() {
           active={pinningPatient !== null}
           onPick={setPendingCoords}
         />
+        <RightClickCatcher
+          pinningPatient={pinningPatient}
+          plannerDrawerOpen={plannerDrawerOpen}
+          onRightClick={setRightClickCoords}
+        />
 
       </MapContainer>
       {/* Show optimized planner route OR single-patient route (not both) */}
@@ -246,6 +273,13 @@ export default function MapView() {
           setPendingCoords(null);
         }}
       />
+      {rightClickCoords && (
+        <PatientWizard
+          open
+          mode={{ kind: "new", initialCoords: rightClickCoords }}
+          onClose={() => setRightClickCoords(null)}
+        />
+      )}
     </>
   );
 }

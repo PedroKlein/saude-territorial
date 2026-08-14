@@ -309,7 +309,7 @@ describe("POST /api/patients", () => {
     expect(body.patient.hipertensao).toBeDefined();
   });
 
-  it("409 — CNS collision returns existing shape without writing to DB", async () => {
+  it("409 — CNS collision returns existing shape with attached[] without writing to DB", async () => {
     // findFirst returns the existing patient (collision on first call).
     mocks.findFirst.mockResolvedValueOnce(CREATED_GESTANTE);
 
@@ -319,6 +319,12 @@ describe("POST /api/patients", () => {
     expect(body.error).toBe("cns_exists");
     expect(body.patient).toBeDefined();
     expect(body.patient.id).toBe(PATIENT_UUID);
+    // The `attached` array powers the wizard's add-condition mode swap —
+    // it lists which condition slots are already occupied on the existing patient.
+    expect(Array.isArray(body.patient.attached)).toBe(true);
+    expect(body.patient.attached).toContain("gestantes");
+    expect(body.patient.attached).not.toContain("tuberculose");
+    expect(body.patient.attached).not.toContain("hipertensao");
     expect(mocks.transactionSpy).not.toHaveBeenCalled();
   });
 

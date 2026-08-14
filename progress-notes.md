@@ -71,3 +71,31 @@ suggested plans and round-trips through save/reload, sidebar and
 planner rails are independently collapsible via `RailToggles` +
 `uiStore`. Sketches under `src/app/(dev)/proto/` are deleted. All
 quality gates are green.
+
+## Follow-ups landed on top of UP-7
+
+A second pass after UP-7 closed the flagged gaps + trimmed lint noise.
+
+| Follow-up | Status | Evidence |
+|---|---|---|
+| Multi-waypoint OSRM in the planner | ✅ | `getRoute` rewritten to accept `Coord[]`; `/api/routes` proxy takes `{waypoints[], profile}` with Zod validation (min 2, max 25 stops, coord range check). Smoke: 4-stop foot route from real seed data returned `1921.7 m, 309.5 s, 43 geometry points` (vs the old first→last straight line). New tests cover single-waypoint rejection + 3+ waypoint URL chaining. |
+| `DELETE /api/plans/[id]` | ✅ | Handler added; cascades to `daily_plan_stops` via existing FK ON DELETE CASCADE. Smoke: create → 204 delete → GET 404. Trash-icon affordance with inline "Excluir?/Cancelar" confirmation wired into `PlanPickerDialog`. |
+| Right-click-to-create-patient | ✅ | New `RightClickCatcher` inside `<MapContainer>` uses `useMapEvents({ contextmenu })` and opens `PatientWizard` with `{ kind: "new", initialCoords: {lat, lng} }`. Smoke: dispatched a `contextmenu` at the map center; wizard opened on Identidade, and after CNS+name the Endereço step rendered the preview map with "Pino posicionado manualmente" — coords survived the mode switch. |
+| Manual pin-drop in `StepEndereco` | ✅ | `GeoResult` extended with `"manual"` status; failed geocode banner now offers "Ajustar pino manualmente" which flips `GeocodeMapPreview` into a click-to-drop map with a draggable marker. Manual coords take precedence over stale geocode results. Regression test in `PatientWizard.rightclick.test.tsx`. |
+| Flow 4 headless drive (409 CNS collision) | ✅ (contract) | Fixed a real bug: POST `/api/patients` 409 response now emits `patient.attached: ["gestantes" \| "tuberculose" \| "hipertensao"]` alongside the shape, so the wizard can accurately skip already-linked conditions in add-condition mode. Was silently `undefined` before; wizard defaulted to `[]` and would have offered duplicate condition slots. Smoke: real POST with duplicate CNS returned `attached: ["gestantes"]`. Regression assertion added to `route.post.test.ts`. Deep UI drive stalled on shadcn Checkbox headless click; contract-level verification substitutes. |
+| Lint trim | ✅ | 12 → 0 warnings. `INTENSITY_MAP` lifted to module scope in `MapView`. Three RHF `watch()` sites switched to `useWatch()` (`StepDadosGestante`, `StepEndereco`, `PatientDetailPanel`) — React Compiler-safe and removes the `incompatible-library` warnings. Four `applyFilters`+Zustand-state useMemo dep arrays kept intentional; suppressed with commented `eslint-disable-next-line react-hooks/exhaustive-deps` because `applyFilters` closes over `get()` and eslint can't see through it. |
+
+## Gate status after follow-ups
+
+- `pnpm exec tsc --noEmit` — clean
+- `pnpm exec eslint src/` — **0 errors, 0 warnings** (was 12 warnings)
+- `pnpm test` — **285/285** across 35 files (was 272/272 across 33)
+- `pnpm build` — green; production route list adds no new routes (all
+  existing paths handled the DELETE method extension in place)
+
+## Verification cleanup
+
+All smoke rows created during this pass torn down before yielding.
+Supabase baseline restored: 55 gestantes / 5 tuberculose / 8 HAS, 0
+plans. No orphan rows remain in `daily_plan_stops` or the extension
+tables.

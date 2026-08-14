@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import dynamic from "next/dynamic";
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Field } from "@/components/panels/Field";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
+import { US_MOAB_CALDAS } from "@/config/geo.constants";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
@@ -80,6 +81,7 @@ type EnderecoValues = z.infer<typeof EnderecoSchema>;
 
 type GeoResult =
   | { status: "found"; lat: number; lng: number; display: string }
+  | { status: "manual"; lat: number; lng: number }
   | { status: "not_found" }
   | { status: "idle" };
 
@@ -112,7 +114,7 @@ async function fetchGeocode(
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 
 export function StepEndereco({ ctx, setCtx, goNext }: Props) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } =
+  const { register, handleSubmit, control, setValue, formState: { errors } } =
     useForm<EnderecoValues>({
       resolver: zodResolver(EnderecoSchema),
       defaultValues: {
@@ -126,25 +128,41 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
 
   const [geoResult, setGeoResult] = useState<GeoResult>(
     ctx.geocodedCoords
-      ? { status: "found", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng, display: ctx.rua }
+      ? ctx.rua
+        ? { status: "found", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng, display: ctx.rua }
+        : { status: "manual", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
       : { status: "idle" },
   );
+
+  const [manualMode, setManualMode] = useState(false);
 
   // Debounce geocode lookup on address change.
   // Using `undefined` (not null) so clearTimeout receives an acceptable type.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const rua = watch("rua");
-  const numero = watch("numero");
-  const bairro = watch("bairro");
+  // useWatch (not `watch()`) — React Compiler-compatible.
+  const rua = useWatch({ control, name: "rua" });
+  const numero = useWatch({ control, name: "numero" });
+  const bairro = useWatch({ control, name: "bairro" });
+  const currentMicroarea = useWatch({ control, name: "microarea" });
 
   useEffect(() => {
     if (!rua || rua.trim().length < 4) {
-      setGeoResult({ status: "idle" });
+      // The reset is derived from the current input state — intentional
+      // cascading render; the debounce fires only when the address is long
+      // enough to be worth geocoding.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setGeoResult((prev) => (prev.status === "manual" ? prev : { status: "idle" }));
       return;
     }
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      void fetchGeocode(rua, numero ?? "", bairro ?? "").then(setGeoResult);
+      void fetchGeocode(rua, numero ?? "", bairro ?? "").then((result) => {
+        setGeoResult((prev) => {
+          // Don't clobber manual coords with a failed geocode
+          if (result.status !== "found" && prev.status === "manual") return prev;
+          return result;
+        });
+      });
     }, 500);
     return () => {
       clearTimeout(debounceRef.current);
@@ -159,9 +177,11 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
       bairro: values.bairro ?? "",
       microarea: values.microarea ?? "",
       geocodedCoords:
-        geoResult.status === "found"
+        geoResult.status === "manual"
           ? { lat: geoResult.lat, lng: geoResult.lng }
-          : null,
+          : geoResult.status === "found"
+            ? { lat: geoResult.lat, lng: geoResult.lng }
+            : null,
     });
     goNext();
   });
@@ -187,7 +207,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
 
         <Field label="Microárea" error={errors.microarea?.message} className="col-span-3">
           <Select
-            value={watch("microarea") ?? ""}
+            value={currentMicroarea ?? ""}
             onValueChange={(v) => setValue("microarea", v)}
           >
             <SelectTrigger aria-label="Microárea">
@@ -204,7 +224,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         </Field>
       </div>
 
-      {/* Geocode preview */}
+      {/* Geocode found: read-only map */}
       {geoResult.status === "found" && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-medium text-ok-green">
@@ -215,15 +235,48 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         </div>
       )}
 
-      {geoResult.status === "not_found" && (
+      {/* Manual picker: from right-click prefill OR user-requested */}
+      {(manualMode || geoResult.status === "manual") && (
+        <div data-testid="geocode-manual-picker" className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
+            <MapPin className="size-3.5" />
+            {geoResult.status === "manual"
+              ? "Pino posicionado manualmente"
+              : "Clique no mapa para posicionar o pino"}
+          </div>
+          <GeocodeMapPreview
+            lat={
+              geoResult.status === "manual"
+                ? geoResult.lat
+                : (ctx.geocodedCoords?.lat ?? US_MOAB_CALDAS[0])
+            }
+            lng={
+              geoResult.status === "manual"
+                ? geoResult.lng
+                : (ctx.geocodedCoords?.lng ?? US_MOAB_CALDAS[1])
+            }
+            onPickCoords={(c) => {
+              setGeoResult({ status: "manual", ...c });
+              setManualMode(false);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Not-found banner: shown only when not in manual mode */}
+      {geoResult.status === "not_found" && !manualMode && (
         <div className="rounded-lg border border-alert-amber/40 bg-alert-amber/10 p-3 text-xs text-amber-900">
           <p className="font-medium">Não foi possível encontrar este endereço.</p>
           <p className="mt-0.5 text-amber-700">
             Salvar assim mesmo? Você poderá posicionar o pino no mapa depois.
-            {/* NOTE: pin-drop is deferred to post-save via the pinningPatient flow
-                in mapStore. Advance without coords; a map-level affordance lets
-                the ACS drag the pin to the correct location. */}
           </p>
+          <button
+            type="button"
+            onClick={() => setManualMode(true)}
+            className="mt-2 rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+          >
+            Ajustar pino manualmente
+          </button>
         </div>
       )}
     </form>

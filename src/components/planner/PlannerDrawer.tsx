@@ -111,23 +111,11 @@ function useOsrmRoute(
       setRoute(null);
       return;
     }
-
-    // The /api/routes proxy is point-to-point. Use first → last as an
-    // approximation; full multi-waypoint OSRM support is post-UP-6.
-    const from = coords[0];
-    const to = coords[coords.length - 1];
-
     try {
       const res = await fetch("/api/routes", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          fromLat: from.lat,
-          fromLng: from.lng,
-          toLat: to.lat,
-          toLng: to.lng,
-          profile,
-        }),
+        body: JSON.stringify({ waypoints: coords, profile }),
       });
       if (!res.ok) return;
       setRoute(await res.json());

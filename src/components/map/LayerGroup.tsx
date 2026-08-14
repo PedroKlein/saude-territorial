@@ -63,6 +63,10 @@ export function LayerGroup({
         confidence={p.confidence}
       />
     ));
+    // `applyFilters` closes over Zustand filter state via get(); the
+    // state slices below drive re-renders on filter change even though
+    // eslint can't see through the closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     patients,
     alertResults,

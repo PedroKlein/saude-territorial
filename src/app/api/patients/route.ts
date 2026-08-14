@@ -238,6 +238,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     with: { gestantes: true, tuberculose: true, has: true },
   });
   if (existing) {
+    const attached: Array<"gestantes" | "tuberculose" | "hipertensao"> = [];
+    if (existing.gestantes) attached.push("gestantes");
+    if (existing.tuberculose) attached.push("tuberculose");
+    if (existing.has) attached.push("hipertensao");
     return NextResponse.json(
       {
         error: "cns_exists",
@@ -246,6 +250,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           id: existing.id,
           cns: existing.cns,
           nomeCompleto: existing.nomeCompleto,
+          attached,
         },
       },
       { status: 409 },

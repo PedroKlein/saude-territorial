@@ -93,6 +93,9 @@ export function PriorityList({ data }: PriorityListProps) {
         lat: p.lat,
         lng: p.lng,
       }));
+    // `applyFilters` closes over Zustand filter state via get(); the
+    // state slices below drive re-renders on filter change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, activeLayers, applyFilters, microareas, alertLevels, searchText]);
 
   if (!data) return null;

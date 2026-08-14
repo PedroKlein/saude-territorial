@@ -44,7 +44,7 @@ import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
 // ---------------------------------------------------------------------------
 
 export type PatientWizardMode =
-  | { kind: "new" }
+  | { kind: "new"; initialCoords?: { lat: number; lng: number } | null }
   | {
       kind: "add-condition";
       patientId: string;
@@ -81,7 +81,7 @@ export type PatientWizardCtx = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function emptyCtx(): PatientWizardCtx {
+function emptyCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
   return {
     cns: "",
     nomeCompleto: "",
@@ -93,7 +93,7 @@ function emptyCtx(): PatientWizardCtx {
     complemento: "",
     bairro: "",
     microarea: "",
-    geocodedCoords: null,
+    geocodedCoords: mode?.kind === "new" ? (mode.initialCoords ?? null) : null,
     chosenConditions: [],
     gestantes: {},
     tuberculose: {},
@@ -343,7 +343,7 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   // Initial ctx (stashed context takes priority on mode switch)
   // -------------------------------------------------------------------------
 
-  const initialCtx = stashedCtx ?? emptyCtx();
+  const initialCtx = stashedCtx ?? emptyCtx(mode);
 
   const headline =
     internalMode.kind === "new" ? "Novo paciente" : "Adicionar condição";

@@ -36,12 +36,22 @@ const mocks = vi.hoisted(() => {
       return Promise.resolve(fn([]));
     }),
   };
-  // Each method returns the chain so calls stay chainable.
   (["from", "where", "leftJoin", "groupBy", "orderBy", "limit"] as const).forEach(
     (k) => { selectChain[k].mockReturnValue(selectChain); },
   );
 
-  return { getSession, transactionSpy, selectChain };
+  // Chainable delete builder: db.delete(t).where(cond).returning(cols) → Promise<row[]>.
+  const deleteReturning = vi.fn().mockResolvedValue([]);
+  const deleteWhere = vi.fn().mockReturnValue({ returning: deleteReturning });
+  const deleteFn = vi.fn().mockReturnValue({ where: deleteWhere });
+
+  return {
+    getSession,
+    transactionSpy,
+    selectChain,
+    deleteFn,
+    deleteReturning,
+  };
 });
 
 vi.mock("@/lib/auth", () => ({
@@ -52,6 +62,7 @@ vi.mock("@/db/client", () => ({
   db: {
     transaction: mocks.transactionSpy,
     select: vi.fn().mockReturnValue(mocks.selectChain),
+    delete: mocks.deleteFn,
   },
 }));
 
@@ -60,7 +71,7 @@ vi.mock("@/db/client", () => ({
 // ---------------------------------------------------------------------------
 
 import { POST, GET } from "@/app/api/plans/route";
-import { GET as GET_ONE } from "@/app/api/plans/[id]/route";
+import { GET as GET_ONE, DELETE as DELETE_ONE } from "@/app/api/plans/[id]/route";
 import { NextRequest } from "next/server";
 
 // ---------------------------------------------------------------------------
@@ -256,5 +267,50 @@ describe("GET /api/plans/[id]", () => {
     expect(body.plan.id).toBe("plan-uuid-1");
     expect(Array.isArray(body.plan.stops)).toBe(true);
     expect(body.plan.stops).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /api/plans/[id]
+// ---------------------------------------------------------------------------
+
+function makeDelete(url: string): NextRequest {
+  return new NextRequest(url, { method: "DELETE" });
+}
+
+describe("DELETE /api/plans/[id]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 when unauthenticated", async () => {
+    mocks.getSession.mockResolvedValueOnce(null);
+    const res = await DELETE_ONE(
+      makeDelete("http://localhost/api/plans/plan-uuid-1"),
+      { params: Promise.resolve({ id: "plan-uuid-1" }) },
+    );
+    expect(res.status).toBe(401);
+    expect(mocks.deleteFn).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when no row matches", async () => {
+    mocks.getSession.mockResolvedValueOnce({ user: { id: "u1" } });
+    mocks.deleteReturning.mockResolvedValueOnce([]);
+
+    const res = await DELETE_ONE(
+      makeDelete("http://localhost/api/plans/nonexistent"),
+      { params: Promise.resolve({ id: "nonexistent" }) },
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 204 on happy path", async () => {
+    mocks.getSession.mockResolvedValueOnce({ user: { id: "u1" } });
+    mocks.deleteReturning.mockResolvedValueOnce([{ id: "plan-uuid-1" }]);
+
+    const res = await DELETE_ONE(
+      makeDelete("http://localhost/api/plans/plan-uuid-1"),
+      { params: Promise.resolve({ id: "plan-uuid-1" }) },
+    );
+    expect(res.status).toBe(204);
+    expect(mocks.deleteFn).toHaveBeenCalledTimes(1);
   });
 });

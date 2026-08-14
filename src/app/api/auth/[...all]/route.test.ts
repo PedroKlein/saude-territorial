@@ -92,7 +92,7 @@ describe("app/api/auth/[...all]/route — named exports", () => {
     const request = new Request("http://localhost/api/auth/signin", { method: "GET" });
 
     // Should resolve (not throw) — response shape is determined by Better Auth
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     await expect(
       (route.GET as any)(request, { params: Promise.resolve({ all: ["signin"] }) })
     ).resolves.not.toThrow();
@@ -106,7 +106,7 @@ describe("app/api/auth/[...all]/route — named exports", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     await expect(
       (route.POST as any)(request, { params: Promise.resolve({ all: ["signin"] }) })
     ).resolves.not.toThrow();
