@@ -8,6 +8,7 @@ import { ALERT_RULES } from "@/config/alert-rules.config";
 import type { PatientRecord, LayeredPatientData } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
+import { AlertShape } from "@/components/ui/AlertShape";
 
 interface StatsDashboardProps {
   data: LayeredPatientData | undefined;
@@ -67,15 +68,15 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
           Total: <strong>{counts.total}</strong>
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#dc2626]" />
+          <AlertShape level="vermelho" size={12} />
           Críticas: <strong>{counts.vermelho}</strong>
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#d97706]" />
+          <AlertShape level="amarelo" size={12} />
           Atenção: <strong>{counts.amarelo}</strong>
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#16a34a]" />
+          <AlertShape level="verde" size={12} />
           Normal: <strong>{counts.verde}</strong>
         </span>
       </div>

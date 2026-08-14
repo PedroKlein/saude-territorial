@@ -11,6 +11,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
 import type { AlertLevel } from "@/types/alerts";
 import type { LayerId } from "@/config/layers.config";
+import { AlertShape } from "@/components/ui/AlertShape";
 
 // ---------------------------------------------------------------------------
 // Layer → icon/color tables (static literals → Record per project rule)
@@ -31,10 +32,11 @@ const LAYER_FILL: Partial<Record<LayerId, string>> = {
   hipertensao: "var(--color-hipertensao)",
 };
 
-const ALERT_DOT_COLOR: Record<AlertLevel, string | null> = {
-  vermelho: "var(--color-alert-red)",
-  amarelo: "var(--color-alert-amber)",
-  verde: null,
+/** Marker chip alert-dot is hidden for `verde` because "no alert = no badge". */
+const ALERT_ON_CHIP: Record<AlertLevel, boolean> = {
+  vermelho: true,
+  amarelo: true,
+  verde: false,
 };
 
 /** Brand teal ring for selected state (DS-11). */
@@ -61,7 +63,7 @@ function ChipHtml({
 }: ChipProps) {
   const Icon: IconComponent = LAYER_ICON[layerId] ?? HeartPulse;
   const fill = LAYER_FILL[layerId] ?? "var(--color-brand)";
-  const dotColor = ALERT_DOT_COLOR[alertLevel];
+  const showAlert = ALERT_ON_CHIP[alertLevel];
 
   const pillShadow = isSelected
     ? `0 2px 6px rgba(0,0,0,0.22), 0 0 0 2px white, 0 0 0 4px ${SELECTED_RING}`
@@ -95,24 +97,25 @@ function ChipHtml({
         <Icon size={14} color="white" />
       </div>
 
-      {/* Alert dot — top-right corner.
-          DS-16 redundant encoding: solid fill + outer ring = visible in
-          monochrome / deuteranopia simulation. */}
-      {dotColor !== null && (
+      {/* Alert indicator — top-right corner.
+          DS-16 redundant encoding: SHAPE (circle vs triangle) + COLOR so
+          alert states survive deuteranopia. Rendered via <AlertShape>. */}
+      {showAlert && (
         <div
-          aria-hidden="true"
           style={{
             position: "absolute",
-            top: 2,
-            right: 2,
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            backgroundColor: dotColor,
-            // Inner fill + white gap ring + outer color ring → two channels
-            boxShadow: `0 0 0 1.5px white, 0 0 0 3px ${dotColor}`,
+            top: -1,
+            right: -1,
+            width: 14,
+            height: 14,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "drop-shadow(0 0 1px rgba(0,0,0,0.25))",
           }}
-        />
+        >
+          <AlertShape level={alertLevel} size={14} />
+        </div>
       )}
 
       {/* Coincidence badge — bottom-right corner */}

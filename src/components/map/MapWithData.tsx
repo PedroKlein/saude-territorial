@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import DynamicMap from "@/components/map/DynamicMap";
+import { EmptyMapOverlay } from "@/components/map/EmptyMapOverlay";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
 import { PatientDetailPanel } from "@/components/panels/PatientDetailPanel";
 import { StatsDashboard } from "@/components/map/StatsDashboard";
@@ -100,6 +101,7 @@ export function MapWithData() {
           </div>
         )}
         <DynamicMap />
+        <EmptyMapOverlay data={data} />
 
         {/* Legend — inline X button when visible, floating ? handled by RailToggles */}
         <AnimatePresence initial={false}>
