@@ -32,6 +32,26 @@ import { Button } from "@/components/ui/button";
 // Types
 // ---------------------------------------------------------------------------
 
+/**
+ * Props passed to every step's `render` function. Named so consumers can
+ * import a concrete type instead of decoding it through
+ * `Parameters<WizardStep<Ctx>["render"]>[0]` (see rule ts-no-return-type).
+ */
+export interface WizardStepRenderProps<Ctx> {
+  ctx: Ctx;
+  setCtx: (patch: Partial<Ctx>) => void;
+  /**
+   * Navigate to the next non-skipped step. Callers that have just applied
+   * a ctx patch (e.g. StepEscolherCondicoes storing chosenConditions) MUST
+   * pass that same patch here so `shouldSkip` evaluates against the fresh
+   * ctx synchronously — setCtx enqueues an async state update, so the
+   * pre-patch value would otherwise skip newly-chosen condition data pages.
+   */
+  goNext: (patch?: Partial<Ctx>) => void;
+  /** Navigate to the previous non-skipped step. */
+  goBack: () => void;
+}
+
 export type WizardStep<Ctx> = {
   id: string;
   /** Short label shown in the progress bar. */
@@ -54,20 +74,7 @@ export type WizardStep<Ctx> = {
    * server-side re-validation.
    */
   schema?: z.ZodTypeAny;
-  render: (props: {
-    ctx: Ctx;
-    setCtx: (patch: Partial<Ctx>) => void;
-    /**
-     * Navigate to the next non-skipped step. Callers that have just applied
-     * a ctx patch (e.g. StepEscolherCondicoes storing chosenConditions) MUST
-     * pass that same patch here so `shouldSkip` evaluates against the fresh
-     * ctx synchronously — setCtx enqueues an async state update, so the
-     * pre-patch value would otherwise skip newly-chosen condition data pages.
-     */
-    goNext: (patch?: Partial<Ctx>) => void;
-    /** Navigate to the previous non-skipped step. */
-    goBack: () => void;
-  }) => React.ReactNode;
+  render: (props: WizardStepRenderProps<Ctx>) => React.ReactNode;
 };
 
 export type WizardProps<Ctx> = {

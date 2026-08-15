@@ -45,6 +45,7 @@ export const patients = pgTable(
     numero: text("numero"),
     complemento: text("complemento"),
     bairro: text("bairro"),
+    cep: text("cep"),
     microarea: text("microarea"), // Plain tag (`MA1`..`MA5`); FK to a microareas table is post-MVP.
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),

@@ -149,7 +149,9 @@ function buildDefaults(p: UnifiedPatient): PanelFormValues {
       numero: p.numero ?? "",
       complemento: p.complemento ?? "",
       bairro: p.bairro ?? "",
+      cep: p.cep ?? "",
       microarea: p.microarea ?? "",
+      geocodeReference: p.geocodeReference ?? "",
       vulnerabilidades: p.vulnerabilidades ?? "",
     },
     gestantes: p.gestante
@@ -569,6 +571,7 @@ function PanelContent({
   const endereco = [patient.rua, patient.numero, patient.complemento]
     .filter(Boolean)
     .join(", ");
+  const bairroLine = patient.bairro ?? null;
 
   // ---------------------------------------------------------------------------
   // Render
@@ -659,10 +662,26 @@ function PanelContent({
           {/* Contact / identity details */}
           {!isEditing ? (
             <dl className="mt-3 space-y-1.5 text-sm">
-              {endereco && (
+              {(endereco || bairroLine || patient.cep) && (
                 <div className="flex items-start gap-2 text-neutral-600">
                   <MapPin className="mt-0.5 size-3.5 shrink-0 text-neutral-400" />
-                  <span>{endereco}</span>
+                  <div className="min-w-0 flex-1">
+                    {endereco && <div>{endereco}</div>}
+                    {bairroLine && (
+                      <div className="text-xs text-neutral-500">{bairroLine}</div>
+                    )}
+                    {patient.cep && (
+                      <div className="mt-0.5 font-mono text-[11px] tracking-wide text-neutral-500">
+                        CEP {patient.cep}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {patient.geocodeReference && (
+                <div className="rounded-md border-l-2 border-brand/40 bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-600">
+                  <span className="font-medium text-neutral-700">Referência:</span>{" "}
+                  {patient.geocodeReference}
                 </div>
               )}
               {patient.telefone && (
@@ -738,10 +757,31 @@ function PanelContent({
               <Field label="Número" className="col-span-1">
                 <Input {...form.register("base.numero")} aria-label="Número" />
               </Field>
+
               <Field label="Complemento" className="col-span-1">
                 <Input
                   {...form.register("base.complemento")}
                   aria-label="Complemento"
+                />
+              </Field>
+              <Field label="Bairro" className="col-span-1">
+                <Input {...form.register("base.bairro")} aria-label="Bairro" />
+              </Field>
+              <Field label="CEP" className="col-span-1">
+                <Input
+                  {...form.register("base.cep")}
+                  aria-label="CEP"
+                  placeholder="90000-000"
+                  inputMode="numeric"
+                  maxLength={9}
+                />
+              </Field>
+              <Field label="Referência" className="col-span-2">
+                <Textarea
+                  {...form.register("base.geocodeReference")}
+                  rows={2}
+                  aria-label="Referência do endereço"
+                  placeholder="Ex.: casa azul, em frente à padaria."
                 />
               </Field>
               <Field label="Vulnerabilidades" className="col-span-2">

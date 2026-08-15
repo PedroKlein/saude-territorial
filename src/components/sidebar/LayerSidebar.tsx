@@ -12,8 +12,12 @@ import {
   School,
   Building2,
   ChevronDown,
+  MapPin,
+  Flame,
+  Hexagon,
 } from "lucide-react";
 import { useMapStore } from "@/stores/mapStore";
+import type { ViewMode } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
 import { evaluatePatient } from "@/lib/alerts/engine";
@@ -71,16 +75,19 @@ interface LayerSidebarProps {
  * Sections (top → bottom):
  *   1. Search input row
  *   2. Alertas meta-filter (total alert count + alertsOnly toggle)
- *   3. Camadas toggles — primary layers (GES/TB/HAS) + deferred subsection
+ *   3. Filtros — primary layers (GES/TB/HAS) + deferred subsection
  *   4. Precisam atenção — priority patient list (scrollable)
- *   5. Filtros — microárea + alert-level chip filters
- *   6. Footer — "Planejar visita" CTA
+ *   5. Visualização — view mode toggle (markers / density / microarea)
+ *   6. Filtros avançados — microárea + alert-level chip filters
+ *   7. Footer — "Planejar visita" CTA
  */
 export function LayerSidebar({ data }: LayerSidebarProps) {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
   const alertsOnly = useMapStore((s) => s.alertsOnly);
   const setAlertsOnly = useMapStore((s) => s.setAlertsOnly);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const setViewMode = useMapStore((s) => s.setViewMode);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -144,12 +151,12 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 3. Camadas                                                          */}
+      {/* 3. Filtros                                                          */}
       {/* ------------------------------------------------------------------ */}
       <div className="border-b border-neutral-200 p-3">
         <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
           <Layers className="h-3 w-3" />
-          Camadas
+          Filtros
         </div>
 
         {/* Primary layers */}
@@ -196,7 +203,39 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
       <PriorityListSection data={data} />
 
       {/* ------------------------------------------------------------------ */}
-      {/* 5. Filtros                                                          */}
+      {/* 5. Visualização                                                     */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="border-t border-neutral-200 p-3">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+          Visualização
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-0.5">
+          {(
+            [
+              { mode: "markers" as ViewMode, Icon: MapPin, label: "Marcadores" },
+              { mode: "density" as ViewMode, Icon: Flame, label: "Densidade" },
+              { mode: "microarea" as ViewMode, Icon: Hexagon, label: "Microárea" },
+            ] as const
+          ).map(({ mode, Icon, label }) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className={`flex flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] font-medium transition ${
+                viewMode === mode
+                  ? "bg-white text-brand shadow-sm ring-1 ring-neutral-200"
+                  : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              <Icon className="h-3 w-3 shrink-0" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 6. Filtros avançados                                                */}
       {/* ------------------------------------------------------------------ */}
       <div className="border-t border-neutral-200 px-3 py-2">
         <FilterPanel />

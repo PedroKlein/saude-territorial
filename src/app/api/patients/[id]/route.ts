@@ -237,6 +237,7 @@ export async function PATCH(
           if (basePatch.numero !== undefined) baseUpdate.numero = basePatch.numero;
           if (basePatch.complemento !== undefined) baseUpdate.complemento = basePatch.complemento;
           if (basePatch.bairro !== undefined) baseUpdate.bairro = basePatch.bairro;
+          if (basePatch.cep !== undefined) baseUpdate.cep = basePatch.cep;
           if (basePatch.microarea !== undefined) baseUpdate.microarea = basePatch.microarea;
           if (basePatch.geocodeReference !== undefined) {
             baseUpdate.geocodeReference = basePatch.geocodeReference;
@@ -591,6 +592,7 @@ export type UnifiedPatient = {
   numero: string | null;
   complemento: string | null;
   bairro: string | null;
+  cep: string | null;
   microarea: string | null;
   lat: number | null;
   lng: number | null;
@@ -615,6 +617,7 @@ function shapeUnified(p: Loaded): UnifiedPatient {
     numero: p.numero,
     complemento: p.complemento,
     bairro: p.bairro,
+    cep: p.cep,
     microarea: p.microarea,
     lat: p.lat,
     lng: p.lng,

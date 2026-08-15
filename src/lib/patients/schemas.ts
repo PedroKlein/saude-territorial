@@ -69,6 +69,27 @@ const textOrNull = z
     return s === "" ? null : s;
   });
 
+/**
+ * Brazilian postal code (CEP). Accepts 8-digit or hyphenated (NNNNN-NNN)
+ * input, emits the canonical hyphenated form, or null when empty.
+ * Rejects malformed strings so ViaCEP autofill doesn't run on garbage.
+ */
+const cepOrNull = z
+  .union([z.string(), z.null()])
+  .transform((v, ctx): string | null => {
+    if (v === null) return null;
+    const digits = v.replace(/\D/g, "");
+    if (digits === "") return null;
+    if (digits.length !== 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "CEP deve ter 8 dígitos.",
+      });
+      return z.NEVER;
+    }
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  });
+
 /** Non-empty string after trim (for required fields). */
 const requiredText = z
   .string()
@@ -128,6 +149,7 @@ export const BasePatchSchema = z
     numero: textOrNull.optional(),
     complemento: textOrNull.optional(),
     bairro: textOrNull.optional(),
+    cep: cepOrNull.optional(),
     microarea: textOrNull.optional(),
     // Direct-coord update: drag-to-fix + manual pin drop. Presence of either
     // switches the geocode path off and sets geocodeStatus='manual'.
@@ -354,6 +376,7 @@ export const PatientCreateSchema = z
       numero: textOrNull.optional(),
       complemento: textOrNull.optional(),
       bairro: textOrNull.optional(),
+      cep: cepOrNull.optional(),
       microarea: textOrNull.optional(),
       lat: latitude.nullable().optional(),
       lng: longitude.nullable().optional(),

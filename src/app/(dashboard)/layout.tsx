@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { Providers } from "./providers";
 import { AddPatientButton } from "@/components/panels/AddPatientButton";
 
@@ -19,6 +20,12 @@ export default function DashboardLayout({
             <h1 className="text-xl font-bold text-primary">Saúde Territorial</h1>
             <nav className="flex items-center gap-4">
               <AddPatientButton />
+              <Link
+                href="/pacientes"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+              >
+                <Users className="size-4" /> Pacientes
+              </Link>
               <Link
                 href="/map"
                 className="text-sm text-muted-foreground hover:text-primary"

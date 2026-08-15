@@ -143,6 +143,7 @@ const BASE_PATIENT: UnifiedPatient = {
   numero: "42",
   complemento: null,
   bairro: "Jardim",
+  cep: null,
   microarea: "MA1",
   lat: -30.034,
   lng: -51.217,

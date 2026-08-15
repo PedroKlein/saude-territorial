@@ -63,12 +63,15 @@ export type PatientWizardCtx = {
   telefone: string;
   vulnerabilidades: string;
   // --- Endereço ---
+  cep: string;
   rua: string;
   numero: string;
   complemento: string;
   bairro: string;
   microarea: string;
   geocodedCoords: { lat: number; lng: number } | null;
+  /** Free-form landmark note; persisted as patients.geocodeReference. */
+  referencia: string;
   // --- Condições ---
   chosenConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
   // --- Extension data (dates as "dd/MM/yyyy" strings) ---
@@ -88,12 +91,14 @@ function emptyCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
     dataNascimento: "",
     telefone: "",
     vulnerabilidades: "",
+    cep: "",
     rua: "",
     numero: "",
     complemento: "",
     bairro: "",
     microarea: "",
     geocodedCoords: mode?.kind === "new" ? (mode.initialCoords ?? null) : null,
+    referencia: "",
     chosenConditions: [],
     gestantes: {},
     tuberculose: {},
@@ -117,7 +122,9 @@ function buildCreatePayload(ctx: PatientWizardCtx, condicao: "gestantes" | "tube
       ...(ctx.numero ? { numero: ctx.numero } : {}),
       ...(ctx.complemento ? { complemento: ctx.complemento } : {}),
       ...(ctx.bairro ? { bairro: ctx.bairro } : {}),
+      ...(ctx.cep ? { cep: ctx.cep } : {}),
       ...(ctx.microarea ? { microarea: ctx.microarea } : {}),
+      ...(ctx.referencia ? { geocodeReference: ctx.referencia } : {}),
       ...(ctx.vulnerabilidades ? { vulnerabilidades: ctx.vulnerabilidades } : {}),
       ...(ctx.geocodedCoords
         ? { lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }

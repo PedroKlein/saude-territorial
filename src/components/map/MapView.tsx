@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Tooltip, Popup, CircleMarker, useMapEvents } from "react-leaflet";
-import { useRef, useCallback, useMemo, useState } from "react";
+import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { LayerGroup } from "./LayerGroup";
 import { ActiveRouteLayer } from "./ActiveRouteLayer";
@@ -11,19 +11,18 @@ import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
 import { MicroareaOutlines } from "./MicroareaOutlines";
-import { HeatmapLayer } from "./HeatmapLayer";
+import { DensityHeatmap } from "./DensityHeatmap";
+import { MicroareaChoropleth } from "./MicroareaChoropleth";
 import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
-import { usePatientData } from "@/hooks/usePatientData";
+import { usePatientData, type LayeredPatientData } from "@/hooks/usePatientData";
 import { useMapStore } from "@/stores/mapStore";
 import { usePlannerStore } from "@/stores/plannerStore";
+import { useSearchParams } from "next/navigation";
 
 import { useFilterStore } from "@/stores/filterStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
-import { evaluatePatient } from "@/lib/alerts/engine";
-import { ALERT_RULES } from "@/config/alert-rules.config";
 import { buildCoincidenceMap } from "@/components/map/markerHelpers";
-import type { AlertLevel } from "@/types/alerts";
 import { PatientWizard } from "@/components/wizard/PatientWizard";
 // Fix default marker icon paths broken by bundlers (webpack/turbopack)
 L.Icon.Default.mergeOptions({
@@ -54,13 +53,6 @@ const US_ICON = L.divIcon({
   iconAnchor: [22, 22],
 });
 
-// Alert-level → heatmap-intensity weighting. Module-scope so useMemo's
-// dep array stays clean (React Compiler flagged the in-component variant).
-const INTENSITY_MAP: Record<AlertLevel, number> = {
-  vermelho: 1.0,
-  amarelo: 0.6,
-  verde: 0.3,
-};
 
 
 // ---------------------------------------------------------------------------
@@ -93,10 +85,13 @@ function RightClickCatcher({
 
 export default function MapView() {
   const mapRef = useRef<LeafletMap>(null);
+  // Guard: fire the URL-param selection exactly once per mount.
+  const urlSelectionFired = useRef(false);
   const { data } = usePatientData();
   const activeRoute = useMapStore((s) => s.activeRoute);
   const showTerritories = useMapStore((s) => s.showTerritories);
-  const vizMode = useMapStore((s) => s.vizMode);
+
+  const viewMode = useMapStore((s) => s.viewMode);
   const activeLayers = useMapStore((s) => s.activeLayers);
   const pinningPatient = useMapStore((s) => s.pinningPatient);
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
@@ -106,7 +101,19 @@ export default function MapView() {
   const currentMicroareas = useFilterStore((s) => s.microareas);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [rightClickCoords, setRightClickCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
+  const searchParams = useSearchParams();
 
+  // Read ?patient=<uuid> once on mount and open the panel for that patient.
+  useEffect(() => {
+    if (urlSelectionFired.current) return;
+    const id = searchParams.get("patient");
+    if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      urlSelectionFired.current = true;
+      setSelectedPatient(id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMicroareaClick = useCallback(
     (id: string) => {
@@ -121,25 +128,34 @@ export default function MapView() {
   );
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
-  const heatmapPoints = useMemo(() => {
-    if (vizMode !== "heatmap" || !data) return [];
-    const points: { lat: number; lng: number; intensity: number }[] = [];
+  // Flat patient list filtered by active layers — used for density points
+  // and passed to choropleth. Deduped by patient id across layers.
+  const filteredData = useMemo((): LayeredPatientData => {
+    if (!data) return {};
+    const out: LayeredPatientData = {};
+    for (const layerId of layerIds) {
+      if (activeLayers[layerId]) out[layerId] = data[layerId];
+    }
+    return out;
+  }, [data, activeLayers, layerIds]);
+
+  const densityPoints = useMemo(() => {
+    if (viewMode !== "density" || !data) return [];
+    const points: { lat: number; lng: number }[] = [];
     for (const layerId of layerIds) {
       if (!activeLayers[layerId]) continue;
       const patients = data[layerId];
       if (!patients) continue;
       for (const p of patients) {
-        const result = evaluatePatient(ALERT_RULES, p, layerId);
-        const level = (result.level ?? "verde") as AlertLevel;
-        points.push({
-          lat: p.lat,
-          lng: p.lng,
-          intensity: INTENSITY_MAP[level],
-        });
+        if (typeof p.lat === "number" && typeof p.lng === "number") {
+          points.push({ lat: p.lat, lng: p.lng });
+        }
       }
     }
     return points;
-  }, [data, vizMode, activeLayers, layerIds]);
+  }, [data, viewMode, activeLayers, layerIds]);
+
+
 
   // Cross-layer coincidence map: coord key → total marker count across all layers.
   // Memoised so the stable Map reference avoids re-rendering every LayerGroup.
@@ -230,7 +246,7 @@ export default function MapView() {
           </>
         )}
         <ClusteredLayer>
-          {vizMode === "markers" &&
+          {viewMode === "markers" &&
             data &&
             layerIds.map((layerId) => {
               const patients = data[layerId];
@@ -265,9 +281,13 @@ export default function MapView() {
               </Tooltip>
             </CircleMarker>
           ))}
-        {vizMode === "heatmap" && heatmapPoints.length > 0 && (
-          <HeatmapLayer points={heatmapPoints} />
+        {viewMode === "density" && densityPoints.length > 0 && (
+          <DensityHeatmap points={densityPoints} />
         )}
+        {viewMode === "microarea" && (
+          <MicroareaChoropleth data={filteredData} />
+        )}
+
         <PinClickCatcher
           active={pinningPatient !== null}
           onPick={setPendingCoords}

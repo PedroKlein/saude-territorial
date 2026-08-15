@@ -13,7 +13,8 @@ interface ActiveRoute {
   profile: RouteProfile;
 }
 
-export type VizMode = "markers" | "heatmap";
+
+export type ViewMode = "markers" | "density" | "microarea";
 
 /** Identifies the patient whose pin is being placed manually. */
 export interface PinningTarget {
@@ -32,7 +33,7 @@ interface MapState {
   mapZoom: number;
   activeRoute: ActiveRoute | null;
   showTerritories: boolean;
-  vizMode: VizMode;
+  viewMode: ViewMode;
   alertsOnly: boolean;
   /** Patient currently in manual-pin-drop mode (null = not pinning). */
   pinningPatient: PinningTarget | null;
@@ -44,7 +45,7 @@ interface MapActions {
   setMapView: (center: [number, number], zoom: number) => void;
   setActiveRoute: (route: ActiveRoute | null) => void;
   setShowTerritories: (show: boolean) => void;
-  setVizMode: (mode: VizMode) => void;
+  setViewMode: (m: ViewMode) => void;
   setAlertsOnly: (on: boolean) => void;
   setPinningPatient: (target: PinningTarget | null) => void;
 }
@@ -77,7 +78,7 @@ export const useMapStore = create<MapStore>()(persist(
   mapZoom: 14,
   activeRoute: null,
   showTerritories: false,
-  vizMode: "markers",
+  viewMode: "markers",
   alertsOnly: false,
   pinningPatient: null,
 
@@ -98,7 +99,8 @@ export const useMapStore = create<MapStore>()(persist(
 
   setShowTerritories: (show) => set({ showTerritories: show }),
 
-  setVizMode: (mode) => set({ vizMode: mode }),
+
+  setViewMode: (m) => set({ viewMode: m }),
 
   setAlertsOnly: (on) => set({ alertsOnly: on }),
 
@@ -111,7 +113,7 @@ export const useMapStore = create<MapStore>()(persist(
       mapCenter: state.mapCenter,
       mapZoom: state.mapZoom,
       showTerritories: state.showTerritories,
-      vizMode: state.vizMode,
+      viewMode: state.viewMode,
     }),
   }
 ));
