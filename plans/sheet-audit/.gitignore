@@ -1,0 +1,4 @@
+# Raw exports live outside git — regenerate per README.md.
+# They carry example patient shapes we must NOT commit (AGENTS.md).
+workbook.xlsx
+csv/
