@@ -203,10 +203,16 @@ Each condition maps to a `_data` extension table joined to `patients` by `patien
 
 ### Data Handling
 
-- **NEVER commit real patient data** — no names, addresses, CNS, or health conditions.
-- **NEVER log patient data** to console, error trackers, or analytics.
-- Synthetic/mock data only. Seed sources: `extensao-gat4` sister repo (`gestantes.json`, `pacientes.csv`).
-- Seed scripts must gate on `SEED_SYNTHETIC=1` and (for prod-target scripts) `I_HAVE_VERIFIED_NON_PROD=1`.
+This is a synthetic-only project: an academic monitoring platform for
+PET-Saúde Digital that never touches real patient records. All seed and
+reference data (sheet exports, JSON fixtures, CSVs under `plans/`,
+`prototypes/`, `extensao-gat4/`) is fictitious even when the shape mimics
+a production tab.
+
+- Everything in `plans/`, tests, seeds, and audit CSVs is committable.
+- `NEVER log patient fields to console, analytics, or error trackers` still applies — it's a habit worth keeping so the code stays deployable elsewhere later, and it keeps stack traces useful.
+- Seed sources: `extensao-gat4` sister repo (`gestantes.json`, `pacientes.csv`), the PET reference workbook (see `plans/sheet-audit/README.md`).
+- Seed scripts still gate on `SEED_SYNTHETIC=1` — cheap defence against a future refactor accidentally targeting a real DB.
 
 ### Naming Conventions
 

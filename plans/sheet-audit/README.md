@@ -1,31 +1,36 @@
-# Sheet audit — regeneration
+# Sheet audit — PET reference workbook
 
-The raw workbook and per-tab CSVs are NOT committed. They contain example rows
-lifted from the PET reference sheet (`Cópia PET de MODELO 2025 monitoramento
-usuários POR EQUIPE`) and — even if fictitious — carry name / CNS / DOB /
-address / phone / health-condition shapes that AGENTS.md forbids from git.
+Raw workbook + per-tab CSV extracts of the PET reference sheet
+(`Cópia PET de MODELO 2025 monitoramento usuários POR EQUIPE`). Committed
+because this project is synthetic-only (see AGENTS.md § Data Handling) and
+the exports are load-bearing reference material for `plans/sheet-parity.md`.
 
-To regenerate the workbook locally without committing it:
+## Files
+
+- `workbook.xlsx` — full workbook as downloaded from Google Sheets.
+- `csv/<index>_<slug>.csv` — one file per tab, extracted via SheetJS.
+  Tab index matches the order the sheet ships (`xlsx-cli -l` output).
+
+## Regenerate
+
+If the source sheet drifts and you want a fresh snapshot:
 
 ```
 curl -sSL -o plans/sheet-audit/workbook.xlsx \
   "https://docs.google.com/spreadsheets/d/12_mmvJcCiFFyCm2V1q00Qd_wJfQP0i29gPKdtZCeyhU/export?format=xlsx"
-```
 
-To dump the first ten rows of every tab as CSV (headers plus any sample rows
-the sheet ships with):
+# List sheet names + indices
+bunx xlsx-cli -l plans/sheet-audit/workbook.xlsx
 
-```
-mkdir -p plans/sheet-audit/csv
-bun run --silent bunx xlsx-cli -l plans/sheet-audit/workbook.xlsx
-# ...then for each sheet name:
-bunx xlsx-cli -N <index> -n 10 plans/sheet-audit/workbook.xlsx \
+# Extract one tab
+bunx xlsx-cli -N <index> plans/sheet-audit/workbook.xlsx \
   > plans/sheet-audit/csv/<index>_<slug>.csv
 ```
 
-Everything under `plans/sheet-audit/csv/` and `workbook.xlsx` in this directory
-is git-ignored (see the `.gitignore` at the same level).
+## Reading the CSVs
 
-The tab-by-tab column audit that this workbook seeded lives in
-`plans/sheet-parity.md`, which carries schema-relevant column names only —
-no example rows.
+Every tab uses a 2–4 row header hierarchy (super-group / group / column /
+sometimes an italic hint row). Data rows start after the last non-empty
+header. Column offsets don't line up between tabs — parsers have to know
+their own schema. See `plans/sheet-parity.md § Column audit` for the
+per-tab breakdown.
