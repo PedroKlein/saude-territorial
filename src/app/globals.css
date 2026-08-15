@@ -18,6 +18,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * `data-open` / `data-closed` custom variants — Radix state selectors we use
+ * across accordions, dialogs, and sheets. Registering them once here lets
+ * shadcn primitives keep their compact `data-open:*` / `data-closed:*` class
+ * syntax without a manual `data-[state=open]:` in every consumer.
+ */
+@custom-variant data-open (&[data-state="open"]);
+@custom-variant data-closed (&[data-state="closed"]);
+
 @theme inline {
   /* shadcn semantic — reference :root so .dark can override */
   --color-background: var(--background);
@@ -105,6 +114,31 @@
   /* Typography */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /*
+   * Accordion open/close keyframes — consumed by
+   * `data-open:animate-accordion-down` / `data-closed:animate-accordion-up`
+   * on the shadcn AccordionContent primitive. Radix sets
+   * `--radix-accordion-content-height` to the natural height when the
+   * item mounts, so we can lerp height from 0 to that value.
+   *
+   * Kept fast (180ms) to feel responsive on rapid triage clicks; longer
+   * durations felt like the panel was fighting the user. The custom
+   * cubic-bezier is a gentle ease-out — no perceptible overshoot, but
+   * enough deceleration that opening doesn't feel abrupt.
+   */
+  --animate-accordion-down: accordion-down 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  --animate-accordion-up: accordion-up 150ms cubic-bezier(0.4, 0, 0.68, 0.28);
+
+  @keyframes accordion-down {
+    from { height: 0; opacity: 0; }
+    to   { height: var(--radix-accordion-content-height); opacity: 1; }
+  }
+
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); opacity: 1; }
+    to   { height: 0; opacity: 0; }
+  }
 }
 
 :root {

@@ -38,6 +38,7 @@ import { useMapStore } from "@/stores/mapStore";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
+import { US_MOAB_CALDAS } from "@/config/geo.constants";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -95,22 +96,33 @@ function useOsrmRoute(
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchRoute = useCallback(async () => {
-    if (stops.length < 2) {
+    if (stops.length < 1) {
       setRoute(null);
       return;
     }
 
-    const coords: { lat: number; lng: number }[] = [];
+    // Route always departs from and returns to US Moab Caldas, so we prepend
+    // and append its coordinates. With ≥ 1 stop that's ≥ 3 waypoints total —
+    // OSRM's minimum. The polyline drawn on the map therefore includes the
+    // US→first-stop and last-stop→US legs, matching how a real ACS day plays
+    // out.
+    const stopCoords: { lat: number; lng: number }[] = [];
     for (const stop of [...stops].sort((a, b) => a.order - b.order)) {
       const entry = patientMap.get(stop.patientId);
       if (entry?.record.lat && entry.record.lng) {
-        coords.push({ lat: entry.record.lat, lng: entry.record.lng });
+        stopCoords.push({ lat: entry.record.lat, lng: entry.record.lng });
       }
     }
-    if (coords.length < 2) {
+    if (stopCoords.length < 1) {
       setRoute(null);
       return;
     }
+    const [usLat, usLng] = US_MOAB_CALDAS;
+    const coords = [
+      { lat: usLat, lng: usLng },
+      ...stopCoords,
+      { lat: usLat, lng: usLng },
+    ];
     try {
       const res = await fetch("/api/routes", {
         method: "POST",
@@ -234,32 +246,50 @@ export function PlannerDrawer() {
   }
 
   /**
-   * Reorder stops via OSRM /trip. Preserves the current first and last
-   * stops (source=first, destination=last on the API side) so the user's
-   * chosen anchors don't jump — only the middle stops get shuffled to
-   * minimise total travel. No-op when < 3 stops.
+   * Reorder stops via OSRM /trip anchored at US Moab Caldas.
+   *
+   * We prepend and append the US coordinate so the trip is
+   * [US, s1, ..., sN, US]. On the server side we set
+   * `source=first destination=last roundtrip=false`, so OSRM
+   *  - starts at index 0 (US),
+   *  - ends at index N+1 (US),
+   *  - reshuffles only indices 1..N (the actual patient stops)
+   *  to minimise total travel.
+   *
+   * The returned `order` is a permutation of [0..N+1]. Position 0 is
+   * always 0 (US start) and the last position is always N+1 (US end).
+   * We strip both and map the middle positions back to `stops`.
+   *
+   * With < 2 stops there is nothing to optimise (a single stop plus
+   * the two US anchors has a fixed order), so we bail.
    */
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizeError, setOptimizeError] = useState<string | null>(null);
 
   const handleOptimize = useCallback(async () => {
-    if (stops.length < 3) return;
+    if (stops.length < 2) return;
     setOptimizeError(null);
     setIsOptimizing(true);
 
-    // Build the coord list in the current visit order.
+    // Build the coord list in the current visit order and anchor it at US.
     const ordered = [...stops].sort((a, b) => a.order - b.order);
-    const coords: { lat: number; lng: number }[] = [];
+    const stopCoords: { lat: number; lng: number }[] = [];
     for (const s of ordered) {
       const entry = patientMap.get(s.patientId);
       if (entry?.record.lat && entry.record.lng) {
-        coords.push({ lat: entry.record.lat, lng: entry.record.lng });
+        stopCoords.push({ lat: entry.record.lat, lng: entry.record.lng });
       } else {
         setIsOptimizing(false);
         setOptimizeError("Um paciente do plano está sem coordenadas.");
         return;
       }
     }
+    const [usLat, usLng] = US_MOAB_CALDAS;
+    const coords = [
+      { lat: usLat, lng: usLng },
+      ...stopCoords,
+      { lat: usLat, lng: usLng },
+    ];
 
     try {
       const res = await fetch("/api/routes/optimize", {
@@ -272,9 +302,12 @@ export function PlannerDrawer() {
         return;
       }
       const body = (await res.json()) as { order: number[] };
-      // `order[j]` is the input index that should now sit at position j.
-      const reordered: Stop[] = body.order.map((inputIdx, j) => ({
-        patientId: ordered[inputIdx].patientId,
+
+      // Middle positions only — drop the US anchors at ends. Each middle
+      // input index maps back to `ordered` by subtracting 1 (US = index 0).
+      const middle = body.order.slice(1, -1);
+      const reordered: Stop[] = middle.map((inputIdx, j) => ({
+        patientId: ordered[inputIdx - 1].patientId,
         order: j + 1,
       }));
       setStops(reordered);
@@ -493,6 +526,7 @@ export function PlannerDrawer() {
       <PlanSaveDialog
         open={saveDialogOpen}
         onClose={() => setSaveDialogOpen(false)}
+        acsName={acsName.trim() || null}
       />
       <PlanPickerDialog
         open={pickDialogOpen}

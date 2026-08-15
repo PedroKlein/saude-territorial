@@ -10,7 +10,7 @@
  * codes reach console statements.
  */
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm, useWatch, Controller, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
@@ -29,10 +29,14 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { useMapStore } from "@/stores/mapStore";
 import { usePatient } from "@/hooks/usePatient";
+import { usePatientData } from "@/hooks/usePatientData";
+import { coincidenceKey } from "@/components/map/markerHelpers";
 import { useDeletePatient, useDeleteCondition } from "@/hooks/useDeletePatient";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
 import { PatientPatchSchema, type PatientPatch, type ExtensionLayer } from "@/lib/patients/schemas";
@@ -305,6 +309,84 @@ export function PatientDetailPanel() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// CoincidencePicker — cycle through patients that share the current
+// patient's exact coordinates.
+//
+// The map already flags coincidence with a small badge; that badge is
+// only useful if it's actionable, so the panel exposes prev/next
+// controls to walk the cluster without going back to the map. The
+// component renders nothing when the patient is the only one at the
+// coord (which is the common case).
+// ---------------------------------------------------------------------------
+
+function CoincidencePicker({
+  currentId,
+  lat,
+  lng,
+}: {
+  currentId: string;
+  lat: number | null;
+  lng: number | null;
+}) {
+  const { data } = usePatientData();
+  const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
+
+  const coincidents = useMemo(() => {
+    if (!data || lat == null || lng == null) return [] as { id: string; name: string }[];
+    const key = coincidenceKey(lat, lng);
+    const seen = new Set<string>();
+    const list: { id: string; name: string }[] = [];
+    for (const patients of Object.values(data)) {
+      if (!patients) continue;
+      for (const p of patients) {
+        if (seen.has(p.id)) continue;
+        if (coincidenceKey(p.lat, p.lng) !== key) continue;
+        seen.add(p.id);
+        list.push({ id: p.id, name: p.nomeCompleto ?? "(sem nome)" });
+      }
+    }
+    return list;
+  }, [data, lat, lng]);
+
+  if (coincidents.length < 2) return null;
+  const idx = coincidents.findIndex((p) => p.id === currentId);
+  // Defensive: current id is not in list (stale data) — treat as first slot.
+  const position = idx === -1 ? 0 : idx;
+  const next = coincidents[(position + 1) % coincidents.length];
+  const prev = coincidents[(position - 1 + coincidents.length) % coincidents.length];
+
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-amber-50 px-5 py-2 text-xs">
+      <div className="flex min-w-0 items-center gap-1.5 text-amber-900">
+        <MapPin className="size-3.5 shrink-0" />
+        <span className="font-medium">{coincidents.length} pacientes neste endereço</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          onClick={() => setSelectedPatient(prev.id)}
+          className="rounded-md p-1 text-amber-900 hover:bg-amber-100"
+          aria-label={`Ir para ${prev.name}`}
+          title={prev.name}
+        >
+          <ChevronLeft className="size-3.5" />
+        </button>
+        <span className="font-mono tabular-nums text-[11px] text-amber-800">
+          {position + 1}/{coincidents.length}
+        </span>
+        <button
+          onClick={() => setSelectedPatient(next.id)}
+          className="rounded-md p-1 text-amber-900 hover:bg-amber-100"
+          aria-label={`Ir para ${next.name}`}
+          title={next.name}
+        >
+          <ChevronRight className="size-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PanelInner({ id, onClose }: { id: string; onClose: () => void }) {
   const {
     data: patient,
@@ -510,6 +592,11 @@ function PanelContent({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
+        <CoincidencePicker
+          currentId={patient.id}
+          lat={patient.lat}
+          lng={patient.lng}
+        />
         {/* Identity block */}
         <div className="border-b border-neutral-200 px-5 py-4">
           <div className="flex items-start gap-3">

@@ -23,16 +23,21 @@ import { usePlannerStore } from "@/stores/plannerStore";
 interface PlanSaveDialogProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * ACS name entered in the planner drawer header. Passed down so this
+   * dialog doesn't re-ask; it becomes a read-only summary line below.
+   * Nullable when the user left it blank.
+   */
+  acsName: string | null;
 }
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function PlanSaveDialog({ open, onClose }: PlanSaveDialogProps) {
+export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) {
   const { stops, profile, loadPlan } = usePlannerStore();
   const [date, setDate] = useState(todayIso);
-  const [acsName, setAcsName] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,15 +93,13 @@ export function PlanSaveDialog({ open, onClose }: PlanSaveDialogProps) {
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="plan-acs">Nome do ACS</Label>
-            <Input
-              id="plan-acs"
-              placeholder="Opcional"
-              value={acsName}
-              onChange={(e) => setAcsName(e.target.value)}
-            />
-          </div>
+          <p className="rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+            {acsName ? (
+              <>Plano de <span className="font-medium text-neutral-900">{acsName}</span></>
+            ) : (
+              <span className="text-neutral-500">Sem ACS atribuído · edite no cabeçalho do planejamento se necessário</span>
+            )}
+          </p>
           <div className="space-y-1.5">
             <Label htmlFor="plan-notes">Observações</Label>
             <Textarea
