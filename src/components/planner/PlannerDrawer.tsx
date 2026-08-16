@@ -166,6 +166,7 @@ export function PlannerDrawer() {
   } = usePlannerStore();
 
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
+  const setViewMode = useMapStore((s) => s.setViewMode);
   const { data } = usePatientData();
 
   const [acsName, setAcsName] = useState("");
@@ -348,23 +349,13 @@ export function PlannerDrawer() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => { setMapSelectMode(true); setDrawerOpen(false); }}
-                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                  aria-label="Selecionar pacientes no mapa"
-                  title="Selecionar no mapa"
-                >
-                  <MousePointerClick className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                  aria-label="Fechar planejador"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                aria-label="Fechar planejador"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             <input
@@ -417,6 +408,22 @@ export function PlannerDrawer() {
             {/* Manual add */}
             <div className="border-b border-neutral-200 p-3">
               <PatientPickerCombobox patients={allPatients} />
+            </div>
+            {/* Select from map — prominent trigger. Auto-switches viewMode
+             * to "markers" so patient chips are actually clickable (density
+             * and microárea views render no per-patient DOM). */}
+            <div className="border-b border-neutral-200 p-3 pt-0">
+              <button
+                onClick={() => {
+                  setViewMode("markers");
+                  setMapSelectMode(true);
+                  setDrawerOpen(false);
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-brand/30 bg-brand/5 px-3 py-2 text-sm font-medium text-brand transition hover:border-brand/50 hover:bg-brand/10"
+              >
+                <MousePointerClick className="h-4 w-4" />
+                Selecionar do mapa
+              </button>
             </div>
 
             {/* Filter chips (collapsible) */}
