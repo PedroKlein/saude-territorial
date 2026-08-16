@@ -10,6 +10,7 @@
  * LGPD: no patient identifiers reach console.*.
  */
 
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,8 +18,9 @@ import { format } from "date-fns";
 
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
-import { Field } from "@/components/panels/Field";
 import { PressureInput } from "@/components/ui/masked-input";
+import { Field } from "@/components/panels/Field";
+import { HasPatchSchema } from "@/lib/patients/schemas";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
@@ -68,7 +70,11 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
     },
   });
 
+  const [serverIssues, setServerIssues] = useState<string[]>([]);
+
   const onSubmit = handleSubmit((values) => {
+    // Same defense-in-depth as the gestante step — block advance on
+    // range/format errors the API would reject on Finalizar.
     const raw: Record<string, unknown> = {
       dataUltimaConsulta: fmtDate(values.dataUltimaConsulta) || null,
       dataProximaConsulta: fmtDate(values.dataProximaConsulta) || null,
@@ -77,12 +83,27 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
       registroNotas: values.registroNotas || null,
       encaminhamentos: values.encaminhamentos || null,
     };
-    setCtx({ hipertensao: raw });
+    const parsed = HasPatchSchema.safeParse(raw);
+    if (!parsed.success) {
+      setServerIssues(parsed.error.issues.map((i) => i.message));
+      return;
+    }
+    setServerIssues([]);
+    setCtx({ hipertensao: parsed.data as Record<string, unknown> });
     goNext();
   });
 
   return (
     <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+      {serverIssues.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs whitespace-pre-line text-red-900"
+        >
+          {serverIssues.map((m) => `• ${m}`).join("\n")}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
         {/* Data última consulta */}

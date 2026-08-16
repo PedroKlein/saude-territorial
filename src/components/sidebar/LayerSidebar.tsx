@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useUiStore } from "@/stores/uiStore";
 import {
   Baby,
   Wind,
@@ -16,6 +17,7 @@ import {
   Flame,
   Hexagon,
   UserRound,
+  PanelLeftClose,
 } from "lucide-react";
 import { useMapStore } from "@/stores/mapStore";
 import type { ViewMode } from "@/stores/mapStore";
@@ -91,6 +93,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
   const setAlertsOnly = useMapStore((s) => s.setAlertsOnly);
   const viewMode = useMapStore((s) => s.viewMode);
   const setViewMode = useMapStore((s) => s.setViewMode);
+  const toggleSidebar = useUiStore((s) => s.toggleSidebar);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -115,9 +118,19 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
     <aside className="flex h-full flex-col overflow-hidden border-r border-neutral-200 bg-white">
       {/* ------------------------------------------------------------------ */}
       {/* 1. Search                                                           */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="border-b border-neutral-200 p-3">
-        <SearchInput />
+      <div className="flex items-center gap-1 border-b border-neutral-200 p-3">
+        <div className="flex-1">
+          <SearchInput />
+        </div>
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          title="Ocultar filtros"
+          aria-label="Ocultar filtros"
+          className="ml-1 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-100 hover:text-foreground"
+        >
+          <PanelLeftClose className="size-4" />
+        </button>
       </div>
 
       {/* ------------------------------------------------------------------ */}
@@ -217,21 +230,22 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
             [
               { mode: "markers" as ViewMode, Icon: MapPin, label: "Marcadores" },
               { mode: "density" as ViewMode, Icon: Flame, label: "Densidade" },
-              { mode: "microarea" as ViewMode, Icon: Hexagon, label: "Microárea" },
+              { mode: "microarea" as ViewMode, Icon: Hexagon, label: "Áreas" },
             ] as const
           ).map(({ mode, Icon, label }) => (
             <button
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
-              className={`flex flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] font-medium transition ${
+              title={label}
+              className={`flex flex-1 min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[11px] font-medium transition ${
                 viewMode === mode
                   ? "bg-white text-brand shadow-sm ring-1 ring-neutral-200"
                   : "text-neutral-500 hover:text-neutral-700"
               }`}
             >
               <Icon className="h-3 w-3 shrink-0" />
-              {label}
+              <span className="truncate">{label}</span>
             </button>
           ))}
         </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, Plus } from "lucide-react";
+import { Users, Stethoscope } from "lucide-react";
 import { Providers } from "./providers";
 import { AddPatientButton } from "@/components/panels/AddPatientButton";
 
@@ -19,7 +19,7 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             <Link href="/map" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="flex size-8 items-center justify-center rounded-lg bg-brand text-white">
-                <Plus className="size-4" />
+                <Stethoscope className="size-4" />
               </div>
               <h1 className="text-xl font-bold text-primary">Saúde Territorial</h1>
             </Link>

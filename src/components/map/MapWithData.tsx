@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Info, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import DynamicMap from "@/components/map/DynamicMap";
 import { EmptyMapOverlay } from "@/components/map/EmptyMapOverlay";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
@@ -23,7 +23,7 @@ import { PlannerDrawer } from "@/components/planner/PlannerDrawer";
  */
 export function MapWithData() {
   const { data, isLoading } = usePatientData();
-  const { showSidebar, showPanel, showLegend, toggleLegend, toggleSidebar } = useUiStore();
+  const { showSidebar, showPanel, showLegend, toggleLegend } = useUiStore();
   const drawerOpen = usePlannerStore((s) => s.drawerOpen);
   const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
   const plannerStopsCount = usePlannerStore((s) => s.stops.length);
@@ -99,19 +99,8 @@ export function MapWithData() {
       {/* Map area                                                            */}
       {/* ------------------------------------------------------------------ */}
       <div className="relative h-full flex-1">
-        {/* Sidebar collapse toggle — desktop only; hides on mobile (mobile drawer handled separately) */}
-        <button
-          onClick={toggleSidebar}
-          title="Ocultar/Mostrar filtros"
-          aria-label="Ocultar/Mostrar filtros"
-          className="absolute left-1 top-3 z-[1010] hidden h-7 w-7 items-center justify-center rounded-md bg-white/90 shadow-sm hover:bg-white md:flex"
-        >
-          {showSidebar ? (
-            <PanelLeftClose className="size-4 text-muted-foreground" />
-          ) : (
-            <PanelLeftOpen className="size-4 text-muted-foreground" />
-          )}
-        </button>
+        {/* Sidebar toggle when hidden is handled by RailToggles (left-edge pip).
+            Sidebar close-when-shown is handled inside LayerSidebar itself. */}
 
         {isLoading && (
           <div className="absolute top-2 left-1/2 z-[1000] -translate-x-1/2 rounded bg-white px-3 py-1 text-sm shadow">
@@ -176,10 +165,10 @@ export function MapWithData() {
               <button
                 onClick={toggleLegend}
                 title="Mostrar legenda"
-                className="flex items-center gap-1.5 rounded-md border bg-white/90 px-3 py-2 text-xs shadow-sm hover:bg-white"
+                aria-label="Mostrar legenda"
+                className="flex size-8 items-center justify-center rounded-full border bg-white/90 shadow-sm hover:bg-white"
               >
-                <Info className="size-3.5 text-muted-foreground" />
-                <span>Legenda</span>
+                <HelpCircle className="size-4 text-muted-foreground" />
               </button>
             </motion.div>
           )}

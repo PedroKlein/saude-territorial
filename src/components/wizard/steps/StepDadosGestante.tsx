@@ -112,9 +112,13 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
   const liveDpp = watchedDum ? format(computeDpp(watchedDum), "dd/MM/yyyy") : null;
   const liveIg = watchedDum ? formatIg(computeIg(watchedDum)) : null;
 
+  const [serverIssues, setServerIssues] = useState<string[]>([]);
+
   const onSubmit = handleSubmit((values) => {
-    // Validate through GestantesPatchSchema before storing (best-effort; API
-    // re-validates on submit).
+    // Cross-field / format validation via the shared server schema. The RHF
+    // resolver above catches per-field type errors; this catches range and
+    // cross-field guards (e.g. DUM in the future, PA format) so the step
+    // cannot advance with data the API will reject on Finalizar.
     const raw = {
       dum: fmtDate(values.dum),
       risco: values.risco,
@@ -126,12 +130,26 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
       isPuerpera: values.isPuerpera ?? false,
     };
     const parsed = GestantesPatchSchema.safeParse(raw);
-    setCtx({ gestantes: parsed.success ? (parsed.data as Record<string, unknown>) : (raw as Record<string, unknown>) });
+    if (!parsed.success) {
+      setServerIssues(parsed.error.issues.map((i) => i.message));
+      return;
+    }
+    setServerIssues([]);
+    setCtx({ gestantes: parsed.data as Record<string, unknown> });
     goNext();
   });
 
   return (
     <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+      {serverIssues.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs whitespace-pre-line text-red-900"
+        >
+          {serverIssues.map((m) => `• ${m}`).join("\n")}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
         {/* DUM */}

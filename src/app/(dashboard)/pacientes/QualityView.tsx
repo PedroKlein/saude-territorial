@@ -25,13 +25,11 @@ function hasIssue(group: string, p: UnifiedPatient): boolean {
   const rua = r.rua as string | null | undefined;
   const lat = p.lat as number | null | undefined;
   const lng = p.lng as number | null | undefined;
-  const microarea = r.microarea as string | null | undefined;
   const telefone = r.telefone as string | null | undefined;
   const cep = r.cep as string | null | undefined;
   const confidence = p.confidence;
   const dataNascimento = r.dataNascimento as string | null | undefined;
   const nomeCompleto = p.nomeCompleto;
-  const vulnerabilidades = r.vulnerabilidades as unknown[] | null | undefined;
   const geocodeStatus = r.geocodeStatus as string | null | undefined;
 
   switch (group) {
@@ -42,8 +40,6 @@ function hasIssue(group: string, p: UnifiedPatient): boolean {
         (typeof confidence === "number" && confidence < 0.5) ||
         (!!(lat && lng) && !rua)
       );
-    case "sem-microarea":
-      return !microarea;
     case "sem-nome":
       return !nomeCompleto || nomeCompleto.trim() === "";
     case "sem-data-nascimento":
@@ -52,27 +48,26 @@ function hasIssue(group: string, p: UnifiedPatient): boolean {
       return !telefone;
     case "sem-cep":
       return !cep;
-    case "geocode-manual":
+    case "localizacao-manual":
       return geocodeStatus === "manual";
-    case "sem-vulnerabilidades":
-      return !vulnerabilidades || (vulnerabilidades as unknown[]).length === 0;
     default:
       return false;
   }
 }
 
-// Highest-signal groups first; sem-vulnerabilidades is deprioritized (muted).
+// Highest-signal groups first. Microárea is derived from patient geolocation
+// (not user data), so it's not a data-quality flag. Vulnerabilidades are
+// optional context, not required data — omitted too.
 const ISSUE_DEFS: IssueDef[] = [
   { id: "sem-endereco", title: "Sem endereço" },
   { id: "geocode-incerto", title: "Geocode incerto" },
-  { id: "sem-microarea", title: "Sem microárea" },
   { id: "sem-nome", title: "Sem nome" },
   { id: "sem-data-nascimento", title: "Sem data de nascimento" },
   { id: "sem-telefone", title: "Sem telefone" },
   { id: "sem-cep", title: "Sem CEP" },
-  { id: "geocode-manual", title: "Geocode manual" },
-  { id: "sem-vulnerabilidades", title: "Sem vulnerabilidades", muted: true },
+  { id: "localizacao-manual", title: "Localização ajustada manualmente" },
 ];
+
 
 const COLLAPSE_AT = 5;
 

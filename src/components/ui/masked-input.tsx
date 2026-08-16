@@ -131,23 +131,41 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, BaseProps>(
 );
 
 /**
- * Pressão Arterial — sistólica/diastólica, up to 3 digits each.
- * We DO allow 2-digit entries by making the trailing digit optional via a
- * pattern block; the emitted unmasked value is `sss/ddd` or `ss/dd` etc.
+ * Pressão Arterial — sistólica/diastólica.
  *
- * NOTE: the unmasked value here still contains the `/` because the mask
- * pattern preserves it as a fixed placeholder. Downstream form code should
- * treat this as a display-shaped string, not raw digits.
+ * Accepts either 2 or 3 digits on each side (matches
+ * `PressaoArterialSchema` in `src/lib/patients/validation.ts`, which allows
+ * `NN..NNN/NN..NNN`). The mask is a dynamic list so imask picks the
+ * shortest matching pattern as the user types; `lazy=true` hides unfilled
+ * slots and `unmask=false` keeps the literal `/` in the emitted value so
+ * downstream Zod parsing sees `120/80` (not stripped `12080`).
  */
 export const PressureInput = React.forwardRef<HTMLInputElement, BaseProps>(
-  function PressureInput(props, ref) {
+  function PressureInput(
+    { value, onValueChange, onBlur, className, ariaLabel, ...rest },
+    ref,
+  ) {
+    // Preserve the `/`. If a legacy row carries something like "120x80",
+    // strip non-digit/non-slash so the mask can accept the rest.
+    const normalized = React.useMemo(
+      () => (value == null ? "" : String(value).replace(/[^\d/]/g, "")),
+      [value],
+    );
     return (
-      <MaskedInputInternal
-        ref={ref}
-        mask="000/000"
+      <IMaskInput
+        mask={[{ mask: "00/00" }, { mask: "000/00" }, { mask: "000/000" }, { mask: "00/000" }]}
+        lazy
         placeholder="120/80"
-        ariaLabel="Pressão arterial"
-        {...props}
+        inputRef={ref as React.Ref<HTMLInputElement>}
+        value={normalized}
+        onAccept={(masked: string) => {
+          onValueChange?.(masked, masked);
+        }}
+        onBlur={onBlur}
+        aria-label={ariaLabel ?? "Pressão arterial"}
+        data-slot="input"
+        className={cn(INPUT_CLASSES, "font-mono tabular-nums", className)}
+        {...rest}
       />
     );
   },

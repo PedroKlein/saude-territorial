@@ -9,6 +9,7 @@
  * LGPD: no patient identifiers reach console.*.
  */
 
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/panels/Field";
+import { TuberculosePatchSchema } from "@/lib/patients/schemas";
 import { EnumField } from "@/components/panels/EnumField";
 import {
   BACILOSCOPIA_RESULTADO_LABELS,
@@ -106,6 +108,8 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
     },
   });
 
+  const [serverIssues, setServerIssues] = useState<string[]>([]);
+
   const onSubmit = handleSubmit((values) => {
     const raw: Record<string, unknown> = {
       tipo: values.tipo ?? null,
@@ -124,12 +128,26 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       encerramentoMotivo: values.encerramentoMotivo || null,
       encerramentoData: fmtDate(values.encerramentoData) || null,
     };
-    setCtx({ tuberculose: raw });
+    const parsed = TuberculosePatchSchema.safeParse(raw);
+    if (!parsed.success) {
+      setServerIssues(parsed.error.issues.map((i) => i.message));
+      return;
+    }
+    setServerIssues([]);
+    setCtx({ tuberculose: parsed.data as Record<string, unknown> });
     goNext();
   });
 
   return (
     <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+      {serverIssues.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs whitespace-pre-line text-red-900"
+        >
+          {serverIssues.map((m) => `• ${m}`).join("\n")}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
         {/* Tipo */}
