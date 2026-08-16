@@ -41,22 +41,41 @@ const IdentidadeSchema = z.object({
   vulnerabilidades: z.string().optional(),
 });
 
+/**
+ * Edit-mode variant: CNS is locked and comes straight from the DB, so we
+ * skip the Luhn validation. Seed / legacy rows may not pass Luhn but the
+ * user has no way to fix them here — validating would just block edits.
+ */
+const IdentidadeEditSchema = z.object({
+  cns: z.string(),
+  nomeCompleto: z
+    .string()
+    .trim()
+    .min(1, "Nome completo é obrigatório."),
+  dataNascimento: z.date().nullable().optional(),
+  telefone: z.string().optional(),
+  vulnerabilidades: z.string().optional(),
+});
+
 type IdentidadeValues = z.infer<typeof IdentidadeSchema>;
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
+type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0] & {
+  /** When true, CNS field is read-only (edit mode — CNS is immutable). */
+  lockCns?: boolean;
+};
 
-export function StepIdentidade({ ctx, setCtx, goNext }: Props) {
+export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) {
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
   } = useForm<IdentidadeValues>({
-    resolver: zodResolver(IdentidadeSchema),
+    resolver: zodResolver(lockCns ? IdentidadeEditSchema : IdentidadeSchema),
     defaultValues: {
       cns: ctx.cns,
       nomeCompleto: ctx.nomeCompleto,
@@ -100,6 +119,9 @@ export function StepIdentidade({ ctx, setCtx, goNext }: Props) {
               onValueChange={field.onChange}
               aria-invalid={Boolean(errors.cns)}
               aria-label="CNS"
+              readOnly={lockCns}
+              disabled={lockCns}
+              className={lockCns ? "opacity-60" : undefined}
             />
           )}
         />

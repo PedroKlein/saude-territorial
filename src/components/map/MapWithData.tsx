@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { X } from "lucide-react";
+import { Info, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import DynamicMap from "@/components/map/DynamicMap";
 import { EmptyMapOverlay } from "@/components/map/EmptyMapOverlay";
 import { LayerSidebar } from "@/components/sidebar/LayerSidebar";
@@ -12,7 +12,7 @@ import { Legend } from "@/components/map/Legend";
 import { RailToggles } from "@/components/map/RailToggles";
 import { usePatientData } from "@/hooks/usePatientData";
 import { useUiStore } from "@/stores/uiStore";
-import { usePlannerStore } from "@/stores/plannerStore";
+import { usePlannerStore, PLAN_LIMIT } from "@/stores/plannerStore";
 import { PlannerDrawer } from "@/components/planner/PlannerDrawer";
 
 /**
@@ -23,8 +23,12 @@ import { PlannerDrawer } from "@/components/planner/PlannerDrawer";
  */
 export function MapWithData() {
   const { data, isLoading } = usePatientData();
-  const { showSidebar, showPanel, showLegend, toggleLegend } = useUiStore();
+  const { showSidebar, showPanel, showLegend, toggleLegend, toggleSidebar } = useUiStore();
   const drawerOpen = usePlannerStore((s) => s.drawerOpen);
+  const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
+  const plannerStopsCount = usePlannerStore((s) => s.stops.length);
+  const setMapSelectMode = usePlannerStore((s) => s.setMapSelectMode);
+  const setDrawerOpen = usePlannerStore((s) => s.setDrawerOpen);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Respect OS-level reduced-motion preference.
@@ -95,26 +99,57 @@ export function MapWithData() {
       {/* Map area                                                            */}
       {/* ------------------------------------------------------------------ */}
       <div className="relative h-full flex-1">
+        {/* Sidebar collapse toggle — desktop only; hides on mobile (mobile drawer handled separately) */}
+        <button
+          onClick={toggleSidebar}
+          title="Ocultar/Mostrar filtros"
+          aria-label="Ocultar/Mostrar filtros"
+          className="absolute left-1 top-3 z-[1010] hidden h-7 w-7 items-center justify-center rounded-md bg-white/90 shadow-sm hover:bg-white md:flex"
+        >
+          {showSidebar ? (
+            <PanelLeftClose className="size-4 text-muted-foreground" />
+          ) : (
+            <PanelLeftOpen className="size-4 text-muted-foreground" />
+          )}
+        </button>
+
         {isLoading && (
           <div className="absolute top-2 left-1/2 z-[1000] -translate-x-1/2 rounded bg-white px-3 py-1 text-sm shadow">
             Carregando dados...
           </div>
         )}
+        {/* Map-select mode banner — floats above the map while user picks stops */}
+        {mapSelectMode && (
+          <div className="absolute top-4 left-1/2 z-[500] -translate-x-1/2 flex items-center gap-3 rounded-lg bg-brand/95 px-4 py-2 text-white shadow-lg">
+            <span className="text-sm font-medium">
+              {plannerStopsCount}/{PLAN_LIMIT} selecionados
+            </span>
+            <button
+              onClick={() => { setMapSelectMode(false); setDrawerOpen(true); }}
+              className="rounded px-2 py-0.5 text-sm font-semibold underline hover:no-underline"
+            >
+              Concluir
+            </button>
+            <button
+              onClick={() => setMapSelectMode(false)}
+              className="text-sm text-white/80 hover:text-white"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
         <DynamicMap />
         <EmptyMapOverlay data={data} />
 
-        {/* Legend — inline X button when visible, floating ? handled by RailToggles */}
-        <AnimatePresence initial={false}>
-          {showLegend && (
+        {/* Legend chip (minimized) or full expanded legend */}
+        <AnimatePresence initial={false} mode="wait">
+          {showLegend ? (
             <motion.div
-              key="legend"
+              key="legend-full"
               variants={
                 prefersReduced
                   ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
-                  : {
-                      hidden: { opacity: 0, y: 8 },
-                      visible: { opacity: 1, y: 0 },
-                    }
+                  : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }
               }
               initial="hidden"
               animate="visible"
@@ -122,17 +157,30 @@ export function MapWithData() {
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="absolute bottom-14 left-4 z-[1000]"
             >
-              <div className="relative rounded-lg bg-white/90 px-3 py-2 shadow-md backdrop-blur-sm">
-                <Legend />
-                {/* Inline X to dismiss legend */}
-                <button
-                  onClick={toggleLegend}
-                  className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-xs hover:bg-border"
-                  aria-label="Ocultar legenda"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </div>
+              <Legend onClose={toggleLegend} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="legend-chip"
+              variants={
+                prefersReduced
+                  ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                  : { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }
+              }
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="absolute bottom-14 left-4 z-[1000]"
+            >
+              <button
+                onClick={toggleLegend}
+                title="Mostrar legenda"
+                className="flex items-center gap-1.5 rounded-md border bg-white/90 px-3 py-2 text-xs shadow-sm hover:bg-white"
+              >
+                <Info className="size-3.5 text-muted-foreground" />
+                <span>Legenda</span>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

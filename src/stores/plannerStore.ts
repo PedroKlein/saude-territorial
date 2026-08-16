@@ -4,6 +4,9 @@ import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import type { RouteResult } from "@/types/routing";
 
+// Max stops per plan — cognitive-load ceiling for ACS home visits + OSRM request-size safety
+export const PLAN_LIMIT = 12;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -28,6 +31,10 @@ interface PlannerState {
   route: RouteResult | null;
   /** Set when a saved plan is loaded from the API. */
   planId: string | null;
+  /** True while the user is picking stops directly on the map. Not persisted. */
+  mapSelectMode: boolean;
+  /** Show the over-limit alert banner in the drawer. Not persisted. */
+  limitBannerVisible: boolean;
 }
 
 interface PlannerActions {
@@ -41,6 +48,20 @@ interface PlannerActions {
   setRoute(r: RouteResult | null): void;
   loadPlan(plan: { id: string; stops: Stop[]; profile: "foot" | "car" }): void;
   clear(): void;
+  /** Toggle map-select mode on/off. */
+  setMapSelectMode(v: boolean): void;
+  /** Toggle the over-limit alert banner. */
+  setLimitBannerVisible(v: boolean): void;
+  /**
+   * Bulk-add up to `PLAN_LIMIT - stops.length` new ids (deduped).
+   * Returns how many were actually appended.
+   */
+  addStopsUpTo(ids: string[]): number;
+  /**
+   * Add a single stop only if the plan is below PLAN_LIMIT.
+   * Returns true when the stop was added, false when rejected.
+   */
+  addStopIfBelowLimit(id: string): boolean;
 }
 
 type PlannerStore = PlannerState & PlannerActions;
@@ -69,6 +90,8 @@ export const usePlannerStore = create<PlannerStore>()(
       filters: DEFAULT_FILTERS,
       route: null,
       planId: null,
+      mapSelectMode: false,
+      limitBannerVisible: false,
 
       // actions
       setDrawerOpen: (open) => set({ drawerOpen: open }),
@@ -118,6 +141,42 @@ export const usePlannerStore = create<PlannerStore>()(
           planId: null,
           filters: DEFAULT_FILTERS,
         }),
+
+      setMapSelectMode: (v) => set({ mapSelectMode: v }),
+
+      setLimitBannerVisible: (v) => set({ limitBannerVisible: v }),
+
+      addStopsUpTo: (ids) => {
+        let added = 0;
+        set((s) => {
+          const remaining = PLAN_LIMIT - s.stops.length;
+          if (remaining <= 0) return { limitBannerVisible: true };
+          const existing = new Set(s.stops.map((st) => st.patientId));
+          const newIds = ids.filter((id) => !existing.has(id)).slice(0, remaining);
+          if (newIds.length === 0) return s;
+          added = newIds.length;
+          const newStops = [
+            ...s.stops,
+            ...newIds.map((id, i) => ({ patientId: id, order: s.stops.length + i + 1 })),
+          ];
+          return { stops: newStops, route: null };
+        });
+        return added;
+      },
+
+      addStopIfBelowLimit: (id) => {
+        let wasAdded = false;
+        set((s) => {
+          if (s.stops.length >= PLAN_LIMIT) return { limitBannerVisible: true };
+          if (s.stops.some((st) => st.patientId === id)) return s;
+          wasAdded = true;
+          return {
+            stops: [...s.stops, { patientId: id, order: s.stops.length + 1 }],
+            route: null,
+          };
+        });
+        return wasAdded;
+      },
     }),
     {
       name: "saude-territorial-planner",

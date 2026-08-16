@@ -30,6 +30,27 @@
 import { z } from "zod";
 
 import { isValidCns } from "./cns";
+import {
+  AcompanhamentoStatusSchema,
+  BaciloscopiaResultadoSchema,
+  CulturaResultadoSchema,
+  EncerramentoMotivoTbSchema,
+  IgAberturaSchema,
+  ResultadoTrSchema,
+  RiscoSchema,
+  StatusRealizacaoSchema,
+  TdoStatusSchema,
+  TipoEntradaTbSchema,
+  TrmResultadoSchema,
+  TrStatusSchema,
+} from "./enums";
+import {
+  isoAfter,
+  PpdMmSchema,
+  PressaoArterialSchema,
+  TelefoneSchema,
+  todayIso,
+} from "./validation";
 
 // ---------------------------------------------------------------------------
 // Common helpers
@@ -110,19 +131,6 @@ const longitude = z
     message: "Longitude fora da faixa esperada (RS).",
   });
 
-/**
- * Today's date in ISO `yyyy-MM-dd`. Wall-clock, not UTC — a form submitted
- * at 23:30 local time compares against the local calendar day. Callers that
- * need UTC discipline can post-process.
- */
-function todayIso(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = (now.getMonth() + 1).toString().padStart(2, "0");
-  const d = now.getDate().toString().padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 /** ISO date + integer day offset. Handles month/year rollover via `Date`. */
 function addDaysToIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -144,7 +152,7 @@ export const BasePatchSchema = z
     // 15-digit CNS check enforced only on create; PATCH does not change CNS.
     dataNascimento: dateFlex.optional(),
     idade: z.number().int().min(0).max(130).nullable().optional(),
-    telefone: textOrNull.optional(),
+    telefone: TelefoneSchema.optional(),
     rua: textOrNull.optional(),
     numero: textOrNull.optional(),
     complemento: textOrNull.optional(),
@@ -166,52 +174,65 @@ export type BasePatch = z.infer<typeof BasePatchSchema>;
 // Gestantes extension
 // ---------------------------------------------------------------------------
 
-const RiscoEnum = z
-  .union([z.literal("habitual"), z.literal("alto"), z.string()])
-  .transform((v) => v.trim().toLowerCase())
-  .refine((v) => v === "habitual" || v === "alto", {
-    message: "Risco deve ser 'habitual' ou 'alto'.",
-  }) as z.ZodType<"habitual" | "alto">;
-
 export const GestantesPatchSchema = z
   .object({
     dum: dateFlex.optional(),
     dpp: dateFlex.optional(),
-    risco: RiscoEnum.nullable().optional(),
-    igAbertura: textOrNull.optional(),
+    risco: RiscoSchema.optional(),
+    igAbertura: IgAberturaSchema.optional(),
     dataUltimaConsulta: dateFlex.optional(),
     dataProximaConsulta: dateFlex.optional(),
     numeroConsultas: z.number().int().min(0).optional(),
     hasPreviaTag: textOrNull.optional(),
     diabetesPreviaTag: textOrNull.optional(),
-    pressaoArterial: textOrNull.optional(),
-    acompanhamentoPesoAltura: textOrNull.optional(),
+    pressaoArterial: PressaoArterialSchema.optional(),
+    acompanhamentoPesoAltura: AcompanhamentoStatusSchema.optional(),
     numeroVisitasDomiciliares: z.number().int().min(0).optional(),
-    avaliacaoOdontoStatus: textOrNull.optional(),
-    vacinaDtpa: textOrNull.optional(),
-    trPrimeiroTri: textOrNull.optional(),
-    trSegundoTri: textOrNull.optional(),
-    trTerceiroTri: textOrNull.optional(),
-    resultadoTr: textOrNull.optional(),
-    trHepBHepCPrimeiroTri: textOrNull.optional(),
-    trSifHivTerceiroTri: textOrNull.optional(),
+    avaliacaoOdontoStatus: StatusRealizacaoSchema.optional(),
+    vacinaDtpa: StatusRealizacaoSchema.optional(),
+    trPrimeiroTri: TrStatusSchema.optional(),
+    trSegundoTri: TrStatusSchema.optional(),
+    trTerceiroTri: TrStatusSchema.optional(),
+    resultadoTr: ResultadoTrSchema.optional(),
+    trHepBHepCPrimeiroTri: StatusRealizacaoSchema.optional(),
+    trSifHivTerceiroTri: StatusRealizacaoSchema.optional(),
     isPuerpera: z.boolean().optional(),
-    puerperioConsulta: textOrNull.optional(),
-    puerperioVisitaDomiciliar: textOrNull.optional(),
-    puerperioAvaliacaoOdonto: textOrNull.optional(),
+    puerperioConsulta: StatusRealizacaoSchema.optional(),
+    puerperioVisitaDomiciliar: StatusRealizacaoSchema.optional(),
+    puerperioAvaliacaoOdonto: StatusRealizacaoSchema.optional(),
     isExposta: z.boolean().optional(),
   })
   .strict()
   .superRefine((v, ctx) => {
-    if (typeof v.dataUltimaConsulta === "string") {
-      const today = todayIso();
-      if (v.dataUltimaConsulta > today) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["dataUltimaConsulta"],
-          message: "Data da última consulta não pode ser no futuro.",
-        });
-      }
+    const today = todayIso();
+    if (typeof v.dataUltimaConsulta === "string" && v.dataUltimaConsulta > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataUltimaConsulta"],
+        message: "Data da última consulta não pode ser no futuro.",
+      });
+    }
+    if (typeof v.dum === "string" && v.dum > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dum"],
+        message: "DUM não pode ser no futuro.",
+      });
+    }
+    // dataProximaConsulta strictly AFTER dataUltimaConsulta (equal = suspicious;
+    // if the next visit landed on the same day it belongs on the last-consulta
+    // field, not the next-one).
+    if (
+      isoAfter(v.dataUltimaConsulta, v.dataProximaConsulta) ||
+      (typeof v.dataUltimaConsulta === "string" &&
+        typeof v.dataProximaConsulta === "string" &&
+        v.dataUltimaConsulta === v.dataProximaConsulta)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataProximaConsulta"],
+        message: "A próxima consulta deve ser depois da última.",
+      });
     }
   })
   // DPP is computed server-side (DUM + 280d). Any client value is discarded.
@@ -235,22 +256,22 @@ export const TuberculosePatchSchema = z
     galRegistro: textOrNull.optional(),
     baciloscopiaPrimeiraData: dateFlex.optional(),
     baciloscopiaSegundaData: dateFlex.optional(),
-    baciloscopiaResultado: textOrNull.optional(),
+    baciloscopiaResultado: BaciloscopiaResultadoSchema.optional(),
     trmPrimeiraData: dateFlex.optional(),
     trmSegundaData: dateFlex.optional(),
-    trmResultado: textOrNull.optional(),
-    culturaMTuberculosis: textOrNull.optional(),
-    ppdMm: z.number().int().min(0).nullable().optional(),
+    trmResultado: TrmResultadoSchema.optional(),
+    culturaMTuberculosis: CulturaResultadoSchema.optional(),
+    ppdMm: PpdMmSchema.nullable().optional(),
     histopatologia: textOrNull.optional(),
     rxTorax: textOrNull.optional(),
     outrosExames: textOrNull.optional(),
     formaClinica: textOrNull.optional(),
-    tipoEntrada: textOrNull.optional(),
+    tipoEntrada: TipoEntradaTbSchema.optional(),
     esquema: textOrNull.optional(),
     dataInicio: dateFlex.optional(),
     formaTratamento: textOrNull.optional(),
-    tdoStatus: textOrNull.optional(),
-    encerramentoMotivo: textOrNull.optional(),
+    tdoStatus: TdoStatusSchema.optional(),
+    encerramentoMotivo: EncerramentoMotivoTbSchema.optional(),
     encerramentoData: dateFlex.optional(),
     contatosCoabitantes: z.number().int().min(0).nullable().optional(),
     contatosExaminados: z.number().int().min(0).nullable().optional(),
@@ -260,26 +281,53 @@ export const TuberculosePatchSchema = z
   })
   .strict()
   .superRefine((v, ctx) => {
-    if (
-      typeof v.baciloscopiaPrimeiraData === "string" &&
-      typeof v.baciloscopiaSegundaData === "string" &&
-      v.baciloscopiaPrimeiraData > v.baciloscopiaSegundaData
-    ) {
+    const today = todayIso();
+    if (isoAfter(v.baciloscopiaPrimeiraData, v.baciloscopiaSegundaData)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["baciloscopiaSegundaData"],
         message: "A 2ª baciloscopia não pode ser anterior à 1ª.",
       });
     }
-    if (
-      typeof v.dataInicio === "string" &&
-      typeof v.encerramentoData === "string" &&
-      v.dataInicio > v.encerramentoData
-    ) {
+    if (isoAfter(v.dataInicio, v.encerramentoData)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["encerramentoData"],
         message: "A data de encerramento não pode ser anterior ao início.",
+      });
+    }
+    if (typeof v.dataInicio === "string" && v.dataInicio > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataInicio"],
+        message: "Data de início não pode ser no futuro.",
+      });
+    }
+    if (typeof v.encerramentoData === "string" && v.encerramentoData > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["encerramentoData"],
+        message: "Data de encerramento não pode ser no futuro.",
+      });
+    }
+    // Início do tratamento acontece após a primeira baciloscopia — o exame
+    // fecha o diagnóstico que autoriza iniciar o esquema.
+    if (isoAfter(v.baciloscopiaPrimeiraData, v.dataInicio)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataInicio"],
+        message: "Início do tratamento não pode ser anterior à 1ª baciloscopia.",
+      });
+    }
+    if (
+      typeof v.contatosExaminados === "number" &&
+      typeof v.contatosCoabitantes === "number" &&
+      v.contatosExaminados > v.contatosCoabitantes
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["contatosExaminados"],
+        message: "Contatos examinados não pode exceder o número de coabitantes.",
       });
     }
   });
@@ -295,21 +343,38 @@ export const HasPatchSchema = z
     dataUltimaConsulta: dateFlex.optional(),
     dataProximaConsulta: dateFlex.optional(),
     dataUltimaAfericaoPa: dateFlex.optional(),
-    pressaoArterial: textOrNull.optional(),
+    pressaoArterial: PressaoArterialSchema.optional(),
     registroNotas: textOrNull.optional(),
     encaminhamentos: textOrNull.optional(),
   })
   .strict()
   .superRefine((v, ctx) => {
-    if (typeof v.dataUltimaConsulta === "string") {
-      const today = todayIso();
-      if (v.dataUltimaConsulta > today) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["dataUltimaConsulta"],
-          message: "Data da última consulta não pode ser no futuro.",
-        });
-      }
+    const today = todayIso();
+    if (typeof v.dataUltimaConsulta === "string" && v.dataUltimaConsulta > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataUltimaConsulta"],
+        message: "Data da última consulta não pode ser no futuro.",
+      });
+    }
+    if (typeof v.dataUltimaAfericaoPa === "string" && v.dataUltimaAfericaoPa > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataUltimaAfericaoPa"],
+        message: "Data da aferição não pode ser no futuro.",
+      });
+    }
+    if (
+      isoAfter(v.dataUltimaConsulta, v.dataProximaConsulta) ||
+      (typeof v.dataUltimaConsulta === "string" &&
+        typeof v.dataProximaConsulta === "string" &&
+        v.dataUltimaConsulta === v.dataProximaConsulta)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dataProximaConsulta"],
+        message: "A próxima consulta deve ser depois da última.",
+      });
     }
   });
 
@@ -371,7 +436,7 @@ export const PatientCreateSchema = z
       nomeCompleto: requiredText,
       dataNascimento: dateFlex.optional(),
       idade: z.number().int().min(0).max(130).nullable().optional(),
-      telefone: textOrNull.optional(),
+      telefone: TelefoneSchema.optional(),
       rua: textOrNull.optional(),
       numero: textOrNull.optional(),
       complemento: textOrNull.optional(),
@@ -383,13 +448,21 @@ export const PatientCreateSchema = z
       geocodeReference: textOrNull.optional(),
       vulnerabilidades: textOrNull.optional(),
     }),
-    condicao: z.enum(["gestantes", "tuberculose", "hipertensao"]),
+    condicao: z.enum(["gestantes", "tuberculose", "hipertensao"]).optional(),
     gestantes: GestantesPatchSchema.optional(),
     tuberculose: TuberculosePatchSchema.optional(),
     hipertensao: HasPatchSchema.optional(),
   })
   .refine(
     (data) => {
+      if (!data.condicao) {
+        // No condition: no extension data should be present.
+        return (
+          data.gestantes === undefined &&
+          data.tuberculose === undefined &&
+          data.hipertensao === undefined
+        );
+      }
       if (data.condicao === "gestantes") return data.gestantes !== undefined;
       if (data.condicao === "tuberculose") return data.tuberculose !== undefined;
       if (data.condicao === "hipertensao") return data.hipertensao !== undefined;

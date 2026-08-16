@@ -8,6 +8,7 @@ import { Baby, Wind, HeartPulse } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { useMapStore } from "@/stores/mapStore";
+import { usePlannerStore } from "@/stores/plannerStore";
 import { useUpdatePatient } from "@/hooks/useUpdatePatient";
 import type { AlertLevel } from "@/types/alerts";
 import type { LayerId } from "@/config/layers.config";
@@ -52,6 +53,8 @@ interface ChipProps {
   coincidenceCount: number;
   isSelected: boolean;
   isDraggable: boolean;
+  /** True when this patient is a planner stop in map-select mode. */
+  isPlanStop: boolean;
 }
 
 function ChipHtml({
@@ -60,6 +63,7 @@ function ChipHtml({
   coincidenceCount,
   isSelected,
   isDraggable,
+  isPlanStop,
 }: ChipProps) {
   const Icon: IconComponent = LAYER_ICON[layerId] ?? HeartPulse;
   const fill = LAYER_FILL[layerId] ?? "var(--color-brand)";
@@ -144,6 +148,29 @@ function ChipHtml({
           {coincidenceCount}
         </div>
       )}
+      {/* Plan-stop check badge — bottom-left corner (map-select mode). */}
+      {isPlanStop && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            backgroundColor: SELECTED_RING,
+            color: "white",
+            fontSize: 9,
+            fontWeight: 700,
+            borderRadius: 999,
+            width: 14,
+            height: 14,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 0 1.5px white",
+          }}
+        >
+          ✓
+        </div>
+      )}
     </div>
   );
 }
@@ -158,6 +185,7 @@ function buildChipIcon(
   coincidenceCount: number,
   isSelected: boolean,
   isDraggable: boolean,
+  isPlanStop: boolean,
 ): L.DivIcon {
   return L.divIcon({
     className: "",
@@ -168,6 +196,7 @@ function buildChipIcon(
         coincidenceCount={coincidenceCount}
         isSelected={isSelected}
         isDraggable={isDraggable}
+        isPlanStop={isPlanStop}
       />,
     ),
     iconSize: [38, 38],
@@ -212,9 +241,18 @@ export function PatientMarker({
   const pinningPatient = useMapStore((s) => s.pinningPatient);
   const update = useUpdatePatient();
 
+  // Planner map-select subscriptions (fine-grained selectors → minimal re-renders).
+  const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
+  const isInPlan = usePlannerStore((s) => s.stops.some((st) => st.patientId === id));
+  const addStopIfBelowLimit = usePlannerStore((s) => s.addStopIfBelowLimit);
+  const removeStop = usePlannerStore((s) => s.removeStop);
+  const setLimitBannerVisible = usePlannerStore((s) => s.setLimitBannerVisible);
+
   const isSelected = selectedPatient === id;
   // Drag unlocks ONLY in explicit reposition mode from the detail panel.
   const isRepositioning = pinningPatient?.id === id;
+  // Show the plan-stop check badge only while map-select mode is active.
+  const isPlanStop = mapSelectMode && isInPlan;
 
   const icon = useMemo(
     () =>
@@ -224,8 +262,9 @@ export function PatientMarker({
         coincidenceCount,
         isSelected || isRepositioning,
         isRepositioning,
+        isPlanStop,
       ),
-    [layerId, alertLevel, coincidenceCount, isSelected, isRepositioning],
+    [layerId, alertLevel, coincidenceCount, isSelected, isRepositioning, isPlanStop],
   );
 
   const emoji =
@@ -249,7 +288,18 @@ export function PatientMarker({
       zIndexOffset={isSelected || isRepositioning ? 1000 : 0}
       draggable={isRepositioning}
       eventHandlers={{
-        click: () => setSelectedPatient(id),
+        click: () => {
+          if (mapSelectMode) {
+            if (isInPlan) {
+              removeStop(id);
+            } else {
+              const added = addStopIfBelowLimit(id);
+              if (!added) setLimitBannerVisible(true);
+            }
+            return;
+          }
+          setSelectedPatient(id);
+        },
         dragend: (e: LeafletEvent) => {
           if (!isRepositioning) return;
           const marker = e.target as L.Marker;

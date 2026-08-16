@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Pencil } from "lucide-react";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import { evaluatePatient, getHighestAlert } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
@@ -125,9 +125,12 @@ function SortButton({
 export function PatientTable({
   patients,
   isLoading,
+  onEdit,
 }: {
   patients: UnifiedPatient[];
   isLoading: boolean;
+  /** Optional row-action: open the wizard in edit mode for this patient. */
+  onEdit?: (patient: UnifiedPatient) => void;
 }) {
   const router = useRouter();
 
@@ -323,6 +326,9 @@ export function PatientTable({
                   onClick={() => handleSort("alerta")}
                 />
               </th>
+              <th className="w-10 px-2 py-2.5 text-left">
+                <span className="sr-only">Ações</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -330,7 +336,7 @@ export function PatientTable({
               <SkeletonRows />
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
                   Nenhum paciente encontrado com os filtros selecionados.
                 </td>
               </tr>
@@ -377,15 +383,31 @@ export function PatientTable({
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className="inline-flex items-center gap-1.5 text-xs font-medium"
+                        className="inline-flex items-center"
                         title={ALERT_LABEL[alertLevel]}
+                        aria-label={ALERT_LABEL[alertLevel]}
                       >
                         <span
-                          className="size-2.5 rounded-full"
+                          className="inline-block size-2.5 rounded-full"
                           style={{ backgroundColor: ALERT_COLOR[alertLevel] }}
                         />
-                        {ALERT_LABEL[alertLevel]}
                       </span>
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      {onEdit && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(p);
+                          }}
+                          className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                          aria-label={`Editar ${p.nomeCompleto ?? "paciente"}`}
+                          title="Editar paciente"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

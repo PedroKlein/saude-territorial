@@ -15,14 +15,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X, Trash2, Wand2 } from "lucide-react";
+import { Sparkles, Route, Car, Footprints, Save, FolderOpen, ChevronDown, Filter, X, Trash2, Wand2, MousePointerClick } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { usePlannerStore } from "@/stores/plannerStore";
+import { usePlannerStore, PLAN_LIMIT } from "@/stores/plannerStore";
 import type { Stop } from "@/stores/plannerStore";
 import { usePatientData } from "@/hooks/usePatientData";
 import { evaluatePatient } from "@/lib/alerts/engine";
@@ -160,6 +160,9 @@ export function PlannerDrawer() {
     route,
     filters,
     clear,
+    setMapSelectMode,
+    limitBannerVisible,
+    setLimitBannerVisible,
   } = usePlannerStore();
 
   const setActiveRoute = useMapStore((s) => s.setActiveRoute);
@@ -235,15 +238,6 @@ export function PlannerDrawer() {
     setStops(suggested);
   }
 
-  function handleAddAll(patients: PatientRecord[]) {
-    const next: Stop[] = [...stops];
-    for (const p of patients) {
-      if (!next.some((s) => s.patientId === p.id)) {
-        next.push({ patientId: p.id, order: next.length + 1 });
-      }
-    }
-    setStops(next.map((s, i) => ({ ...s, order: i + 1 })));
-  }
 
   /**
    * Reorder stops via OSRM /trip anchored at US Moab Caldas.
@@ -354,13 +348,23 @@ export function PlannerDrawer() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                aria-label="Fechar planejador"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { setMapSelectMode(true); setDrawerOpen(false); }}
+                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                  aria-label="Selecionar pacientes no mapa"
+                  title="Selecionar no mapa"
+                >
+                  <MousePointerClick className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                  aria-label="Fechar planejador"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             <input
@@ -378,6 +382,24 @@ export function PlannerDrawer() {
 
           {/* Scrollable body */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {/* Over-limit alert banner */}
+            {limitBannerVisible && (
+              <div
+                role="alert"
+                className="mx-3 mt-2 flex items-start gap-2 rounded border border-alert-amber/40 bg-alert-amber/10 px-3 py-2 text-[12px] text-amber-900"
+              >
+                <span className="flex-1">
+                  Limite de {PLAN_LIMIT} pacientes por plano atingido. Remova algum para adicionar mais.
+                </span>
+                <button
+                  onClick={() => setLimitBannerVisible(false)}
+                  className="shrink-0 text-amber-700 hover:text-amber-900"
+                  aria-label="Fechar aviso"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {/* Auto-suggest */}
             <div className="border-b border-neutral-200 p-3">
               <button
@@ -418,7 +440,6 @@ export function PlannerDrawer() {
                 <div className="border-t border-neutral-100 p-3">
                   <FilterChips
                     candidates={filteredCandidates}
-                    onAddAll={handleAddAll}
                   />
                 </div>
               )}
@@ -450,8 +471,8 @@ export function PlannerDrawer() {
                     <Wand2 className="h-3 w-3" />
                     {isOptimizing ? "Otimizando…" : "Otimizar"}
                   </button>
-                  <span className="text-[11px] text-neutral-400">
-                    {stops.length} parada{stops.length !== 1 ? "s" : ""}
+                  <span className={`text-[11px] font-medium ${stops.length >= PLAN_LIMIT ? "text-alert-amber" : "text-neutral-400"}`}>
+                    {stops.length} / {PLAN_LIMIT} parada{stops.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>

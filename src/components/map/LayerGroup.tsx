@@ -49,7 +49,13 @@ export function LayerGroup({
 
     const filtered = applyFilters(alertFiltered);
 
-    return filtered.map((p) => (
+    // Base-only patients (sem-condicao layer with no address) carry null
+    // coords — they exist in /pacientes but never render on the map.
+    const withCoords = filtered.filter(
+      (p) => p.lat != null && p.lng != null,
+    ) as Array<(typeof filtered)[number] & { lat: number; lng: number }>;
+
+    return withCoords.map((p) => (
       <PatientMarker
         key={p.cns}
         id={p.id}

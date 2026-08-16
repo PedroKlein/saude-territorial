@@ -75,10 +75,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const gestantes: Record<string, unknown>[] = [];
     const tuberculose: Record<string, unknown>[] = [];
     const hipertensao: Record<string, unknown>[] = [];
+    const semCondicao: Record<string, unknown>[] = [];
 
     for (const p of rows) {
-      // Only pins on the map: patients with a resolved coordinate.
-      if (p.lat == null || p.lng == null || p.geocodeStatus === "unresolved") continue;
+      // Patients without resolved coords never render on the map — but a
+      // condition-less patient must still be findable in /pacientes so the
+      // ACS can add an address later. Skip only if the patient HAS a
+      // condition; base-only rows fall through to sem-condicao below.
+      const hasCoords =
+        p.lat != null && p.lng != null && p.geocodeStatus !== "unresolved";
+      const hasAnyCondition = p.gestantes || p.tuberculose || p.has;
+      if (!hasCoords && hasAnyCondition) continue;
 
       // Fields shared across every layer this patient appears in.
       const baseRecord = {
@@ -174,9 +181,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           ),
         });
       }
+
+      // Patients with no condition extension → sem-condicao layer.
+      if (!p.gestantes && !p.tuberculose && !p.has) {
+        semCondicao.push({
+          ...baseRecord,
+          dataUltimaAtualizacao: timestampToBRDate(p.updatedAt),
+        });
+      }
     }
 
-    return NextResponse.json({ layers: { gestantes, tuberculose, hipertensao } });
+    return NextResponse.json({
+      layers: { gestantes, tuberculose, hipertensao, "sem-condicao": semCondicao },
+    });
   } catch (err) {
     // LGPD: never surface the raw error to the client; log a code, not data.
     const code = err instanceof Error ? err.name : "UnknownError";
@@ -320,7 +337,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         })
         .returning({ id: patients.id });
       newId = inserted.id;
-
+      // Insert condition extension only when one was chosen.
       if (data.condicao === "gestantes") {
         await tx.insert(gestantesData).values({
           patientId: newId,
@@ -331,12 +348,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           patientId: newId,
           ...(data.tuberculose ?? {}),
         });
-      } else {
+      } else if (data.condicao === "hipertensao") {
         await tx.insert(hasData).values({
           patientId: newId,
           ...(data.hipertensao ?? {}),
         });
       }
+      // No condition provided → base-only patient (valid since #8).
     });
   } catch (err) {
     const code = err instanceof Error ? err.name : "UnknownError";

@@ -56,6 +56,12 @@ export const LAYER_CONFIG = {
     label: "ILPI",
     visibleColumns: ["nomeLocal", "atividades"],
   },
+  "sem-condicao": {
+    icon: "/icons/sem-condicao.svg",
+    colorToken: "muted-foreground",
+    label: "Sem condição",
+    visibleColumns: ["nomeCompleto", "cns"],
+  },
 } as const satisfies Record<string, LayerConfig>;
 
 export type LayerId = keyof typeof LAYER_CONFIG;

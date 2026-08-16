@@ -108,8 +108,59 @@ export function StepConfirmar({ ctx }: Props) {
         )}
       </div>
 
-      {/* Condition preview cards */}
-      {ctx.chosenConditions.length > 0 && (
+      {/* Edit mode: show add/remove/update breakdown */}
+      {(ctx.originalConditions.length > 0 || ctx.toRemove.length > 0) ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Alterações nas condições
+          </p>
+          {(() => {
+            const toAdd = ctx.chosenConditions.filter(
+              (c) => !ctx.originalConditions.includes(c),
+            );
+            const toUpdate = ctx.chosenConditions.filter((c) =>
+              ctx.originalConditions.includes(c),
+            );
+            return (
+              <>
+                {toAdd.length > 0 && (
+                  <div className="rounded-md border border-ok-green/30 bg-ok-green/5 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-ok-green">
+                      Adicionar:{" "}
+                      {toAdd
+                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .join(", ")}
+                    </p>
+                  </div>
+                )}
+                {ctx.toRemove.length > 0 && (
+                  <div className="rounded-md border border-alert-red/30 bg-alert-red/5 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-alert-red">
+                      Remover:{" "}
+                      {ctx.toRemove
+                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .join(", ")}
+                    </p>
+                  </div>
+                )}
+                {toUpdate.length > 0 && (
+                  <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-muted-foreground">
+                      Atualizar:{" "}
+                      {toUpdate
+                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .join(", ")}
+                    </p>
+                  </div>
+                )}
+                {toAdd.length === 0 && ctx.toRemove.length === 0 && toUpdate.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Nenhuma alteração nas condições.</p>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      ) : ctx.chosenConditions.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Condições a vincular
@@ -134,10 +185,10 @@ export function StepConfirmar({ ctx }: Props) {
             );
           })}
         </div>
-      )}
-
-      {ctx.chosenConditions.length === 0 && (
-        <p className="text-xs text-muted-foreground">Nenhuma condição selecionada.</p>
+      ) : (
+        <p className="rounded-md border border-brand/20 bg-brand/5 px-3 py-2 text-xs text-brand">
+          Sem condição vinculada — você poderá adicionar depois.
+        </p>
       )}
     </div>
   );

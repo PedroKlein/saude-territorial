@@ -30,7 +30,7 @@ import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 const CondicoesSchema = z.object({
   chosen: z
     .array(z.enum(["gestantes", "tuberculose", "hipertensao"]))
-    .min(1, "Escolha ao menos uma condição."),
+    .min(0),
 });
 
 type CondicoesValues = z.infer<typeof CondicoesSchema>;
@@ -39,7 +39,7 @@ type CondicoesValues = z.infer<typeof CondicoesSchema>;
 // Card config
 // ---------------------------------------------------------------------------
 
-const CARDS = [
+export const CARDS = [
   {
     id: "gestantes" as const,
     label: "Gestante",
@@ -199,11 +199,9 @@ export function StepEscolherCondicoes({
         )}
       />
 
-      {errors.chosen && (
-        <p role="alert" className="text-xs text-destructive">
-          {errors.chosen.message}
-        </p>
-      )}
+      <p className="text-[11px] text-muted-foreground">
+        Você pode cadastrar sem condição e adicionar depois.
+      </p>
     </form>
   );
 }

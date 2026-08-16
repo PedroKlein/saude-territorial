@@ -1,9 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { usePatientData, type PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
+import {
+  PatientWizard,
+  type PatientWizardMode,
+} from "@/components/wizard/PatientWizard";
 import { PatientTable } from "./PatientTable";
 import { QualityView } from "./QualityView";
 
@@ -22,6 +26,7 @@ export interface UnifiedPatient extends PatientRecord {
 
 export default function PacientesPage() {
   const { data, isLoading, isError } = usePatientData();
+  const [wizardMode, setWizardMode] = useState<PatientWizardMode | null>(null);
 
   const patients = useMemo<UnifiedPatient[]>(() => {
     if (!data) return [];
@@ -76,14 +81,35 @@ export default function PacientesPage() {
           </TabsList>
 
           <TabsContent value="lista">
-            <PatientTable patients={patients} isLoading={isLoading} />
+            <PatientTable
+              patients={patients}
+              isLoading={isLoading}
+              onEdit={(p) =>
+                setWizardMode({ kind: "edit", patientId: p.id, patient: p })
+              }
+            />
           </TabsContent>
 
           <TabsContent value="qualidade">
-            <QualityView patients={patients} isLoading={isLoading} />
+            <QualityView
+              patients={patients}
+              isLoading={isLoading}
+              onEdit={(patientId) => {
+                const p = patients.find((pt) => pt.id === patientId);
+                if (p) setWizardMode({ kind: "edit", patientId: p.id, patient: p });
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
+
+      {wizardMode && (
+        <PatientWizard
+          open
+          mode={wizardMode}
+          onClose={() => setWizardMode(null)}
+        />
+      )}
     </div>
   );
 }

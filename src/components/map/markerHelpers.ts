@@ -10,10 +10,14 @@ export function coincidenceKey(lat: number, lng: number): string {
  * Used to render the coincidence badge when N > 1 patients share coordinates.
  */
 export function buildCoincidenceMap(
-  patients: ReadonlyArray<{ lat: number; lng: number }>,
+  patients: ReadonlyArray<{ lat: number | null; lng: number | null }>,
 ): Map<string, number> {
   const map = new Map<string, number>();
   for (const p of patients) {
+    // Skip base-only patients with no resolved coords — they exist in the
+    // /pacientes list (sem-condicao layer) but never render on the map,
+    // so they don't participate in coincidence counting.
+    if (p.lat == null || p.lng == null) continue;
     const k = coincidenceKey(p.lat, p.lng);
     map.set(k, (map.get(k) ?? 0) + 1);
   }

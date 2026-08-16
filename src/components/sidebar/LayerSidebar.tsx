@@ -15,6 +15,7 @@ import {
   MapPin,
   Flame,
   Hexagon,
+  UserRound,
 } from "lucide-react";
 import { useMapStore } from "@/stores/mapStore";
 import type { ViewMode } from "@/stores/mapStore";
@@ -34,7 +35,7 @@ import type { LucideIcon } from "lucide-react";
 // Layer icon / color mapping
 // ---------------------------------------------------------------------------
 
-const PRIMARY_LAYER_IDS: LayerId[] = ["gestantes", "tuberculose", "hipertensao"];
+const PRIMARY_LAYER_IDS: LayerId[] = ["gestantes", "tuberculose", "hipertensao", "sem-condicao"];
 const DEFERRED_LAYER_IDS: LayerId[] = ["diabetes", "acamados", "pse", "ilpi"];
 
 const LAYER_ICON: Record<LayerId, LucideIcon> = {
@@ -45,6 +46,7 @@ const LAYER_ICON: Record<LayerId, LucideIcon> = {
   acamados: BedSingle,
   pse: School,
   ilpi: Building2,
+  "sem-condicao": UserRound,
 };
 
 const LAYER_COLOR_CLASS: Record<LayerId, string> = {
@@ -55,6 +57,7 @@ const LAYER_COLOR_CLASS: Record<LayerId, string> = {
   acamados: "bg-acamados",
   pse: "bg-pse",
   ilpi: "bg-ilpi",
+  "sem-condicao": "bg-muted-foreground",
 };
 
 // ---------------------------------------------------------------------------
@@ -178,7 +181,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         <details className="mt-2 group">
           <summary className="flex cursor-pointer list-none items-center gap-1 py-1 text-xs text-neutral-400 hover:text-neutral-500">
             <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
-            Mais camadas
+            Mais condições
           </summary>
           <div className="mt-1 space-y-0.5">
             {DEFERRED_LAYER_IDS.map((id) => (

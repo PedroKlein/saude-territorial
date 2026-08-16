@@ -7,11 +7,13 @@
  * Modes:
  *  new          → identidade → endereço → condições → dados pages → confirmar → sucesso
  *  add-condition → condições → dados pages → confirmar → sucesso
+ *  edit         → identidade → endereço → gerenciar-condicoes → dados pages → confirmar → sucesso
  *
  * Submit logic (onFinish):
- *  new          → POST /api/patients with identity + first condition; PATCH
+ *  new          → POST /api/patients with identity + optional first condition; PATCH
  *                 additional conditions sequentially.
  *  add-condition → POST /api/patients/[id]/conditions for each chosen condition.
+ *  edit         → PATCH base + kept conditions; attach new ones; delete removed ones.
  *
  * 409 handling: when POST returns cns_exists, the wizard mid-flows into
  * add-condition mode scoped to the existing patient. An inline banner explains
@@ -27,6 +29,7 @@ import type { WizardStep } from "@/components/wizard/Wizard";
 import { StepIdentidade } from "@/components/wizard/steps/StepIdentidade";
 import { StepEndereco } from "@/components/wizard/steps/StepEndereco";
 import { StepEscolherCondicoes } from "@/components/wizard/steps/StepEscolherCondicoes";
+import { StepGerenciarCondicoes } from "@/components/wizard/steps/StepGerenciarCondicoes";
 import { StepDadosGestante } from "@/components/wizard/steps/StepDadosGestante";
 import { StepDadosTB } from "@/components/wizard/steps/StepDadosTB";
 import { StepDadosHAS } from "@/components/wizard/steps/StepDadosHAS";
@@ -37,7 +40,9 @@ import {
   useAttachCondition,
   isCreatePatientError,
 } from "@/hooks/useCreatePatient";
-import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
+import { useUpdatePatient } from "@/hooks/useUpdatePatient";
+import { useDeleteCondition } from "@/hooks/useDeletePatient";
+import type { PatientCreate, ConditionAttach, PatientPatch } from "@/lib/patients/schemas";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -49,6 +54,31 @@ export type PatientWizardMode =
       kind: "add-condition";
       patientId: string;
       alreadyAttached: Array<"gestantes" | "tuberculose" | "hipertensao">;
+    }
+  | {
+      kind: "edit";
+      patientId: string;
+      /**
+       * Snapshot of the patient at open time. Populates ctx defaults; the
+       * wizard PATCHes the delta against the server.
+       *
+       * Deliberately loose (not `PatientRecord & {…}`): a base-only patient
+       * in the sem-condicao layer has null lat/lng, and hydrateCtxFromPatient
+       * already handles that (typeof-guarded read). Anchoring to
+       * `PatientRecord` (lat: number) would reject those. See #8 (optional
+       * condition on create).
+       */
+      patient: {
+        id: string;
+        cns: string;
+        nomeCompleto: string | null;
+        lat: number | null;
+        lng: number | null;
+        gestante?: Record<string, unknown> | null;
+        tuberculose?: Record<string, unknown> | null;
+        has?: Record<string, unknown> | null;
+        [key: string]: unknown;
+      };
     };
 
 // ---------------------------------------------------------------------------
@@ -74,6 +104,16 @@ export type PatientWizardCtx = {
   referencia: string;
   // --- Condições ---
   chosenConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  /**
+   * Conditions present at wizard open time (edit mode only).
+   * Used to distinguish kept / new / removed when building the PATCH body.
+   */
+  originalConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  /**
+   * Conditions the user queued for removal (edit mode only).
+   * Populated by StepGerenciarCondicoes; committed on Finalizar.
+   */
+  toRemove: Array<"gestantes" | "tuberculose" | "hipertensao">;
   // --- Extension data (dates as "dd/MM/yyyy" strings) ---
   gestantes: Record<string, unknown>;
   tuberculose: Record<string, unknown>;
@@ -81,10 +121,107 @@ export type PatientWizardCtx = {
 };
 
 // ---------------------------------------------------------------------------
+// Validation error formatting (#7)
+// ---------------------------------------------------------------------------
+
+/**
+ * PT-BR labels for known field paths that appear in Zod 400 issue arrays.
+ * Path is the last segment from `ZodIssue.path`.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  cns: "CNS",
+  nomeCompleto: "Nome completo",
+  dataNascimento: "Data de nascimento",
+  idade: "Idade",
+  telefone: "Telefone",
+  rua: "Rua",
+  numero: "Número",
+  complemento: "Complemento",
+  bairro: "Bairro",
+  cep: "CEP",
+  microarea: "Microárea",
+  geocodeReference: "Referência",
+  vulnerabilidades: "Vulnerabilidades",
+  lat: "Latitude",
+  lng: "Longitude",
+  // gestantes
+  dum: "DUM",
+  dpp: "DPP",
+  risco: "Risco",
+  ig: "Idade gestacional",
+  igAbertura: "IG na abertura",
+  dataUltimaConsulta: "Data da última consulta",
+  dataProximaConsulta: "Data da próxima consulta",
+  numeroConsultas: "Número de consultas",
+  pressaoArterial: "Pressão arterial",
+  vacinaDtpa: "Vacina dTpa",
+  hasPreviaTag: "HAS prévia",
+  diabetesPreviaTag: "Diabetes prévia",
+  // tuberculose
+  tipo: "Tipo",
+  galRegistro: "Registro GAL",
+  baciloscopiaResultado: "Baciloscopia",
+  trmResultado: "TRM",
+  culturaMTuberculosis: "Cultura M. tuberculosis",
+  formaClinica: "Forma clínica",
+  tipoEntrada: "Tipo de entrada",
+  esquema: "Esquema",
+  dataInicio: "Data de início",
+  tdoStatus: "TDO",
+  encerramentoMotivo: "Motivo de encerramento",
+  encerramentoData: "Data de encerramento",
+  outrosExames: "Outros exames",
+  // hipertensao
+  dataUltimaAfericaoPa: "Última aferição PA",
+  registroNotas: "Notas",
+  encaminhamentos: "Encaminhamentos",
+  condicao: "Condição",
+  base: "Dados básicos",
+};
+
+interface RawIssue {
+  path: (string | number)[];
+  message: string;
+}
+
+function isRawIssue(x: unknown): x is RawIssue {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    "path" in x &&
+    "message" in x &&
+    typeof (x as RawIssue).message === "string"
+  );
+}
+
+/**
+ * Format Zod issue array as a human-readable PT-BR string.
+ * Returns a single line for one issue; a bulleted list for multiple.
+ */
+function formatIssues(issues: unknown): string {
+  const raw = Array.isArray(issues) ? issues : [];
+  const lines = raw.filter(isRawIssue).map((issue) => {
+    const fieldKey = issue.path[issue.path.length - 1];
+    const label =
+      (typeof fieldKey === "string" && FIELD_LABELS[fieldKey]) ||
+      fieldKey ||
+      "Campo";
+    return `• ${label}: ${issue.message}`;
+  });
+
+  if (lines.length === 0) return "Dados inválidos.";
+  if (lines.length === 1) return lines[0].replace(/^• /, "");
+  return `Encontramos os seguintes problemas:\n${lines.join("\n")}`;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function emptyCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
+function buildInitialCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
+  if (mode?.kind === "edit") {
+    return hydrateCtxFromPatient(mode.patient);
+  }
   return {
     cns: "",
     nomeCompleto: "",
@@ -100,6 +237,8 @@ function emptyCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
     geocodedCoords: mode?.kind === "new" ? (mode.initialCoords ?? null) : null,
     referencia: "",
     chosenConditions: [],
+    originalConditions: [],
+    toRemove: [],
     gestantes: {},
     tuberculose: {},
     hipertensao: {},
@@ -107,10 +246,61 @@ function emptyCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
 }
 
 /**
- * Build the POST /api/patients body from wizard ctx.
+ * Populate ctx from an existing patient (edit mode).
+ *
+ * All string fields collapse null → "" to keep react-hook-form controlled
+ * inputs happy. Extension bags carry the full server-returned payload so
+ * subsequent field-level dirty tracking can produce a minimal PATCH body.
+ *
+ * `chosenConditions` and `originalConditions` both reflect the conditions
+ * currently attached. StepGerenciarCondicoes may modify `chosenConditions`
+ * and `toRemove` during the edit flow.
+ */
+function hydrateCtxFromPatient(
+  p: Extract<PatientWizardMode, { kind: "edit" }>["patient"],
+): PatientWizardCtx {
+  const attached: Array<"gestantes" | "tuberculose" | "hipertensao"> = [];
+  if (p.gestante) attached.push("gestantes");
+  if (p.tuberculose) attached.push("tuberculose");
+  if (p.has) attached.push("hipertensao");
+
+  const str = (v: unknown): string =>
+    typeof v === "string" ? v : v == null ? "" : String(v);
+
+  return {
+    cns: str(p.cns),
+    nomeCompleto: str(p.nomeCompleto),
+    dataNascimento: str((p as Record<string, unknown>).dataNascimento),
+    telefone: str((p as Record<string, unknown>).telefone),
+    vulnerabilidades: str((p as Record<string, unknown>).vulnerabilidades),
+    cep: str((p as Record<string, unknown>).cep),
+    rua: str((p as Record<string, unknown>).rua),
+    numero: str((p as Record<string, unknown>).numero),
+    complemento: str((p as Record<string, unknown>).complemento),
+    bairro: str((p as Record<string, unknown>).bairro),
+    microarea: str((p as Record<string, unknown>).microarea),
+    referencia: str((p as Record<string, unknown>).geocodeReference),
+    geocodedCoords:
+      typeof p.lat === "number" && typeof p.lng === "number"
+        ? { lat: p.lat, lng: p.lng }
+        : null,
+    chosenConditions: attached,
+    originalConditions: attached,
+    toRemove: [],
+    gestantes: (p.gestante ?? {}) as Record<string, unknown>,
+    tuberculose: (p.tuberculose ?? {}) as Record<string, unknown>,
+    hipertensao: (p.has ?? {}) as Record<string, unknown>,
+  };
+}
+
+/**
+ * Build the POST /api/patients body when a condition is chosen.
  * The first chosen condition becomes the primary extension row.
  */
-function buildCreatePayload(ctx: PatientWizardCtx, condicao: "gestantes" | "tuberculose" | "hipertensao"): PatientCreate {
+function buildCreatePayload(
+  ctx: PatientWizardCtx,
+  condicao: "gestantes" | "tuberculose" | "hipertensao",
+): PatientCreate {
   const extKey = condicao === "hipertensao" ? "hipertensao" : condicao;
   return {
     cns: ctx.cns,
@@ -136,6 +326,32 @@ function buildCreatePayload(ctx: PatientWizardCtx, condicao: "gestantes" | "tube
 }
 
 /**
+ * Build the POST /api/patients body when NO condition is chosen (#8).
+ * Emits only `cns` + `base` — the server will create a base-only patient.
+ */
+function buildCreatePayloadNoCondition(ctx: PatientWizardCtx): PatientCreate {
+  return {
+    cns: ctx.cns,
+    base: {
+      nomeCompleto: ctx.nomeCompleto,
+      ...(ctx.dataNascimento ? { dataNascimento: ctx.dataNascimento } : {}),
+      ...(ctx.telefone ? { telefone: ctx.telefone } : {}),
+      ...(ctx.rua ? { rua: ctx.rua } : {}),
+      ...(ctx.numero ? { numero: ctx.numero } : {}),
+      ...(ctx.complemento ? { complemento: ctx.complemento } : {}),
+      ...(ctx.bairro ? { bairro: ctx.bairro } : {}),
+      ...(ctx.cep ? { cep: ctx.cep } : {}),
+      ...(ctx.microarea ? { microarea: ctx.microarea } : {}),
+      ...(ctx.referencia ? { geocodeReference: ctx.referencia } : {}),
+      ...(ctx.vulnerabilidades ? { vulnerabilidades: ctx.vulnerabilidades } : {}),
+      ...(ctx.geocodedCoords
+        ? { lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
+        : {}),
+    },
+  } as PatientCreate;
+}
+
+/**
  * Build the POST /api/patients/[id]/conditions body for an additional condition.
  */
 function buildAttachPayload(
@@ -144,6 +360,56 @@ function buildAttachPayload(
 ): ConditionAttach {
   const extKey = condicao === "hipertensao" ? "hipertensao" : condicao;
   return { condicao, data: ctx[extKey] } as ConditionAttach;
+}
+
+/**
+ * Build the PATCH /api/patients/[id] body from wizard ctx.
+ *
+ * Only patches `base` + the CONDITIONS that are in BOTH `originalConditions`
+ * AND `chosenConditions` (i.e. kept, not new additions and not removals).
+ * New additions go through `attachCondition`; removals go through
+ * `deleteCondition`. This is important because the PATCH endpoint cannot
+ * create new extension rows — only update existing ones.
+ *
+ * Address changes trigger re-geocoding server-side unless `lat`/`lng` are
+ * present (drag-to-fix short-circuits that path — see PATCH handler).
+ */
+function buildPatchPayload(ctx: PatientWizardCtx): PatientPatch {
+  const nullable = (v: string): string | null => (v === "" ? null : v);
+
+  // Conditions that existed before AND are still chosen (kept).
+  const keptConditions = ctx.chosenConditions.filter((c) =>
+    ctx.originalConditions.includes(c),
+  );
+
+  const body: PatientPatch = {
+    base: {
+      ...(ctx.nomeCompleto ? { nomeCompleto: ctx.nomeCompleto } : {}),
+      dataNascimento: nullable(ctx.dataNascimento),
+      telefone: nullable(ctx.telefone),
+      rua: nullable(ctx.rua),
+      numero: nullable(ctx.numero),
+      complemento: nullable(ctx.complemento),
+      bairro: nullable(ctx.bairro),
+      cep: nullable(ctx.cep),
+      microarea: nullable(ctx.microarea),
+      geocodeReference: nullable(ctx.referencia),
+      vulnerabilidades: nullable(ctx.vulnerabilidades),
+      ...(ctx.geocodedCoords
+        ? { lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
+        : {}),
+    },
+  };
+  if (keptConditions.includes("gestantes")) {
+    body.gestantes = ctx.gestantes as PatientPatch["gestantes"];
+  }
+  if (keptConditions.includes("tuberculose")) {
+    body.tuberculose = ctx.tuberculose as PatientPatch["tuberculose"];
+  }
+  if (keptConditions.includes("hipertensao")) {
+    body.hipertensao = ctx.hipertensao as PatientPatch["hipertensao"];
+  }
+  return body;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +436,8 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
 
   const createPatient = useCreatePatient();
   const attachCondition = useAttachCondition();
+  const updatePatient = useUpdatePatient();
+  const deleteCondition = useDeleteCondition();
 
   // -------------------------------------------------------------------------
   // onFinish — called by the wizard when the user clicks "Finalizar"
@@ -178,17 +446,23 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   const onFinish = useCallback(
     async (ctx: PatientWizardCtx) => {
       if (internalMode.kind === "new") {
-        const firstCond = ctx.chosenConditions[0];
-        if (!firstCond) return; // no conditions chosen — should not happen
+        const [firstCond, ...restConds] = ctx.chosenConditions;
 
         let newId: string;
         try {
           const result = await createPatient.mutateAsync({
-            body: buildCreatePayload(ctx, firstCond),
+            body: firstCond
+              ? buildCreatePayload(ctx, firstCond)
+              : buildCreatePayloadNoCondition(ctx),
           });
           const d = result.data as { patient?: { id?: string } } | undefined;
           newId = d?.patient?.id ?? "";
         } catch (err) {
+          // Surface specific field errors from 400 responses (#7).
+          if (isCreatePatientError(err) && err.status === 400) {
+            const issues = err.body?.issues;
+            throw new Error(formatIssues(issues));
+          }
           if (isCreatePatientError(err) && err.status === 409) {
             // CNS collision: switch to add-condition mode for the existing patient.
             const existing = err.body?.patient as
@@ -220,16 +494,15 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           throw err;
         }
 
-        // Attach additional conditions sequentially
-        for (const cond of ctx.chosenConditions.slice(1)) {
+        // Attach additional conditions sequentially.
+        for (const cond of restConds) {
           await attachCondition.mutateAsync({
             patientId: newId,
             body: buildAttachPayload(ctx, cond),
           });
         }
         setCreatedPatientId(newId);
-      } else {
-        // add-condition
+      } else if (internalMode.kind === "add-condition") {
         const { patientId } = internalMode;
         for (const cond of ctx.chosenConditions) {
           await attachCondition.mutateAsync({
@@ -238,9 +511,44 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           });
         }
         setCreatedPatientId(patientId);
+      } else {
+        // edit
+        const { patientId } = internalMode;
+
+        // 1. PATCH base + kept conditions.
+        try {
+          await updatePatient.mutateAsync({
+            id: patientId,
+            body: buildPatchPayload(ctx),
+          });
+        } catch (err) {
+          const ue = err as { status?: number; body?: { issues?: unknown[] } };
+          if (ue.status === 400 && ue.body?.issues) {
+            throw new Error(formatIssues(ue.body.issues));
+          }
+          throw err;
+        }
+
+        // 2. Attach newly added conditions (not in originalConditions).
+        const newConditions = ctx.chosenConditions.filter(
+          (c) => !ctx.originalConditions.includes(c),
+        );
+        for (const cond of newConditions) {
+          await attachCondition.mutateAsync({
+            patientId,
+            body: buildAttachPayload(ctx, cond),
+          });
+        }
+
+        // 3. Delete removed conditions.
+        for (const cond of ctx.toRemove) {
+          await deleteCondition.mutateAsync({ id: patientId, condicao: cond });
+        }
+
+        setCreatedPatientId(patientId);
       }
     },
-    [internalMode, createPatient, attachCondition],
+    [internalMode, createPatient, attachCondition, updatePatient, deleteCondition],
   );
 
   // -------------------------------------------------------------------------
@@ -258,7 +566,7 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   }, [createdPatientId]);
 
   // -------------------------------------------------------------------------
-  // Step list (static; data pages use shouldSkip to skip unchosen conditions)
+  // Step list (static; data pages use shouldSkip to skip unchosen/removed conditions)
   // -------------------------------------------------------------------------
 
   const alreadyAttached =
@@ -277,23 +585,30 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
         ),
       };
 
+      // Data pages skip when the condition is not chosen OR is queued for removal.
       const dataPages: Array<WizardStep<PatientWizardCtx>> = [
         {
           id: "dados-gestante",
           label: "Gestante",
-          shouldSkip: (c) => !c.chosenConditions.includes("gestantes"),
+          shouldSkip: (c) =>
+            !c.chosenConditions.includes("gestantes") ||
+            c.toRemove.includes("gestantes"),
           render: (props) => <StepDadosGestante {...props} />,
         },
         {
           id: "dados-tb",
           label: "Tuberculose",
-          shouldSkip: (c) => !c.chosenConditions.includes("tuberculose"),
+          shouldSkip: (c) =>
+            !c.chosenConditions.includes("tuberculose") ||
+            c.toRemove.includes("tuberculose"),
           render: (props) => <StepDadosTB {...props} />,
         },
         {
           id: "dados-has",
           label: "HAS",
-          shouldSkip: (c) => !c.chosenConditions.includes("hipertensao"),
+          shouldSkip: (c) =>
+            !c.chosenConditions.includes("hipertensao") ||
+            c.toRemove.includes("hipertensao"),
           render: (props) => <StepDadosHAS {...props} />,
         },
       ];
@@ -340,6 +655,29 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
         ];
       }
 
+      if (internalMode.kind === "edit") {
+        return [
+          {
+            id: "identidade",
+            label: "Identidade",
+            render: (props) => <StepIdentidade {...props} lockCns />,
+          },
+          {
+            id: "endereco",
+            label: "Endereço",
+            render: (props) => <StepEndereco {...props} />,
+          },
+          {
+            id: "gerenciar-condicoes",
+            label: "Condições",
+            render: (props) => <StepGerenciarCondicoes {...props} />,
+          },
+          ...dataPages,
+          confirmar,
+          sucesso,
+        ];
+      }
+
       return [condStep, ...dataPages, confirmar, sucesso];
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -350,10 +688,14 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   // Initial ctx (stashed context takes priority on mode switch)
   // -------------------------------------------------------------------------
 
-  const initialCtx = stashedCtx ?? emptyCtx(mode);
+  const initialCtx = stashedCtx ?? buildInitialCtx(mode);
 
   const headline =
-    internalMode.kind === "new" ? "Novo paciente" : "Adicionar condição";
+    internalMode.kind === "new"
+      ? "Novo paciente"
+      : internalMode.kind === "edit"
+        ? "Editar paciente"
+        : "Adicionar condição";
 
   return (
     <>

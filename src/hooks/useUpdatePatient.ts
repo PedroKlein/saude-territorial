@@ -55,7 +55,7 @@ export interface UpdatePatientError extends Error {
   body?: {
     error?: string;
     requiresManualPin?: boolean;
-    issues?: unknown;
+    issues?: unknown[];
   };
 }
 

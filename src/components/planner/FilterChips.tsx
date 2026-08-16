@@ -6,7 +6,7 @@
  */
 
 import { Baby, Wind, HeartPulse, X, Plus } from "lucide-react";
-import { usePlannerStore } from "@/stores/plannerStore";
+import { usePlannerStore, PLAN_LIMIT } from "@/stores/plannerStore";
 import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import type { PatientRecord } from "@/hooks/usePatientData";
@@ -18,7 +18,6 @@ import type { PatientRecord } from "@/hooks/usePatientData";
 interface FilterChipsProps {
   /** All candidate patients to count and bulk-add. */
   candidates: PatientRecord[];
-  onAddAll: (patients: PatientRecord[]) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,8 +82,8 @@ function Chip({
 // Component
 // ---------------------------------------------------------------------------
 
-export function FilterChips({ candidates, onAddAll }: FilterChipsProps) {
-  const { filters, setFilters, stops } = usePlannerStore();
+export function FilterChips({ candidates }: FilterChipsProps) {
+  const { filters, setFilters, stops, addStopsUpTo, setLimitBannerVisible } = usePlannerStore();
 
   function toggleMicroarea(ma: string) {
     const next = filters.microarea.includes(ma)
@@ -110,6 +109,8 @@ export function FilterChips({ candidates, onAddAll }: FilterChipsProps) {
   // Candidates not already in the plan.
   const alreadyInPlan = new Set(stops.map((s) => s.patientId));
   const addable = candidates.filter((p) => !alreadyInPlan.has(p.id));
+  // How many can actually be added (clamped to remaining capacity).
+  const canAdd = Math.max(0, Math.min(addable.length, PLAN_LIMIT - stops.length));
 
   return (
     <div className="space-y-2">
@@ -178,13 +179,16 @@ export function FilterChips({ candidates, onAddAll }: FilterChipsProps) {
       </div>
 
       {/* Bulk-add */}
-      {addable.length > 0 && (
+      {canAdd > 0 && (
         <button
-          onClick={() => onAddAll(addable)}
+          onClick={() => {
+            const added = addStopsUpTo(addable.map((p) => p.id));
+            if (added < addable.length) setLimitBannerVisible(true);
+          }}
           className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-300 bg-white py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
         >
           <Plus className="h-3.5 w-3.5" />
-          Adicionar todos ao plano ({addable.length})
+          Adicionar todos ({canAdd})
         </button>
       )}
     </div>

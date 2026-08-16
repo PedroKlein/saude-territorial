@@ -4,6 +4,7 @@ import {
   check,
   date,
   integer,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -13,6 +14,51 @@ import {
 
 import { patients } from "./patients";
 
+/** Baciloscopia — resultado consolidado (LOCKED por alert rule). */
+export const baciloscopiaResultadoEnum = pgEnum("baciloscopia_resultado", [
+  "Positiva",
+  "Negativa",
+]);
+
+/** Teste Rápido Molecular. */
+export const trmResultadoEnum = pgEnum("trm_resultado", [
+  "Detectável",
+  "Não detectável",
+]);
+
+/** Cultura M. tuberculosis. */
+export const culturaResultadoEnum = pgEnum("cultura_resultado", [
+  "Positiva",
+  "Negativa",
+  "Pendente",
+]);
+
+/** TDO — Tratamento Diretamente Observado. */
+export const tdoStatusEnum = pgEnum("tdo_status", [
+  "TDO regular",
+  "TDO irregular/faltoso",
+  "Não aplicável",
+]);
+
+/** Tipo de entrada no tratamento TB (sheet col V). */
+export const tipoEntradaTbEnum = pgEnum("tipo_entrada_tb", [
+  "Caso novo",
+  "Recidiva",
+  "Reingresso após abandono",
+  "Transferência",
+  "Não sabe",
+]);
+
+/** Motivo de encerramento TB (sheet col AL). */
+export const encerramentoMotivoTbEnum = pgEnum("encerramento_motivo_tb", [
+  "Cura",
+  "Abandono",
+  "Óbito por TB",
+  "Óbito por outra causa",
+  "Transferência",
+  "Falência",
+  "Mudança de diagnóstico",
+]);
 /**
  * `tuberculose_data` — single-row-per-case TB fields.
  *
@@ -46,11 +92,11 @@ export const tuberculoseData = pgTable("tuberculose_data", {
   baciloscopiaSegundaData: date("baciloscopia_segunda_data"), // col M
   // Free-text summary for backwards-compat with the current alert rule and
   // the LOCKED spec vocabulary. Values: "Positiva" | "Negativa" | "".
-  baciloscopiaResultado: text("baciloscopia_resultado"),
+  baciloscopiaResultado: baciloscopiaResultadoEnum("baciloscopia_resultado"),
   trmPrimeiraData: date("trm_primeira_data"), // col N — TRM 1ª amostra
   trmSegundaData: date("trm_segunda_data"), // col O
-  trmResultado: text("trm_resultado"), // "Detectável" | "Não detectável" | ""
-  culturaMTuberculosis: text("cultura_m_tuberculosis"), // col P — "Positiva" | "Negativa" | "Pendente"
+  trmResultado: trmResultadoEnum("trm_resultado"),
+  culturaMTuberculosis: culturaResultadoEnum("cultura_m_tuberculosis"), // col P
   ppdMm: integer("ppd_mm"), // col Q — PPD skin test result in millimeters
   histopatologia: text("histopatologia"), // col R
   rxTorax: text("rx_torax"), // col S
@@ -58,14 +104,14 @@ export const tuberculoseData = pgTable("tuberculose_data", {
 
   // Tratamento (cols U–Y)
   formaClinica: text("forma_clinica"), // col U
-  tipoEntrada: text("tipo_entrada"), // col V — "Caso novo" | "Recidiva" | ...
+  tipoEntrada: tipoEntradaTbEnum("tipo_entrada"), // col V
   esquema: text("esquema"), // col W — drug regimen, e.g. "RHZE"
   dataInicio: date("data_inicio"), // col X
   formaTratamento: text("forma_tratamento"), // col Y
-  tdoStatus: text("tdo_status"), // col AK — "TDO regular" | "TDO irregular/faltoso" | ""
+  tdoStatus: tdoStatusEnum("tdo_status"), // col AK
 
   // Encerramento (cols AL, AM)
-  encerramentoMotivo: text("encerramento_motivo"), // "Cura" | "Abandono" | "Óbito" | "Transferência"
+  encerramentoMotivo: encerramentoMotivoTbEnum("encerramento_motivo"),
   encerramentoData: date("encerramento_data"),
 
   // Contatos (cols AN–AQ)

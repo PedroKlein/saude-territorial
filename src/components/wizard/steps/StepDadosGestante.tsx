@@ -34,6 +34,13 @@ import { Field } from "@/components/panels/Field";
 import { Computed } from "@/components/panels/Computed";
 import { PressureInput } from "@/components/ui/masked-input";
 import { Button } from "@/components/ui/button";
+import { EnumField } from "@/components/panels/EnumField";
+import {
+  RISCO_LABELS,
+  RISCO_VALUES,
+  STATUS_REALIZACAO_LABELS,
+  STATUS_REALIZACAO_VALUES,
+} from "@/lib/patients/enums";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
@@ -161,15 +168,14 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
             control={control}
             name="risco"
             render={({ field }) => (
-              <Select value={field.value ?? ""} onValueChange={field.onChange}>
-                <SelectTrigger aria-label="Risco gestacional">
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="habitual">Habitual</SelectItem>
-                  <SelectItem value="alto">Alto</SelectItem>
-                </SelectContent>
-              </Select>
+              <EnumField
+                values={RISCO_VALUES}
+                labels={RISCO_LABELS}
+                value={field.value ?? ""}
+                onChange={(v) => field.onChange(v as "habitual" | "alto")}
+                ariaLabel="Risco gestacional"
+                invalid={Boolean(errors.risco)}
+              />
             )}
           />
         </Field>
@@ -196,6 +202,10 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                 onChange={field.onChange}
                 max={new Date()}
                 ariaLabel="Data da última consulta"
+                aria-invalid={
+                  Boolean(errors.dataUltimaConsulta) ||
+                  Boolean(errors.dataProximaConsulta)
+                }
               />
             )}
           />
@@ -211,6 +221,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                 value={field.value ?? null}
                 onChange={field.onChange}
                 ariaLabel="Data da próxima consulta"
+                aria-invalid={Boolean(errors.dataProximaConsulta)}
               />
             )}
           />
@@ -227,7 +238,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
         </Field>
 
         {/* PA */}
-        <Field label="PA (pressão arterial)" className="col-span-1">
+        <Field label="PA (pressão arterial)" className="col-span-1" error={errors.pressaoArterial?.message}>
           <Controller
             control={control}
             name="pressaoArterial"
@@ -236,6 +247,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                 value={field.value ?? ""}
                 onValueChange={field.onChange}
                 aria-label="Pressão arterial"
+                aria-invalid={Boolean(errors.pressaoArterial)}
               />
             )}
           />
@@ -255,8 +267,24 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
 
       {showAdvanced && (
         <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-lg border border-dashed p-3">
-          <Field label="Vacina DTPa" className="col-span-2">
-            <Input {...register("vacinaDtpa")} aria-label="Vacina DTPa" placeholder="Sim / Não / Em dia" />
+          <Field
+            label="Vacina DTPa"
+            className="col-span-2"
+            error={errors.vacinaDtpa?.message}
+          >
+            <Controller
+              control={control}
+              name="vacinaDtpa"
+              render={({ field }) => (
+                <EnumField
+                  values={STATUS_REALIZACAO_VALUES}
+                  labels={STATUS_REALIZACAO_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="Vacina DTPa"
+                />
+              )}
+            />
           </Field>
           <Field label="É puérpera" className="col-span-2">
             <Controller

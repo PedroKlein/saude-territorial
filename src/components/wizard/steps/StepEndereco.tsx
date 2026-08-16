@@ -146,12 +146,20 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
       },
     });
 
+  // When ctx has saved coords at mount, treat them as manual so the debounce
+  // cannot override them (#6). Status 'manual' is the guard checked in the
+  // debounce effect — `if (prev.status === "manual") return prev;`.
   const [geoResult, setGeoResult] = useState<GeoResult>(
     ctx.geocodedCoords
-      ? ctx.rua
-        ? { status: "found", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng, display: ctx.rua }
-        : { status: "manual", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
+      ? { status: "manual", lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
       : { status: "idle" },
+  );
+
+  // 'hydrated' = coords came from saved data (show neutral "Localização salva" banner).
+  // 'user'     = user explicitly dragged the pin.
+  // null       = no manual placement yet.
+  const manualOrigin = useRef<"hydrated" | "user" | null>(
+    ctx.geocodedCoords ? "hydrated" : null,
   );
 
   const [manualMode, setManualMode] = useState(false);
@@ -332,25 +340,49 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         </Field>
       </div>
 
-      {/* Geocode found: read-only map */}
+      {/* Geocode found: map preview, still draggable so ACS can adjust. */}
       {geoResult.status === "found" && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-medium text-ok-green">
             <MapPin className="size-3.5" />
-            Endereço encontrado
+            Endereço encontrado — arraste o pino para ajustar
           </div>
-          <GeocodeMapPreview lat={geoResult.lat} lng={geoResult.lng} />
+          <GeocodeMapPreview
+            lat={geoResult.lat}
+            lng={geoResult.lng}
+            onPickCoords={(c) => {
+              manualOrigin.current = "user";
+              setGeoResult({ status: "manual", ...c });
+            }}
+          />
         </div>
       )}
 
-      {/* Manual picker: from right-click prefill OR user-requested */}
+      {/* Manual / hydrated picker */}
       {(manualMode || geoResult.status === "manual") && (
         <div data-testid="geocode-manual-picker" className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
-            <MapPin className="size-3.5" />
-            {geoResult.status === "manual"
-              ? "Pino posicionado manualmente"
-              : "Clique no mapa para posicionar o pino"}
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
+              <MapPin className="size-3.5" />
+              {geoResult.status === "manual"
+                ? manualOrigin.current === "hydrated"
+                  ? "Localização salva — arraste o pino para ajustar"
+                  : "Pino posicionado manualmente"
+                : "Clique no mapa para posicionar o pino"}
+            </div>
+            {/* Let user re-geocode from current address text */}
+            {geoResult.status === "manual" && (
+              <button
+                type="button"
+                onClick={() => {
+                  manualOrigin.current = null;
+                  setGeoResult({ status: "idle" });
+                }}
+                className="text-xs text-blue-600 underline hover:text-blue-800"
+              >
+                Buscar endereço no mapa
+              </button>
+            )}
           </div>
           <GeocodeMapPreview
             lat={
@@ -364,6 +396,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
                 : (ctx.geocodedCoords?.lng ?? US_MOAB_CALDAS[1])
             }
             onPickCoords={(c) => {
+              manualOrigin.current = "user";
               setGeoResult({ status: "manual", ...c });
               setManualMode(false);
             }}

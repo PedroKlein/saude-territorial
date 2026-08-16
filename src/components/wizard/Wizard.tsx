@@ -310,7 +310,7 @@ export function Wizard<Ctx>({
         {finishError && (
           <div
             role="alert"
-            className="mx-5 mb-3 rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs text-red-900"
+            className="mx-5 mb-3 whitespace-pre-line rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 text-xs text-red-900"
           >
             {finishError}
           </div>

@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * PatientDetailPanel — the "a patient is a patient" right-side panel (UP-2.2/2.3/2.4).
+ * PatientDetailPanel — the right-side detail panel.
  *
- * Identity block + N collapsible condition cards, one per non-null extension row.
- * Edit mode wraps the whole panel in a single react-hook-form instance.
+ * View-only surface: no inline form. Edits happen in the `PatientWizard`
+ * (opened in `kind: "edit"` mode via the "Editar" footer button). The
+ * wizard is also the surface for adding new conditions and for the
+ * "novo paciente" flow, so patient editing and creation share the exact
+ * same steps, validation, and geolocation pin-drop UI.
  *
- * LGPD: patient fields are never written to logs; only aggregate/opaque error
- * codes reach console statements.
+ * LGPD: patient data is only rendered in-context; nothing is logged.
  */
 
-import { useMemo, useState, useEffect } from "react";
-import { useForm, useWatch, Controller, type UseFormReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Baby,
@@ -24,7 +24,6 @@ import {
   Plus,
   Pencil,
   X,
-  Save,
   RotateCcw,
   Trash2,
   ChevronDown,
@@ -37,10 +36,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { usePatient } from "@/hooks/usePatient";
 import { usePatientData } from "@/hooks/usePatientData";
 import { coincidenceKey } from "@/components/map/markerHelpers";
-import { useDeletePatient, useDeleteCondition } from "@/hooks/useDeletePatient";
-import { useUpdatePatient } from "@/hooks/useUpdatePatient";
-import { PatientPatchSchema, type PatientPatch, type ExtensionLayer } from "@/lib/patients/schemas";
-import { type z } from "zod";
+import { useDeletePatient } from "@/hooks/useDeletePatient";
 import type { UnifiedPatient } from "@/app/api/patients/[id]/route";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
@@ -54,22 +50,13 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { PhoneInput } from "@/components/ui/masked-input";
-import { DatePicker } from "@/components/ui/date-picker";
 import { ConfirmDialog } from "@/components/panels/ConfirmDialog";
 import { Field } from "@/components/panels/Field";
 import { Computed } from "@/components/panels/Computed";
-import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
-import { PatientWizard } from "@/components/wizard/PatientWizard";
+import {
+  PatientWizard,
+  type PatientWizardMode,
+} from "@/components/wizard/PatientWizard";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -78,21 +65,6 @@ import { PatientWizard } from "@/components/wizard/PatientWizard";
 const GESTANTE_COLOR = "oklch(72% 0.11 15)";
 const TB_COLOR = "oklch(60% 0.09 40)";
 const HAS_COLOR = "oklch(60% 0.13 275)";
-
-const MICROAREA_OPTIONS = (
-  MICROAREAS_GEOJSON.features as Array<{
-    properties: { id: string; nome: string } | null;
-  }>
-).flatMap((f) =>
-  f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
-);
-
-// ---------------------------------------------------------------------------
-// Form type — the Zod schema's INPUT shape (before transforms)
-// ---------------------------------------------------------------------------
-
-/** Typed form values aligned to PatientPatchSchema's input so zodResolver works. */
-type PanelFormValues = z.input<typeof PatientPatchSchema>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,9 +76,10 @@ type PanelFormValues = z.input<typeof PatientPatchSchema>;
  */
 function parseBrDate(s: string | null | undefined): Date | null {
   if (!s) return null;
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
-  if (!m) return null;
-  return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  const [dd, mm, yyyy] = s.split("/");
+  if (!dd || !mm || !yyyy) return null;
+  const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  return isNaN(d.getTime()) ? null : d;
 }
 
 /** Compute age in years from a `dd/MM/yyyy` date string. */
@@ -116,7 +89,7 @@ function computeAgeFromBr(dob: string | null): number | null {
   const today = new Date();
   let age = today.getFullYear() - d.getFullYear();
   const m = today.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age -= 1;
   return age;
 }
 
@@ -124,75 +97,11 @@ function computeAgeFromBr(dob: string | null): number | null {
 function getInitials(nome: string): string {
   return nome
     .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-/** True if any field in the dirty-fields object tree is marked dirty. */
-function hasDirty(obj: unknown): boolean {
-  if (typeof obj === "boolean") return obj;
-  if (typeof obj === "object" && obj !== null) {
-    return Object.values(obj).some(hasDirty);
-  }
-  return false;
-}
-
-/** Build react-hook-form default values from a unified patient record. */
-function buildDefaults(p: UnifiedPatient): PanelFormValues {
-  return {
-    base: {
-      nomeCompleto: p.nomeCompleto ?? "",
-      dataNascimento: p.dataNascimento ?? "",
-      telefone: p.telefone ?? "",
-      rua: p.rua ?? "",
-      numero: p.numero ?? "",
-      complemento: p.complemento ?? "",
-      bairro: p.bairro ?? "",
-      cep: p.cep ?? "",
-      microarea: p.microarea ?? "",
-      geocodeReference: p.geocodeReference ?? "",
-      vulnerabilidades: p.vulnerabilidades ?? "",
-    },
-    gestantes: p.gestante
-      ? {
-          dum: (p.gestante.dum as string | null) ?? "",
-          risco: (p.gestante.risco as string | null) ?? "",
-          dataUltimaConsulta: (p.gestante.dataUltimaConsulta as string | null) ?? "",
-          dataProximaConsulta: (p.gestante.dataProximaConsulta as string | null) ?? "",
-          numeroConsultas: (p.gestante.numeroConsultas as number | null) ?? undefined,
-          pressaoArterial: (p.gestante.pressaoArterial as string | null) ?? "",
-          vacinaDtpa: (p.gestante.vacinaDtpa as string | null) ?? "",
-          igAbertura: (p.gestante.igAbertura as string | null) ?? "",
-          hasPreviaTag: (p.gestante.hasPreviaTag as string | null) ?? "",
-          diabetesPreviaTag: (p.gestante.diabetesPreviaTag as string | null) ?? "",
-        }
-      : undefined,
-    tuberculose: p.tuberculose
-      ? {
-          tipo: (p.tuberculose.tipo as string | null) ?? "",
-          formaClinica: (p.tuberculose.formaClinica as string | null) ?? "",
-          tipoEntrada: (p.tuberculose.tipoEntrada as string | null) ?? "",
-          esquema: (p.tuberculose.esquema as string | null) ?? "",
-          dataInicio: (p.tuberculose.dataInicio as string | null) ?? "",
-          tdoStatus: (p.tuberculose.tdoStatus as string | null) ?? "",
-          encerramentoMotivo: (p.tuberculose.encerramentoMotivo as string | null) ?? "",
-          encerramentoData: (p.tuberculose.encerramentoData as string | null) ?? "",
-          baciloscopiaResultado: (p.tuberculose.baciloscopiaResultado as string | null) ?? "",
-          galRegistro: (p.tuberculose.galRegistro as string | null) ?? "",
-        }
-      : undefined,
-    hipertensao: p.has
-      ? {
-          dataUltimaConsulta: (p.has.dataUltimaConsulta as string | null) ?? "",
-          dataProximaConsulta: (p.has.dataProximaConsulta as string | null) ?? "",
-          dataUltimaAfericaoPa: (p.has.dataUltimaAfericaoPa as string | null) ?? "",
-          pressaoArterial: (p.has.pressaoArterial as string | null) ?? "",
-          registroNotas: (p.has.registroNotas as string | null) ?? "",
-          encaminhamentos: (p.has.encaminhamentos as string | null) ?? "",
-        }
-      : undefined,
-  };
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -201,9 +110,9 @@ function buildDefaults(p: UnifiedPatient): PanelFormValues {
 
 function LoadingSkeleton({ onClose }: { onClose: () => void }) {
   return (
-    <aside className="absolute inset-x-0 bottom-0 z-[1000] flex max-h-[70vh] flex-col overflow-hidden rounded-t-2xl border-t bg-white shadow-lg md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-[22rem] md:rounded-none md:border-l md:border-t-0">
+    <aside className="absolute inset-x-0 bottom-0 z-[1000] flex max-h-[85vh] flex-col overflow-hidden rounded-t-2xl border-t bg-white shadow-lg md:inset-x-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-[22rem] md:rounded-none md:border-l md:border-t-0">
       <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-3">
-        <div className="h-4 w-32 animate-pulse rounded bg-neutral-200" />
+        <span className="text-sm font-medium text-neutral-700">Carregando…</span>
         <button
           onClick={onClose}
           className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100"
@@ -212,16 +121,10 @@ function LoadingSkeleton({ onClose }: { onClose: () => void }) {
           <X className="size-4" />
         </button>
       </div>
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-        <div className="flex items-start gap-3">
-          <div className="size-11 animate-pulse rounded-full bg-neutral-200 shrink-0" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-200" />
-            <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-200" />
-          </div>
-        </div>
-        <div className="h-24 animate-pulse rounded-lg bg-neutral-200" />
-        <div className="h-24 animate-pulse rounded-lg bg-neutral-200" />
+      <div className="flex-1 space-y-4 p-6">
+        <div className="h-12 w-full animate-pulse rounded bg-neutral-200" />
+        <div className="h-24 w-full animate-pulse rounded bg-neutral-100" />
+        <div className="h-32 w-full animate-pulse rounded bg-neutral-100" />
       </div>
     </aside>
   );
@@ -312,14 +215,7 @@ export function PatientDetailPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// CoincidencePicker — cycle through patients that share the current
-// patient's exact coordinates.
-//
-// The map already flags coincidence with a small badge; that badge is
-// only useful if it's actionable, so the panel exposes prev/next
-// controls to walk the cluster without going back to the map. The
-// component renders nothing when the patient is the only one at the
-// coord (which is the common case).
+// CoincidencePicker — cycle through patients sharing the current coord.
 // ---------------------------------------------------------------------------
 
 function CoincidencePicker({
@@ -343,6 +239,7 @@ function CoincidencePicker({
       if (!patients) continue;
       for (const p of patients) {
         if (seen.has(p.id)) continue;
+        if (p.lat == null || p.lng == null) continue;
         if (coincidenceKey(p.lat, p.lng) !== key) continue;
         seen.add(p.id);
         list.push({ id: p.id, name: p.nomeCompleto ?? "(sem nome)" });
@@ -353,7 +250,6 @@ function CoincidencePicker({
 
   if (coincidents.length < 2) return null;
   const idx = coincidents.findIndex((p) => p.id === currentId);
-  // Defensive: current id is not in list (stale data) — treat as first slot.
   const position = idx === -1 ? 0 : idx;
   const next = coincidents[(position + 1) % coincidents.length];
   const prev = coincidents[(position - 1 + coincidents.length) % coincidents.length];
@@ -407,10 +303,7 @@ function PanelInner({ id, onClose }: { id: string; onClose: () => void }) {
 // PanelContent — the real panel once patient data is available
 // ---------------------------------------------------------------------------
 
-type ConfirmState =
-  | { type: "patient" }
-  | { type: "condition"; layer: ExtensionLayer }
-  | null;
+type ConfirmState = { type: "patient" } | null;
 
 function PanelContent({
   patient,
@@ -419,9 +312,8 @@ function PanelContent({
   patient: UnifiedPatient;
   onClose: () => void;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardMode, setWizardMode] = useState<PatientWizardMode | null>(null);
   const [showAdvanced, setShowAdvanced] = useState<
     Partial<Record<string, boolean>>
   >({});
@@ -430,29 +322,6 @@ function PanelContent({
   const [openCards, setOpenCards] = useState<string[]>(["gestante", "tuberculose", "has"]);
 
   const deletePatient = useDeletePatient();
-  const deleteCondition = useDeleteCondition();
-  const updatePatient = useUpdatePatient();
-
-  // ---------------------------------------------------------------------------
-  // Form
-  // ---------------------------------------------------------------------------
-
-  const form = useForm<PanelFormValues, unknown, PatientPatch>({
-    resolver: zodResolver(PatientPatchSchema),
-    defaultValues: buildDefaults(patient),
-  });
-
-  // Sync form defaults when patient data refreshes after a save
-  useEffect(() => {
-    form.reset(buildDefaults(patient));
-  }, [patient, form]);
-
-  // Watch DUM for live DPP/IG computation. useWatch (not `form.watch`) so
-  // React Compiler can memoize this component safely.
-  const watchedDum = useWatch({ control: form.control, name: "gestantes.dum" });
-  const dumDate = parseBrDate(watchedDum as string | undefined);
-  const liveDpp = dumDate ? format(computeDpp(dumDate), "dd/MM/yyyy") : null;
-  const liveIg = dumDate ? formatIg(computeIg(dumDate)) : null;
 
   // ---------------------------------------------------------------------------
   // Alert evaluation
@@ -483,6 +352,15 @@ function PanelContent({
   }
 
   // ---------------------------------------------------------------------------
+  // Gestante — computed DPP / IG straight from stored DUM.
+  // ---------------------------------------------------------------------------
+
+  const dumStr = (patient.gestante?.dum as string | null | undefined) ?? null;
+  const dumDate = parseBrDate(dumStr);
+  const liveDpp = dumDate ? format(computeDpp(dumDate), "dd/MM/yyyy") : null;
+  const liveIg = dumDate ? formatIg(computeIg(dumDate)) : null;
+
+  // ---------------------------------------------------------------------------
   // Condition card definitions
   // ---------------------------------------------------------------------------
 
@@ -490,29 +368,23 @@ function PanelContent({
     {
       key: "gestante",
       data: patient.gestante,
-      layer: "gestantes" as ExtensionLayer,
       label: "Gestante",
       color: GESTANTE_COLOR,
       Icon: Baby,
-      formKey: "gestantes" as const,
     },
     {
       key: "tuberculose",
       data: patient.tuberculose,
-      layer: "tuberculose" as ExtensionLayer,
       label: "Tuberculose",
       color: TB_COLOR,
       Icon: Wind,
-      formKey: "tuberculose" as const,
     },
     {
       key: "has",
       data: patient.has,
-      layer: "hipertensao" as ExtensionLayer,
       label: "HAS — Hipertensão",
       color: HAS_COLOR,
       Icon: HeartPulse,
-      formKey: "hipertensao" as const,
     },
   ] as const;
 
@@ -522,45 +394,28 @@ function PanelContent({
   // Handlers
   // ---------------------------------------------------------------------------
 
-  const handleSave = form.handleSubmit(async (values) => {
-    const dirty = form.formState.dirtyFields;
-
-    const body: PatientPatch = {};
-    if (hasDirty(dirty.base)) body.base = values.base;
-    if (hasDirty(dirty.gestantes)) body.gestantes = values.gestantes;
-    if (hasDirty(dirty.tuberculose)) body.tuberculose = values.tuberculose;
-    if (hasDirty(dirty.hipertensao)) body.hipertensao = values.hipertensao;
-
-    if (Object.keys(body).length === 0) {
-      setIsEditing(false);
-      return;
-    }
-
-    try {
-      await updatePatient.mutateAsync({
-        id: patient.id,
-        body,
-      });
-      setIsEditing(false);
-    } catch {
-      // Error surfaced via form state / updatePatient.error
-    }
-  });
-
-  const handleCancelEdit = () => {
-    form.reset(buildDefaults(patient));
-    setIsEditing(false);
-  };
-
   const handleDeletePatient = async () => {
     await deletePatient.mutateAsync({ id: patient.id });
     setConfirmState(null);
   };
 
-  const handleDeleteCondition = async (layer: ExtensionLayer) => {
-    await deleteCondition.mutateAsync({ id: patient.id, condicao: layer });
-    setConfirmState(null);
+
+  const openEdit = () => {
+    setWizardMode({ kind: "edit", patientId: patient.id, patient });
   };
+
+  const openAddCondition = () => {
+    setWizardMode({
+      kind: "add-condition",
+      patientId: patient.id,
+      alreadyAttached: [
+        patient.gestante ? "gestantes" : null,
+        patient.tuberculose ? "tuberculose" : null,
+        patient.has ? "hipertensao" : null,
+      ].filter((v): v is "gestantes" | "tuberculose" | "hipertensao" => v !== null),
+    });
+  };
+
   // ---------------------------------------------------------------------------
   // Computed display strings
   // ---------------------------------------------------------------------------
@@ -582,7 +437,7 @@ function PanelContent({
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-5 py-3">
         <span className="text-sm font-semibold text-neutral-700">
-          {isEditing ? "Editar paciente" : "Detalhes do paciente"}
+          Detalhes do paciente
         </span>
         <button
           onClick={onClose}
@@ -615,41 +470,27 @@ function PanelContent({
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  {isEditing ? (
-                    <Field label="Nome completo" error={form.formState.errors.base?.nomeCompleto?.message}>
-                      <Input
-                        {...form.register("base.nomeCompleto")}
-                        className="text-sm font-semibold"
-                        aria-label="Nome completo"
-                      />
-                    </Field>
-                  ) : (
-                    <>
-                      <h2 className="text-base font-semibold leading-tight text-neutral-900">
-                        {patient.nomeCompleto}
-                      </h2>
-                      <div className="mt-0.5 text-xs text-neutral-500">
-                        {age != null ? `${age} anos` : null}
-                        {age != null && patient.dataNascimento ? " · " : null}
-                        {patient.dataNascimento}
-                        {patient.microarea ? ` · ${patient.microarea}` : null}
-                      </div>
-                    </>
-                  )}
+                  <h2 className="text-base font-semibold leading-tight text-neutral-900">
+                    {patient.nomeCompleto}
+                  </h2>
+                  <div className="mt-0.5 text-xs text-neutral-500">
+                    {age != null ? `${age} anos` : null}
+                    {age != null && patient.dataNascimento ? " · " : null}
+                    {patient.dataNascimento}
+                    {patient.microarea ? ` · ${patient.microarea}` : null}
+                  </div>
                 </div>
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="shrink-0 rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-                    aria-label="Editar paciente"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                )}
+                <button
+                  onClick={openEdit}
+                  className="shrink-0 rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+                  aria-label="Editar paciente"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
               </div>
 
               {/* Alert chips */}
-              {!isEditing && alerts.length > 0 && (
+              {alerts.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {alerts.map((a, i) => (
                     <AlertChip key={i} level={a.level} label={a.label} />
@@ -660,142 +501,45 @@ function PanelContent({
           </div>
 
           {/* Contact / identity details */}
-          {!isEditing ? (
-            <dl className="mt-3 space-y-1.5 text-sm">
-              {(endereco || bairroLine || patient.cep) && (
-                <div className="flex items-start gap-2 text-neutral-600">
-                  <MapPin className="mt-0.5 size-3.5 shrink-0 text-neutral-400" />
-                  <div className="min-w-0 flex-1">
-                    {endereco && <div>{endereco}</div>}
-                    {bairroLine && (
-                      <div className="text-xs text-neutral-500">{bairroLine}</div>
-                    )}
-                    {patient.cep && (
-                      <div className="mt-0.5 font-mono text-[11px] tracking-wide text-neutral-500">
-                        CEP {patient.cep}
-                      </div>
-                    )}
-                  </div>
+          <dl className="mt-3 space-y-1.5 text-sm">
+            {(endereco || bairroLine || patient.cep) && (
+              <div className="flex items-start gap-2 text-neutral-600">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-neutral-400" />
+                <div className="min-w-0 flex-1">
+                  {endereco && <div>{endereco}</div>}
+                  {bairroLine && (
+                    <div className="text-xs text-neutral-500">{bairroLine}</div>
+                  )}
+                  {patient.cep && (
+                    <div className="mt-0.5 font-mono text-[11px] tracking-wide text-neutral-500">
+                      CEP {patient.cep}
+                    </div>
+                  )}
                 </div>
-              )}
-              {patient.geocodeReference && (
-                <div className="rounded-md border-l-2 border-brand/40 bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-600">
-                  <span className="font-medium text-neutral-700">Referência:</span>{" "}
-                  {patient.geocodeReference}
-                </div>
-              )}
-              {patient.telefone && (
-                <div className="flex items-center gap-2 text-neutral-600">
-                  <Phone className="size-3.5 shrink-0 text-neutral-400" />
-                  <span>{patient.telefone}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-neutral-600">
-                <User className="size-3.5 shrink-0 text-neutral-400" />
-                <span className="font-mono text-xs tracking-wide">
-                  {patient.cns}
-                </span>
               </div>
-            </dl>
-          ) : (
-            /* Edit identity fields */
-            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-3">
-              <Field label="Data nasc." className="col-span-1">
-                <Controller
-                  control={form.control}
-                  name="base.dataNascimento"
-                  render={({ field }) => (
-                    <DatePicker
-                      value={parseBrDate(field.value as string)}
-                      onChange={(d) =>
-                        field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-                      }
-                      ariaLabel="Data de nascimento"
-                    />
-                  )}
-                />
-              </Field>
-              <Field label="Microárea" className="col-span-1">
-                <Controller
-                  control={form.control}
-                  name="base.microarea"
-                  render={({ field }) => (
-                    <Select
-                      value={(field.value as string) || ""}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full" aria-label="Microárea">
-                        <SelectValue placeholder="Selecionar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MICROAREA_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-              <Field label="Telefone" className="col-span-2">
-                <Controller
-                  control={form.control}
-                  name="base.telefone"
-                  render={({ field }) => (
-                    <PhoneInput
-                      value={(field.value as string) || ""}
-                      onValueChange={field.onChange}
-                      aria-label="Telefone"
-                    />
-                  )}
-                />
-              </Field>
-              <Field label="Rua" className="col-span-2">
-                <Input {...form.register("base.rua")} aria-label="Rua" />
-              </Field>
-              <Field label="Número" className="col-span-1">
-                <Input {...form.register("base.numero")} aria-label="Número" />
-              </Field>
-
-              <Field label="Complemento" className="col-span-1">
-                <Input
-                  {...form.register("base.complemento")}
-                  aria-label="Complemento"
-                />
-              </Field>
-              <Field label="Bairro" className="col-span-1">
-                <Input {...form.register("base.bairro")} aria-label="Bairro" />
-              </Field>
-              <Field label="CEP" className="col-span-1">
-                <Input
-                  {...form.register("base.cep")}
-                  aria-label="CEP"
-                  placeholder="90000-000"
-                  inputMode="numeric"
-                  maxLength={9}
-                />
-              </Field>
-              <Field label="Referência" className="col-span-2">
-                <Textarea
-                  {...form.register("base.geocodeReference")}
-                  rows={2}
-                  aria-label="Referência do endereço"
-                  placeholder="Ex.: casa azul, em frente à padaria."
-                />
-              </Field>
-              <Field label="Vulnerabilidades" className="col-span-2">
-                <Textarea
-                  {...form.register("base.vulnerabilidades")}
-                  rows={2}
-                  aria-label="Vulnerabilidades"
-                />
-              </Field>
+            )}
+            {patient.geocodeReference && (
+              <div className="rounded-md border-l-2 border-brand/40 bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-600">
+                <span className="font-medium text-neutral-700">Referência:</span>{" "}
+                {patient.geocodeReference}
+              </div>
+            )}
+            {patient.telefone && (
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Phone className="size-3.5 shrink-0 text-neutral-400" />
+                <span>{patient.telefone}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-neutral-600">
+              <User className="size-3.5 shrink-0 text-neutral-400" />
+              <span className="font-mono text-xs tracking-wide">
+                {patient.cns}
+              </span>
             </div>
-          )}
+          </dl>
 
-          {/* Vulnerabilidades callout (view mode) */}
-          {!isEditing && patient.vulnerabilidades && (
+          {/* Vulnerabilidades callout */}
+          {patient.vulnerabilidades && (
             <div className="mt-3 rounded-md bg-amber-50/70 px-2.5 py-1.5 text-[12px] text-amber-900">
               <span className="font-medium">Vulnerabilidades:</span>{" "}
               {patient.vulnerabilidades}
@@ -840,7 +584,6 @@ function PanelContent({
                       >
                         <div className="flex flex-1 items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
-                            {/* Colored icon circle */}
                             <span
                               className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
                               style={{ backgroundColor: card.color }}
@@ -876,7 +619,6 @@ function PanelContent({
                             </div>
                           </div>
 
-                          {/* Chevron indicator (dropdown lives outside the button, see below) */}
                           {openCards.includes(card.key) ? (
                             <ChevronUp className="size-4 text-neutral-400" />
                           ) : (
@@ -885,19 +627,11 @@ function PanelContent({
                         </div>
                       </AccordionTrigger>
 
-                      {/*
-                       * No card-level dropdown here. The old kebab menu held a
-                       * single "Remover condição" action, which visually
-                       * competed with the collapse chevron. The remove action
-                       * lives inline at the bottom of the expanded card body.
-                       */}
-
                       <AccordionContent className="border-t border-neutral-100">
                         <div className="px-4 py-4">
                           {card.key === "gestante" && (
                             <GestanteCardBody
                               data={data}
-                              isEditing={isEditing}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
                                 setShowAdvanced((s) => ({
@@ -905,7 +639,6 @@ function PanelContent({
                                   [card.key]: !s[card.key],
                                 }))
                               }
-                              form={form}
                               liveIg={liveIg}
                               liveDpp={liveDpp}
                             />
@@ -913,7 +646,6 @@ function PanelContent({
                           {card.key === "tuberculose" && (
                             <TuberculoseCardBody
                               data={data}
-                              isEditing={isEditing}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
                                 setShowAdvanced((s) => ({
@@ -921,13 +653,11 @@ function PanelContent({
                                   [card.key]: !s[card.key],
                                 }))
                               }
-                              form={form}
                             />
                           )}
                           {card.key === "has" && (
                             <HasCardBody
                               data={data}
-                              isEditing={isEditing}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
                                 setShowAdvanced((s) => ({
@@ -935,35 +665,9 @@ function PanelContent({
                                   [card.key]: !s[card.key],
                                 }))
                               }
-                              form={form}
                             />
                           )}
                         </div>
-                        {/*
-                         * Card-scoped destructive action lives here — visually
-                         * separated from the data grid by a border, muted
-                         * background and text style, so it doesn't compete
-                         * with the collapse chevron in the header. Hidden
-                         * during edit mode where Cancelar/Salvar own the
-                         * footer.
-                         */}
-                        {!isEditing && (
-                          <div className="flex justify-end border-t border-neutral-100 bg-neutral-50/60 px-4 py-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setConfirmState({
-                                  type: "condition",
-                                  layer: card.layer,
-                                })
-                              }
-                              className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-neutral-500 hover:bg-red-50 hover:text-destructive"
-                            >
-                              <Trash2 className="size-3" />
-                              Remover condição
-                            </button>
-                          </div>
-                        )}
                       </AccordionContent>
                     </AccordionItem>
                   </motion.div>
@@ -976,59 +680,34 @@ function PanelContent({
 
       {/* Footer */}
       <div className="shrink-0 border-t border-neutral-200 bg-neutral-50 px-4 py-3">
-        {isEditing ? (
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={handleCancelEdit}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="flex-1 bg-brand text-white hover:bg-brand/80"
-              onClick={() => void handleSave()}
-              disabled={updatePatient.isPending}
-            >
-              <Save className="mr-1 size-3.5" />
-              {updatePatient.isPending ? "Salvando…" : "Salvar"}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 border-dashed text-neutral-500"
-              onClick={() => setWizardOpen(true)}
-            >
-              <Plus className="mr-1 size-3.5" />
-              Adicionar condição
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="mr-1 size-3.5" />
-              Editar
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setConfirmState({ type: "patient" })}
-            >
-              <Trash2 className="mr-1 size-3.5" />
-              Excluir
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 border-dashed text-neutral-500"
+            onClick={openAddCondition}
+          >
+            <Plus className="mr-1 size-3.5" />
+            Adicionar condição
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openEdit}
+          >
+            <Pencil className="mr-1 size-3.5" />
+            Editar
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setConfirmState({ type: "patient" })}
+          >
+            <Trash2 className="mr-1 size-3.5" />
+            Excluir
+          </Button>
+        </div>
 
-        {/* Update timestamp */}
         {patient.updatedAt && (
           <p className="mt-1.5 text-[11px] text-neutral-400">
             Atualizado {patient.updatedAt}
@@ -1048,47 +727,26 @@ function PanelContent({
           onCancel={() => setConfirmState(null)}
         />
       )}
-      {confirmState?.type === "condition" && (
-        <ConfirmDialog
-          title="Remover condição"
-          body={`Remover a condição do paciente. Os demais dados permanecem.`}
-          confirmLabel="Remover"
-          destructive
-          isPending={deleteCondition.isPending}
-          onConfirm={() =>
-            void handleDeleteCondition(confirmState.layer)
-          }
-          onCancel={() => setConfirmState(null)}
+
+      {wizardMode && (
+        <PatientWizard
+          open
+          mode={wizardMode}
+          onClose={() => setWizardMode(null)}
         />
       )}
-
-      <PatientWizard
-        open={wizardOpen}
-        mode={{
-          kind: "add-condition",
-          patientId: patient.id,
-          alreadyAttached: [
-            patient.gestante ? "gestantes" : null,
-            patient.tuberculose ? "tuberculose" : null,
-            patient.has ? "hipertensao" : null,
-          ].filter((v): v is "gestantes" | "tuberculose" | "hipertensao" => v !== null),
-        }}
-        onClose={() => setWizardOpen(false)}
-      />
     </aside>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Card body sub-components
+// Card body sub-components — view only. Edit surface is the wizard.
 // ---------------------------------------------------------------------------
 
 type CardBodyProps = {
   data: Record<string, unknown>;
-  isEditing: boolean;
   isAdvanced: boolean;
   onToggleAdvanced: () => void;
-  form: UseFormReturn<PanelFormValues>;
 };
 
 /**
@@ -1118,122 +776,21 @@ function AdvancedToggle({
 
 function GestanteCardBody({
   data,
-  isEditing,
   isAdvanced,
-  form,
+  onToggleAdvanced,
   liveDpp,
   liveIg,
-  onToggleAdvanced,
 }: CardBodyProps & { liveDpp: string | null; liveIg: string | null }) {
-  const errors = form.formState.errors;
-  if (!isEditing) {
-    return (
-      <>
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
-          Pré-natal
-        </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <Field label="DUM">
-            <span className="text-sm text-neutral-800">
-              {(data.dum as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="DPP (calculado)">
-            <Computed
-              value={liveDpp ?? (data.dpp as string | null) ?? "—"}
-              ariaLabel="Data provável do parto"
-            />
-          </Field>
-          <Field label="IG (calculado)">
-            <Computed
-              value={
-                liveIg ??
-                (data.ig != null ? `${data.ig as number} sem` : "—")
-              }
-              ariaLabel="Idade gestacional"
-            />
-          </Field>
-          <Field label="Risco">
-            <span className="text-sm text-neutral-800">
-              {(data.risco as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Nº consultas">
-            <span className="text-sm text-neutral-800">
-              {data.numeroConsultas != null
-                ? String(data.numeroConsultas as number)
-                : "—"}
-            </span>
-          </Field>
-          <Field label="Próxima consulta">
-            <span className="text-sm text-neutral-800">
-              {(data.dataProximaConsulta as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="PA">
-            <span className="font-mono text-sm text-neutral-800">
-              {(data.pressaoArterial as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Vacina dTpa">
-            <span className="text-sm text-neutral-800">
-              {(data.vacinaDtpa as string | null) ?? "—"}
-            </span>
-          </Field>
-        </div>
-        {isAdvanced && (
-          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-neutral-100 pt-3">
-            <Field label="IG na abertura PN">
-              <span className="text-sm text-neutral-800">
-                {(data.igAbertura as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="HAS prévia">
-              <span className="text-sm text-neutral-800">
-                {(data.hasPreviaTag as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Diabetes prévia">
-              <span className="text-sm text-neutral-800">
-                {(data.diabetesPreviaTag as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Última consulta">
-              <span className="text-sm text-neutral-800">
-                {(data.dataUltimaConsulta as string | null) ?? "—"}
-              </span>
-            </Field>
-          </div>
-        )}
-        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
-      </>
-    );
-  }
-
-  // Edit mode
   return (
     <>
       <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
         Pré-natal
       </div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-        <Field
-          label="DUM"
-          error={errors.gestantes?.dum?.message}
-        >
-          <Controller
-            control={form.control}
-            name="gestantes.dum"
-            render={({ field }) => (
-              <DatePicker
-                value={parseBrDate(field.value as string)}
-                onChange={(d) =>
-                  field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-                }
-                ariaLabel="DUM"
-              />
-            )}
-          />
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label="DUM">
+          <span className="text-sm text-neutral-800">
+            {(data.dum as string | null) ?? "—"}
+          </span>
         </Field>
         <Field label="DPP (calculado)">
           <Computed
@@ -1243,364 +800,188 @@ function GestanteCardBody({
         </Field>
         <Field label="IG (calculado)">
           <Computed
-            value={liveIg ?? (data.ig != null ? `${data.ig as number} sem` : "—")}
+            value={
+              liveIg ??
+              (data.ig != null ? `${data.ig as number} sem` : "—")
+            }
             ariaLabel="Idade gestacional"
           />
         </Field>
-        <Field label="Risco" error={errors.gestantes?.risco?.message}>
-          <Controller
-            control={form.control}
-            name="gestantes.risco"
-            render={({ field }) => (
-              <Select
-                value={(field.value as string) || ""}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger className="w-full" aria-label="Risco">
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="habitual">Habitual</SelectItem>
-                  <SelectItem value="alto">Alto</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
+        <Field label="Risco">
+          <span className="text-sm text-neutral-800">
+            {(data.risco as string | null) ?? "—"}
+          </span>
         </Field>
-        <Field label="Próx. consulta" error={errors.gestantes?.dataProximaConsulta?.message}>
-          <Controller
-            control={form.control}
-            name="gestantes.dataProximaConsulta"
-            render={({ field }) => (
-              <DatePicker
-                value={parseBrDate(field.value as string)}
-                onChange={(d) =>
-                  field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-                }
-                ariaLabel="Próxima consulta"
-              />
-            )}
-          />
+        <Field label="Nº consultas">
+          <span className="text-sm text-neutral-800">
+            {data.numeroConsultas != null
+              ? String(data.numeroConsultas as number)
+              : "—"}
+          </span>
+        </Field>
+        <Field label="Próxima consulta">
+          <span className="text-sm text-neutral-800">
+            {(data.dataProximaConsulta as string | null) ?? "—"}
+          </span>
         </Field>
         <Field label="PA">
-          <Input
-            {...form.register("gestantes.pressaoArterial")}
-            aria-label="Pressão arterial"
-            className="font-mono"
-          />
+          <span className="font-mono text-sm text-neutral-800">
+            {(data.pressaoArterial as string | null) ?? "—"}
+          </span>
         </Field>
-
-        {isAdvanced && (
-          <>
-            <Field label="IG abertura PN" className="col-span-2">
-              <Input
-                {...form.register("gestantes.igAbertura")}
-                aria-label="IG na abertura do pré-natal"
-              />
-            </Field>
-            <Field label="HAS prévia">
-              <Input
-                {...form.register("gestantes.hasPreviaTag")}
-                aria-label="HAS prévia"
-              />
-            </Field>
-            <Field label="Diabetes prévia">
-              <Input
-                {...form.register("gestantes.diabetesPreviaTag")}
-                aria-label="Diabetes prévia"
-              />
-            </Field>
-          </>
-        )}
-        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
+        <Field label="Vacina dTpa">
+          <span className="text-sm text-neutral-800">
+            {(data.vacinaDtpa as string | null) ?? "—"}
+          </span>
+        </Field>
       </div>
+      {isAdvanced && (
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-neutral-100 pt-3">
+          <Field label="IG na abertura PN">
+            <span className="text-sm text-neutral-800">
+              {(data.igAbertura as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="HAS prévia">
+            <span className="text-sm text-neutral-800">
+              {(data.hasPreviaTag as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Diabetes prévia">
+            <span className="text-sm text-neutral-800">
+              {(data.diabetesPreviaTag as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Última consulta">
+            <span className="text-sm text-neutral-800">
+              {(data.dataUltimaConsulta as string | null) ?? "—"}
+            </span>
+          </Field>
+        </div>
+      )}
+      <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
     </>
   );
 }
 
 function TuberculoseCardBody({
   data,
-  isEditing,
   isAdvanced,
-  form,
   onToggleAdvanced,
 }: CardBodyProps) {
-  const errors = form.formState.errors;
-  if (!isEditing) {
-    return (
-      <>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <Field label="Tipo">
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label="Tipo">
+          <span className="text-sm text-neutral-800">
+            {(data.tipo as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Forma clínica">
+          <span className="text-sm text-neutral-800">
+            {(data.formaClinica as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Data início">
+          <span className="text-sm text-neutral-800">
+            {(data.dataInicio as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="TDO">
+          <span className="text-sm text-neutral-800">
+            {(data.tdoStatus as string | null) ?? "—"}
+          </span>
+        </Field>
+      </div>
+      {isAdvanced && (
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-neutral-100 pt-3">
+          <Field label="Esquema">
             <span className="text-sm text-neutral-800">
-              {(data.tipo as string | null) ?? "—"}
+              {(data.esquema as string | null) ?? "—"}
             </span>
           </Field>
-          <Field label="Forma clínica">
+          <Field label="Tipo entrada">
             <span className="text-sm text-neutral-800">
-              {(data.formaClinica as string | null) ?? "—"}
+              {(data.tipoEntrada as string | null) ?? "—"}
             </span>
           </Field>
-          <Field label="Data início">
+          <Field label="Encerramento">
             <span className="text-sm text-neutral-800">
-              {(data.dataInicio as string | null) ?? "—"}
+              {(data.encerramentoData as string | null) ?? "—"}
             </span>
           </Field>
-          <Field label="TDO">
+          <Field label="Motivo enc.">
             <span className="text-sm text-neutral-800">
-              {(data.tdoStatus as string | null) ?? "—"}
+              {(data.encerramentoMotivo as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Baciloscopia">
+            <span className="text-sm text-neutral-800">
+              {(data.baciloscopiaResultado as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="GAL">
+            <span className="text-sm text-neutral-800">
+              {(data.galRegistro as string | null) ?? "—"}
             </span>
           </Field>
         </div>
-        {isAdvanced && (
-          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-neutral-100 pt-3">
-            <Field label="Esquema">
-              <span className="text-sm text-neutral-800">
-                {(data.esquema as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Tipo entrada">
-              <span className="text-sm text-neutral-800">
-                {(data.tipoEntrada as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Encerramento">
-              <span className="text-sm text-neutral-800">
-                {(data.encerramentoData as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Motivo enc.">
-              <span className="text-sm text-neutral-800">
-                {(data.encerramentoMotivo as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="Baciloscopia">
-              <span className="text-sm text-neutral-800">
-                {(data.baciloscopiaResultado as string | null) ?? "—"}
-              </span>
-            </Field>
-            <Field label="GAL">
-              <span className="text-sm text-neutral-800">
-                {(data.galRegistro as string | null) ?? "—"}
-              </span>
-            </Field>
-          </div>
-        )}
-        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
-      </>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-      <Field label="Tipo">
-        <Input {...form.register("tuberculose.tipo")} aria-label="Tipo de TB" />
-      </Field>
-      <Field label="Forma clínica">
-        <Input
-          {...form.register("tuberculose.formaClinica")}
-          aria-label="Forma clínica"
-        />
-      </Field>
-      <Field label="Data início" error={errors.tuberculose?.dataInicio?.message}>
-        <Controller
-          control={form.control}
-          name="tuberculose.dataInicio"
-          render={({ field }) => (
-            <DatePicker
-              value={parseBrDate(field.value as string)}
-              onChange={(d) =>
-                field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-              }
-              ariaLabel="Data de início do tratamento"
-            />
-          )}
-        />
-      </Field>
-      <Field label="TDO">
-        <Input
-          {...form.register("tuberculose.tdoStatus")}
-          aria-label="Status TDO"
-        />
-      </Field>
-      {isAdvanced && (
-        <>
-          <Field label="Esquema">
-            <Input
-              {...form.register("tuberculose.esquema")}
-              aria-label="Esquema de tratamento"
-            />
-          </Field>
-          <Field label="Tipo entrada">
-            <Input
-              {...form.register("tuberculose.tipoEntrada")}
-              aria-label="Tipo de entrada"
-            />
-          </Field>
-          <Field label="Encerramento" error={errors.tuberculose?.encerramentoData?.message}>
-            <Controller
-              control={form.control}
-              name="tuberculose.encerramentoData"
-              render={({ field }) => (
-                <DatePicker
-                  value={parseBrDate(field.value as string)}
-                  onChange={(d) =>
-                    field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-                  }
-                  ariaLabel="Data de encerramento"
-                />
-              )}
-            />
-          </Field>
-          <Field label="Baciloscopia">
-            <Input
-              {...form.register("tuberculose.baciloscopiaResultado")}
-              aria-label="Resultado de baciloscopia"
-            />
-          </Field>
-        </>
       )}
       <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
-    </div>
+    </>
   );
 }
 
 function HasCardBody({
   data,
-  isEditing,
   isAdvanced,
-  form,
   onToggleAdvanced,
 }: CardBodyProps) {
-  const errors = form.formState.errors;
-  if (!isEditing) {
-    return (
-      <>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <Field label="Última consulta">
-            <span className="text-sm text-neutral-800">
-              {(data.dataUltimaConsulta as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Próxima consulta">
-            <span className="text-sm text-neutral-800">
-              {(data.dataProximaConsulta as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Última aferição PA">
-            <span className="text-sm text-neutral-800">
-              {(data.dataUltimaAfericaoPa as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="PA">
-            <span className="font-mono text-sm text-neutral-800">
-              {(data.pressaoArterial as string | null) ?? "—"}
-            </span>
-          </Field>
-        </div>
-        {isAdvanced && (
-          <div className="mt-3 grid grid-cols-1 gap-y-3 border-t border-neutral-100 pt-3">
-            {typeof data.registroNotas === "string" && data.registroNotas && (
-              <div>
-                <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
-                  Notas clínicas
-                </div>
-                <p className="text-sm text-neutral-800">{data.registroNotas}</p>
-              </div>
-            )}
-            {typeof data.encaminhamentos === "string" && data.encaminhamentos && (
-              <div>
-                <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
-                  Encaminhamentos
-                </div>
-                <p className="text-sm text-neutral-800">{data.encaminhamentos}</p>
-              </div>
-            )}
-          </div>
-        )}
-        <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
-      </>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-      <Field
-        label="Última consulta"
-        error={errors.hipertensao?.dataUltimaConsulta?.message}
-      >
-        <Controller
-          control={form.control}
-          name="hipertensao.dataUltimaConsulta"
-          render={({ field }) => (
-            <DatePicker
-              value={parseBrDate(field.value as string)}
-              onChange={(d) =>
-                field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-              }
-              ariaLabel="Data da última consulta"
-            />
-          )}
-        />
-      </Field>
-      <Field
-        label="Próxima consulta"
-        error={errors.hipertensao?.dataProximaConsulta?.message}
-      >
-        <Controller
-          control={form.control}
-          name="hipertensao.dataProximaConsulta"
-          render={({ field }) => (
-            <DatePicker
-              value={parseBrDate(field.value as string)}
-              onChange={(d) =>
-                field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-              }
-              ariaLabel="Data da próxima consulta"
-            />
-          )}
-        />
-      </Field>
-      <Field label="Aferição PA" error={errors.hipertensao?.dataUltimaAfericaoPa?.message}>
-        <Controller
-          control={form.control}
-          name="hipertensao.dataUltimaAfericaoPa"
-          render={({ field }) => (
-            <DatePicker
-              value={parseBrDate(field.value as string)}
-              onChange={(d) =>
-                field.onChange(d ? format(d, "dd/MM/yyyy") : "")
-              }
-              ariaLabel="Data da última aferição de PA"
-            />
-          )}
-        />
-      </Field>
-      <Field label="PA">
-        <Input
-          {...form.register("hipertensao.pressaoArterial")}
-          aria-label="Pressão arterial"
-          className="font-mono"
-        />
-      </Field>
+    <>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label="Última consulta">
+          <span className="text-sm text-neutral-800">
+            {(data.dataUltimaConsulta as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Próxima consulta">
+          <span className="text-sm text-neutral-800">
+            {(data.dataProximaConsulta as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Última aferição PA">
+          <span className="text-sm text-neutral-800">
+            {(data.dataUltimaAfericaoPa as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="PA">
+          <span className="font-mono text-sm text-neutral-800">
+            {(data.pressaoArterial as string | null) ?? "—"}
+          </span>
+        </Field>
+      </div>
       {isAdvanced && (
-        <>
-          <Field label="Notas clínicas" className="col-span-2">
-            <Textarea
-              {...form.register("hipertensao.registroNotas")}
-              rows={2}
-              aria-label="Notas clínicas"
-            />
-          </Field>
-          <Field label="Encaminhamentos" className="col-span-2">
-            <Textarea
-              {...form.register("hipertensao.encaminhamentos")}
-              rows={2}
-              aria-label="Encaminhamentos"
-            />
-          </Field>
-        </>
+        <div className="mt-3 grid grid-cols-1 gap-y-3 border-t border-neutral-100 pt-3">
+          {typeof data.registroNotas === "string" && data.registroNotas && (
+            <div>
+              <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+                Notas clínicas
+              </div>
+              <p className="text-sm text-neutral-800">{data.registroNotas}</p>
+            </div>
+          )}
+          {typeof data.encaminhamentos === "string" && data.encaminhamentos && (
+            <div>
+              <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+                Encaminhamentos
+              </div>
+              <p className="text-sm text-neutral-800">{data.encaminhamentos}</p>
+            </div>
+          )}
+        </div>
       )}
       <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
-    </div>
+    </>
   );
 }

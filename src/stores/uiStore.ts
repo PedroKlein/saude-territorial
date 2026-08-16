@@ -32,7 +32,7 @@ export const useUiStore = create<UiStore>()(
     (set, get) => ({
       showSidebar: true,
       showPanel: true,
-      showLegend: true,
+      showLegend: false,
 
       toggleSidebar: () => set((s) => ({ showSidebar: !s.showSidebar })),
       togglePanel: () => set((s) => ({ showPanel: !s.showPanel })),

@@ -25,6 +25,21 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/panels/Field";
+import { EnumField } from "@/components/panels/EnumField";
+import {
+  BACILOSCOPIA_RESULTADO_LABELS,
+  BACILOSCOPIA_RESULTADO_VALUES,
+  CULTURA_RESULTADO_LABELS,
+  CULTURA_RESULTADO_VALUES,
+  ENCERRAMENTO_MOTIVO_TB_LABELS,
+  ENCERRAMENTO_MOTIVO_TB_VALUES,
+  TDO_STATUS_LABELS,
+  TDO_STATUS_VALUES,
+  TIPO_ENTRADA_TB_LABELS,
+  TIPO_ENTRADA_TB_VALUES,
+  TRM_RESULTADO_LABELS,
+  TRM_RESULTADO_VALUES,
+} from "@/lib/patients/enums";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
@@ -38,12 +53,15 @@ const StepSchema = z.object({
   baciloscopiaRange: z.custom<DateRange | null>().optional(),
   baciloscopiaResultado: z.string().optional(),
   trmRange: z.custom<DateRange | null>().optional(),
+  trmResultado: z.string().optional(),
   culturaMTuberculosis: z.string().optional(),
   formaClinica: z.string().optional(),
   tipoEntrada: z.string().optional(),
   esquema: z.string().optional(),
   dataInicio: z.date().nullable().optional(),
-  tdoStatus: z.enum(["sim", "não", "N/A"]).optional(),
+  // Real TDO vocabulary — matches the Postgres enum `tdo_status`
+  // (was previously the wrong `sim / não / N/A`).
+  tdoStatus: z.string().optional(),
   encerramentoMotivo: z.string().optional(),
   encerramentoData: z.date().nullable().optional(),
 });
@@ -82,7 +100,8 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       formaClinica: (prev.formaClinica as string | undefined) ?? "",
       tipoEntrada: (prev.tipoEntrada as string | undefined) ?? "",
       esquema: (prev.esquema as string | undefined) ?? "",
-      tdoStatus: (prev.tdoStatus as "sim" | "não" | "N/A" | undefined),
+      tdoStatus: (prev.tdoStatus as string | undefined) ?? undefined,
+      trmResultado: (prev.trmResultado as string | undefined) ?? "",
       encerramentoMotivo: (prev.encerramentoMotivo as string | undefined) ?? "",
     },
   });
@@ -95,7 +114,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       baciloscopiaSegundaData: fmtDate(values.baciloscopiaRange?.to) || null,
       baciloscopiaResultado: values.baciloscopiaResultado || null,
       trmPrimeiraData: fmtDate(values.trmRange?.from) || null,
-      trmSegundaData: fmtDate(values.trmRange?.to) || null,
+      trmResultado: values.trmResultado || null,
       culturaMTuberculosis: values.culturaMTuberculosis || null,
       formaClinica: values.formaClinica || null,
       tipoEntrada: values.tipoEntrada || null,
@@ -153,8 +172,41 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         </Field>
 
         {/* Baciloscopia resultado */}
-        <Field label="Resultado baciloscopia" className="col-span-2">
-          <Input {...register("baciloscopiaResultado")} aria-label="Resultado da baciloscopia" />
+        <Field
+          label="Resultado baciloscopia"
+          className="col-span-2"
+          error={errors.baciloscopiaResultado?.message}
+        >
+          <Controller
+            control={control}
+            name="baciloscopiaResultado"
+            render={({ field }) => (
+              <EnumField
+                values={BACILOSCOPIA_RESULTADO_VALUES}
+                labels={BACILOSCOPIA_RESULTADO_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Resultado da baciloscopia"
+              />
+            )}
+          />
+        </Field>
+
+        {/* TRM resultado */}
+        <Field label="Resultado TRM" className="col-span-2" error={errors.trmResultado?.message}>
+          <Controller
+            control={control}
+            name="trmResultado"
+            render={({ field }) => (
+              <EnumField
+                values={TRM_RESULTADO_VALUES}
+                labels={TRM_RESULTADO_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Resultado do TRM"
+              />
+            )}
+          />
         </Field>
 
         {/* TRM range */}
@@ -173,8 +225,24 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         </Field>
 
         {/* Cultura */}
-        <Field label="Cultura M. tuberculosis" className="col-span-2">
-          <Input {...register("culturaMTuberculosis")} aria-label="Cultura M. tuberculosis" />
+        <Field
+          label="Cultura M. tuberculosis"
+          className="col-span-2"
+          error={errors.culturaMTuberculosis?.message}
+        >
+          <Controller
+            control={control}
+            name="culturaMTuberculosis"
+            render={({ field }) => (
+              <EnumField
+                values={CULTURA_RESULTADO_VALUES}
+                labels={CULTURA_RESULTADO_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Resultado da cultura"
+              />
+            )}
+          />
         </Field>
 
         {/* Forma clínica */}
@@ -183,8 +251,24 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         </Field>
 
         {/* Tipo de entrada */}
-        <Field label="Tipo de entrada" className="col-span-1">
-          <Input {...register("tipoEntrada")} aria-label="Tipo de entrada" />
+        <Field
+          label="Tipo de entrada"
+          className="col-span-1"
+          error={errors.tipoEntrada?.message}
+        >
+          <Controller
+            control={control}
+            name="tipoEntrada"
+            render={({ field }) => (
+              <EnumField
+                values={TIPO_ENTRADA_TB_VALUES}
+                labels={TIPO_ENTRADA_TB_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Tipo de entrada"
+              />
+            )}
+          />
         </Field>
 
         {/* Esquema */}
@@ -208,28 +292,41 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         </Field>
 
         {/* TDO */}
-        <Field label="TDO">
+        <Field label="TDO" error={errors.tdoStatus?.message}>
           <Controller
             control={control}
             name="tdoStatus"
             render={({ field }) => (
-              <Select value={field.value ?? ""} onValueChange={field.onChange}>
-                <SelectTrigger aria-label="Status do TDO">
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sim">Sim</SelectItem>
-                  <SelectItem value="não">Não</SelectItem>
-                  <SelectItem value="N/A">N/A</SelectItem>
-                </SelectContent>
-              </Select>
+              <EnumField
+                values={TDO_STATUS_VALUES}
+                labels={TDO_STATUS_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Status do TDO"
+              />
             )}
           />
         </Field>
 
         {/* Encerramento motivo */}
-        <Field label="Encerramento — motivo" className="col-span-1">
-          <Input {...register("encerramentoMotivo")} aria-label="Motivo de encerramento" />
+        <Field
+          label="Encerramento — motivo"
+          className="col-span-1"
+          error={errors.encerramentoMotivo?.message}
+        >
+          <Controller
+            control={control}
+            name="encerramentoMotivo"
+            render={({ field }) => (
+              <EnumField
+                values={ENCERRAMENTO_MOTIVO_TB_VALUES}
+                labels={ENCERRAMENTO_MOTIVO_TB_LABELS}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                ariaLabel="Motivo de encerramento"
+              />
+            )}
+          />
         </Field>
 
         {/* Encerramento data */}

@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -10,6 +11,41 @@ import {
 
 import { patients } from "./patients";
 
+/** Risco gestacional — LOCKED lowercase for `alert-rules.config.ts` literal match. */
+export const riscoGestante = pgEnum("risco_gestante", ["habitual", "alto"]);
+
+/** IG na abertura pré-natal (bucketizada). */
+export const igAberturaEnum = pgEnum("ig_abertura", [
+  "< 12 sem",
+  "12-24 sem",
+  "> 24 sem",
+]);
+
+/** TR/Sorologia Sífilis+HIV por trimestre. */
+export const trStatus = pgEnum("tr_status", ["Feito", "Não Feito", "Não realizada"]);
+
+/** Status de realização de uma ação clínica. */
+export const statusRealizacao = pgEnum("status_realizacao", [
+  "Realizada",
+  "Não realizada",
+  "A realizar",
+  "Não se aplica",
+]);
+
+/** Acompanhamento peso/altura pré-natal — vocabulário próprio. */
+export const acompanhamentoStatus = pgEnum("acompanhamento_status", [
+  "Em dia",
+  "Atrasada",
+  "Não realizada",
+]);
+
+/** Resultado consolidado do Teste Rápido — EXPOSTA aciona a sub-layer. */
+export const resultadoTesteRapido = pgEnum("resultado_teste_rapido", [
+  "MONITORAR",
+  "EXPOSTA",
+  "REAGENTE",
+  "Não Reagente",
+]);
 /**
  * `gestantes_data` — pregnancy-specific fields.
  *
@@ -35,10 +71,9 @@ export const gestantesData = pgTable("gestantes_data", {
   // Core pré-natal (sheet cols I, J, K, L, N, O, U)
   dum: date("dum"), // Data da Última Menstruação (col I)
   dpp: date("dpp"), // Data Provável do Parto (col J)
-  risco: text("risco"), // 'habitual' | 'alto' — normalized at API boundary (col K)
+  risco: riscoGestante("risco"), // 'habitual' | 'alto' — LOCKED lowercase (col K)
   // Bucketed text like "<12 sem", "12-24 sem", ">24 sem" (col L).
-  // Kept as text because the buckets are clinically meaningful, not a raw week count.
-  igAbertura: text("ig_abertura"),
+  igAbertura: igAberturaEnum("ig_abertura"),
   dataUltimaConsulta: date("data_ultima_consulta"), // col N
   dataProximaConsulta: date("data_proxima_consulta"), // col O — post-MVP alert
   numeroConsultas: integer("numero_consultas").notNull().default(0), // col U
@@ -51,25 +86,25 @@ export const gestantesData = pgTable("gestantes_data", {
 
   // Monitoramento clínico (sheet cols P, X, Y, Z + PA)
   pressaoArterial: text("pressao_arterial"), // last reading e.g. "120/80"
-  acompanhamentoPesoAltura: text("acompanhamento_peso_altura"), // "Em dia" | "Atrasada" | ""
+  acompanhamentoPesoAltura: acompanhamentoStatus("acompanhamento_peso_altura"),
   numeroVisitasDomiciliares: integer("numero_visitas_domiciliares").notNull().default(0),
-  avaliacaoOdontoStatus: text("avaliacao_odonto_status"), // "Realizada" | "Agendada" | "Não realizada" | ""
-  vacinaDtpa: text("vacina_dtpa"), // relevant after 20 semanas (col Z)
+  avaliacaoOdontoStatus: statusRealizacao("avaliacao_odonto_status"),
+  vacinaDtpa: statusRealizacao("vacina_dtpa"), // relevant after 20 semanas (col Z)
 
   // Exames TR / sorologia (sheet cols Q, R, S, T, AA, AB)
-  trPrimeiroTri: text("tr_primeiro_tri"), // "Feito" | "Não Feito" | ""
-  trSegundoTri: text("tr_segundo_tri"),
-  trTerceiroTri: text("tr_terceiro_tri"),
-  // "Não Reagente" | "REAGENTE" | "MONITORAR" | "". REAGENTE flips isExposta=true on save.
-  resultadoTr: text("resultado_tr"),
-  trHepBHepCPrimeiroTri: text("tr_hep_b_hep_c_primeiro_tri"), // AA — extended painel Sífilis+HIV+HepB+HepC
-  trSifHivTerceiroTri: text("tr_sif_hiv_terceiro_tri"), // AB
+  trPrimeiroTri: trStatus("tr_primeiro_tri"),
+  trSegundoTri: trStatus("tr_segundo_tri"),
+  trTerceiroTri: trStatus("tr_terceiro_tri"),
+  // REAGENTE / EXPOSTA flips isExposta=true on save.
+  resultadoTr: resultadoTesteRapido("resultado_tr"),
+  trHepBHepCPrimeiroTri: statusRealizacao("tr_hep_b_hep_c_primeiro_tri"), // AA
+  trSifHivTerceiroTri: statusRealizacao("tr_sif_hiv_terceiro_tri"), // AB
 
   // Puerpério (sheet cols AC, AD, AE) — three fields, not one boolean
   isPuerpera: boolean("is_puerpera").notNull().default(false),
-  puerperioConsulta: text("puerperio_consulta"), // AC
-  puerperioVisitaDomiciliar: text("puerperio_visita_domiciliar"), // AD
-  puerperioAvaliacaoOdonto: text("puerperio_avaliacao_odonto"), // AE
+  puerperioConsulta: statusRealizacao("puerperio_consulta"), // AC
+  puerperioVisitaDomiciliar: statusRealizacao("puerperio_visita_domiciliar"), // AD
+  puerperioAvaliacaoOdonto: statusRealizacao("puerperio_avaliacao_odonto"), // AE
 
   // Exposição — collapsed boolean; the Sheet's "Gestantes expostas" tab has
   // 27 additional cols (TARV, VDRL, Anti-HBs, etc.) deferred post-MVP.

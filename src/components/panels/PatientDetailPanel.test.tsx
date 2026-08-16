@@ -80,8 +80,14 @@ vi.mock("lottie-react", () => ({
 }));
 
 // Stub PatientWizard so the panel tests stay focused on the panel itself.
+// The `wizardMock` is hoisted so the vi.mock factory can reference it before
+// the module under test loads. Each test resets it via beforeEach below.
+const { wizardMock } = vi.hoisted(() => ({ wizardMock: vi.fn() }));
 vi.mock("@/components/wizard/PatientWizard", () => ({
-  PatientWizard: () => null,
+  PatientWizard: (props: { open: boolean; mode: { kind: string } }) => {
+    wizardMock(props);
+    return null;
+  },
 }));
 
 // Stub Radix dropdown-menu so content renders inline (no portal in JSDOM)
@@ -193,6 +199,7 @@ beforeEach(() => {
   mocks.deletePatient.mutateAsync.mockReset();
   mocks.deleteCondition.mutateAsync.mockReset();
   mocks.updatePatient.mutateAsync.mockReset();
+  wizardMock.mockReset();
 });
 
 // ---------------------------------------------------------------------------
@@ -292,7 +299,7 @@ describe("PatientDetailPanel", () => {
     expect(screen.queryByText("Tuberculose")).not.toBeInTheDocument();
   });
 
-  it("clicking Editar flips panel into edit mode (inputs appear)", async () => {
+  it("clicking Editar opens the wizard in edit mode", async () => {
     mocks.selectedPatient = "test-patient-uuid-001";
     mocks.usePatient.mockReturnValue({
       data: BASE_PATIENT,
@@ -303,19 +310,26 @@ describe("PatientDetailPanel", () => {
 
     render(<PatientDetailPanel />, { wrapper: Wrapper });
 
-    // Find and click the edit pencil icon button
+    // Panel remains in view mode; wizard is not open yet.
+    expect(
+      wizardMock.mock.calls.every(([p]) => !p.open),
+    ).toBe(true);
+
     const editBtn = screen.getByLabelText("Editar paciente");
     fireEvent.click(editBtn);
 
     await waitFor(() => {
-      // In edit mode, the header shows "Editar paciente"
-      expect(screen.getByText("Editar paciente")).toBeInTheDocument();
-      // The Name field becomes an input
-      expect(screen.getByLabelText("Nome completo")).toBeInTheDocument();
+      // Header stays as "Detalhes do paciente" — edit surface now lives in the wizard.
+      expect(screen.getByText("Detalhes do paciente")).toBeInTheDocument();
+      // The wizard was mounted with mode.kind === "edit".
+      const editCall = wizardMock.mock.calls.find(
+        ([p]) => p.open && p.mode?.kind === "edit",
+      );
+      expect(editCall).toBeDefined();
     });
   });
 
-  it("clicking 'Remover condição' opens the confirm dialog", async () => {
+  it("remove-condition is not directly reachable from the panel view", () => {
     mocks.selectedPatient = "test-patient-uuid-001";
     mocks.usePatient.mockReturnValue({
       data: { ...BASE_PATIENT, gestante: GESTANTE_CONDITION },
@@ -326,19 +340,9 @@ describe("PatientDetailPanel", () => {
 
     render(<PatientDetailPanel />, { wrapper: Wrapper });
 
-    // With the inlined dropdown mock, "Remover condição" button is always in the DOM
-    const removeButtons = screen.getAllByText(/Remover condição/i);
-    // Click the first one — the dropdown item button
-    fireEvent.click(removeButtons[0]);
-
-    await waitFor(() => {
-      // The ConfirmDialog body text appears after clicking
-      expect(
-        screen.getByText(/Os demais dados permanecem/i),
-      ).toBeInTheDocument();
-      // The confirm action button
-      expect(screen.getByText("Remover")).toBeInTheDocument();
-    });
+    // The "Remover condição" button must NOT exist anywhere in the panel
+    // (removal now lives in the wizard's edit step, not the view panel).
+    expect(screen.queryByText(/Remover condição/i)).toBeNull();
   });
 
   it("Excluir paciente button opens patient delete confirm dialog", async () => {

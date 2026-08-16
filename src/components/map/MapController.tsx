@@ -10,7 +10,14 @@ interface MapControllerProps {
 }
 
 /**
- * Programmatic map control: flies to the selected patient's coordinates.
+ * Programmatic map control: flies to the selected patient's coordinates on
+ * every selection change.
+ *
+ * When the user is already zoomed in tighter than the target zoom, the
+ * current zoom is preserved so we don't zoom OUT on a nearby click. Any
+ * cross-page transition (e.g. from `/pacientes` → `/map?patient=…`) lands
+ * on the patient at zoom 17.
+ *
  * Must be rendered inside <MapContainer>.
  */
 export function MapController({ data }: MapControllerProps) {
@@ -24,24 +31,17 @@ export function MapController({ data }: MapControllerProps) {
       return;
     }
 
-    // Only fly when selection changes (not on re-renders)
+    // Only fly when the selection actually changes.
     if (selectedPatient === prevSelected.current) return;
     prevSelected.current = selectedPatient;
 
-    // Find the patient's coordinates across all layers
     for (const patients of Object.values(data)) {
       if (!patients) continue;
       const patient = patients.find((p) => p.id === selectedPatient);
-      if (patient) {
-        // Only fly if the patient is not already visible in the current viewport
-        const patientLatLng = { lat: patient.lat, lng: patient.lng };
-        const bounds = map.getBounds();
-
-        if (!bounds.contains(patientLatLng)) {
-          map.flyTo([patient.lat, patient.lng], 17, { duration: 0.5 });
-        }
-        break;
-      }
+      if (!patient) continue;
+      const targetZoom = Math.max(map.getZoom(), 17);
+      map.flyTo([patient.lat, patient.lng], targetZoom, { duration: 0.5 });
+      break;
     }
   }, [selectedPatient, data, map]);
 

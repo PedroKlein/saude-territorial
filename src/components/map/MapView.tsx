@@ -67,15 +67,17 @@ const US_ICON = L.divIcon({
 function RightClickCatcher({
   pinningPatient,
   plannerDrawerOpen,
+  mapSelectMode,
   onRightClick,
 }: {
   pinningPatient: unknown;
   plannerDrawerOpen: boolean;
+  mapSelectMode: boolean;
   onRightClick: (c: { lat: number; lng: number }) => void;
 }) {
   useMapEvents({
     contextmenu(e) {
-      if (pinningPatient !== null || plannerDrawerOpen) return;
+      if (pinningPatient !== null || plannerDrawerOpen || mapSelectMode) return;
       e.originalEvent.preventDefault();
       onRightClick({ lat: e.latlng.lat, lng: e.latlng.lng });
     },
@@ -97,6 +99,7 @@ export default function MapView() {
   const setPinningPatient = useMapStore((s) => s.setPinningPatient);
   const plannerDrawerOpen = usePlannerStore((s) => s.drawerOpen);
   const plannerStops = usePlannerStore((s) => s.stops);
+  const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -295,6 +298,7 @@ export default function MapView() {
         <RightClickCatcher
           pinningPatient={pinningPatient}
           plannerDrawerOpen={plannerDrawerOpen}
+          mapSelectMode={mapSelectMode}
           onRightClick={setRightClickCoords}
         />
 

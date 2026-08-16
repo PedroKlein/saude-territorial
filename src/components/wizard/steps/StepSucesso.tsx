@@ -48,10 +48,17 @@ export function StepSucesso({
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
 
   const isNew = resolvedMode.kind === "new";
-  const title = isNew ? "Paciente cadastrado!" : "Condição adicionada!";
-  const subtitle = isNew
-    ? "O novo paciente já está disponível no mapa."
-    : "A condição foi vinculada com sucesso ao paciente.";
+  const isEdit = resolvedMode.kind === "edit";
+  const title = isEdit
+    ? "Paciente atualizado!"
+    : isNew
+      ? "Paciente cadastrado!"
+      : "Condição adicionada!";
+  const subtitle = isEdit
+    ? "As alterações foram salvas."
+    : isNew
+      ? "O novo paciente já está disponível no mapa."
+      : "A condição foi vinculada com sucesso ao paciente.";
 
   const handleViewOnMap = () => {
     if (patientId) setSelectedPatient(patientId);
