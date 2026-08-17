@@ -222,7 +222,7 @@ A `/importar` page:
 
 Each session is scoped to fit an omp conversation without churning through context.
 
-### Phase A — Enum discipline + validation hardening on existing fields
+### Phase A — Enum discipline + validation hardening on existing fields — ✅ DONE (commit `2b3f5d4`)
 **Deliverable:** every existing enum-shaped `text` column becomes a Postgres enum with Zod parity; every existing form field gets cross-field validation. NO new columns or layers.
 
 - New migration adds `pg_enum` types + column-type conversions with USING casts.
@@ -233,7 +233,7 @@ Each session is scoped to fit an omp conversation without churning through conte
 
 Estimated size: one session, no new UI concepts.
 
-### Phase B — Existing layer completions
+### Phase B — Existing layer completions — ⏳ NEXT
 **Deliverable:** Gestantes gains its missing columns (odonto, TR sorologia trimestres, pós-parto trio, resultado teste rápido); HAS gains próxima consulta + aferição PA + registro + encaminhamentos; Tuberculose gains the treatment monitoring, TDO, encerramento, contatos.
 
 - New migrations per layer.
@@ -243,7 +243,7 @@ Estimated size: one session, no new UI concepts.
 
 Estimated size: one session.
 
-### Phase C — New patient-scoped layers
+### Phase C — New patient-scoped layers — ⏳ PENDING
 **Deliverable:** Diabetes + Exame pé diabético (as sub-layer with auto-linking) + Domiciliados/Acamados land as first-class layers with wizard integration, panel cards, filter chips, and default (non-alerting) sidebar entries.
 
 - Three migrations, three extension tables.
@@ -254,7 +254,7 @@ Estimated size: one session.
 
 Estimated size: one session (bigger). Might split.
 
-### Phase D — Institutions (ILPI + PSE)
+### Phase D — Institutions (ILPI + PSE) — ⏳ PENDING
 **Deliverable:** new `institutions` + `institution_activities` tables; `patients.institution_id` FK; institution list page + detail page; map layer overlay for institutions.
 
 - Distinct from patient layer — treat as its own module.
@@ -263,7 +263,7 @@ Estimated size: one session (bigger). Might split.
 
 Estimated size: one session, standalone.
 
-### Phase E — XLSX importer (Layers 1–3 above)
+### Phase E — XLSX importer (Layers 1–3 above) — ⏳ PENDING (depends on A–D)
 **Deliverable:** `/importar` page with preflight + commit + audit; per-tab parsers for all ten tabs. Depends on A–D being done so the target schema is complete.
 
 Estimated size: one session but the biggest — parsers are ~150–300 LoC each; testing needs synthetic input files that exercise both the happy path and known error patterns.
