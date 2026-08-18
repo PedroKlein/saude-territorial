@@ -19,7 +19,10 @@ services:
       POSTGRES_PASSWORD: saude
       POSTGRES_DB: saude_territorial
     ports:
-      - "5432:5432"
+      # Host port is overridable: if 5432 is already taken (another local
+      # Postgres, etc.), set DB_PORT in a local `.env` file and change the
+      # port in your `.env.local` DATABASE_URL to match.
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - saude-pgdata:/var/lib/postgresql/data
     healthcheck:

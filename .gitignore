@@ -8,6 +8,8 @@ node_modules/
 # Environment variables
 .env.local
 .env*.local
+# Compose reads a bare .env for DB_PORT overrides; keep it local.
+.env
 
 # TypeScript build info
 *.tsbuildinfo

@@ -51,7 +51,20 @@ depends = ["type-check", "lint", "test"]
 
 [tasks."db:up"]
 description = "Start the local Postgres (docker compose) and wait until healthy"
-run = "docker compose up -d --wait"
+run = """
+# Only start the local docker Postgres when DATABASE_URL points at localhost.
+# A remote DATABASE_URL (managed/hosted Postgres) needs no local container, and
+# starting one would just collide with whatever else owns the host port.
+url="$(sed -n 's/^DATABASE_URL=//p' .env.local 2>/dev/null | head -1)"
+case "$url" in
+  ""|*@localhost:*|*@127.0.0.1:*)
+    docker compose up -d --wait ;;
+  *)
+    echo "DATABASE_URL is not local, so skipping the docker Postgres:"
+    echo "  $url"
+    echo "Migrations and the app will use that DATABASE_URL directly." ;;
+esac
+"""
 
 [tasks."db:down"]
 description = "Stop the local Postgres container (keeps data volume)"
@@ -91,7 +104,7 @@ description = "One-command local setup: install, DB, migrations, synthetic data,
 run = """
 pnpm install
 [ -f .env.local ] || cp .env.local.example .env.local
-docker compose up -d --wait
+mise run db:up
 echo y | npx @better-auth/cli migrate
 pnpm db:migrate
 pnpm db:seed
