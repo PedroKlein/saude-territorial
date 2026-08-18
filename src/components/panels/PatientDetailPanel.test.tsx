@@ -188,6 +188,55 @@ const HAS_CONDITION: Record<string, unknown> = {
   updatedAt: "01/08/2026",
 };
 
+/** Gestante with the full Phase B field set surfaced under "Mostrar mais". */
+const GESTANTE_FULL: Record<string, unknown> = {
+  ...GESTANTE_CONDITION,
+  igAbertura: "< 12 sem",
+  acompanhamentoPesoAltura: "Em dia",
+  numeroVisitasDomiciliares: 3,
+  avaliacaoOdontoStatus: "Realizada",
+  trPrimeiroTri: "Feito",
+  trSegundoTri: "Não Feito",
+  trTerceiroTri: "Não realizada",
+  resultadoTr: "MONITORAR",
+  trHepBHepCPrimeiroTri: "Realizada",
+  trSifHivTerceiroTri: "A realizar",
+  isPuerpera: true,
+  puerperioConsulta: "Realizada",
+  puerperioVisitaDomiciliar: "A realizar",
+  puerperioAvaliacaoOdonto: "Não realizada",
+  isExposta: true,
+};
+
+/** Tuberculose with the full Phase B field set. */
+const TB_FULL: Record<string, unknown> = {
+  tipo: "Pulmonar",
+  galRegistro: "GAL-123",
+  baciloscopiaPrimeiraData: "01/02/2026",
+  baciloscopiaSegundaData: "15/02/2026",
+  baciloscopiaResultado: "Positiva",
+  trmPrimeiraData: "01/02/2026",
+  trmSegundaData: "15/02/2026",
+  trmResultado: "Detectável",
+  culturaMTuberculosis: "Pendente",
+  formaClinica: "Cavitária",
+  tipoEntrada: "Caso novo",
+  esquema: "RHZE",
+  dataInicio: "01/03/2026",
+  tdoStatus: "TDO regular",
+  encerramentoMotivo: null,
+  encerramentoData: null,
+  outrosExames: "Nenhum",
+  ppdMm: 12,
+  histopatologia: "Granuloma",
+  rxTorax: "Infiltrado apical",
+  formaTratamento: "Autoadministrado",
+  contatosCoabitantes: 4,
+  contatosExaminados: 2,
+  todosContatosExaminados: false,
+  updatedAt: "01/08/2026",
+};
+
 // ---------------------------------------------------------------------------
 // Test setup
 // ---------------------------------------------------------------------------
@@ -362,5 +411,50 @@ describe("PatientDetailPanel", () => {
     await waitFor(() => {
       expect(screen.getByText("Excluir paciente")).toBeInTheDocument();
     });
+  });
+
+  it("surfaces gestante full-parity fields under 'Mostrar mais'", () => {
+    mocks.selectedPatient = "test-patient-uuid-001";
+    mocks.usePatient.mockReturnValue({
+      data: { ...BASE_PATIENT, gestante: GESTANTE_FULL },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    render(<PatientDetailPanel />, { wrapper: Wrapper });
+
+    // Advanced-only fields are hidden until the card is expanded.
+    expect(screen.queryByText("Resultado teste rápido")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Mostrar mais"));
+
+    expect(screen.getByText("Resultado teste rápido")).toBeInTheDocument();
+    expect(screen.getByText("MONITORAR")).toBeInTheDocument();
+    expect(screen.getByText("TR Sífilis/HIV — 1º tri")).toBeInTheDocument();
+    expect(screen.getByText("Puerpério — consulta")).toBeInTheDocument();
+    expect(screen.getByText("Exposta (HIV/sífilis)")).toBeInTheDocument();
+  });
+
+  it("surfaces tuberculose full-parity fields under 'Mostrar mais'", () => {
+    mocks.selectedPatient = "test-patient-uuid-001";
+    mocks.usePatient.mockReturnValue({
+      data: { ...BASE_PATIENT, tuberculose: TB_FULL },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    render(<PatientDetailPanel />, { wrapper: Wrapper });
+
+    expect(screen.queryByText("PPD (mm)")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Mostrar mais"));
+
+    expect(screen.getByText("PPD (mm)")).toBeInTheDocument();
+    expect(screen.getByText("Histopatologia")).toBeInTheDocument();
+    expect(screen.getByText("Granuloma")).toBeInTheDocument();
+    expect(screen.getByText("Contatos coabitantes")).toBeInTheDocument();
+    expect(screen.getByText("Forma de tratamento")).toBeInTheDocument();
   });
 });

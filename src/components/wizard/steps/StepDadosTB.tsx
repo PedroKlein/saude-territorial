@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Field } from "@/components/panels/Field";
 import { TuberculosePatchSchema } from "@/lib/patients/schemas";
 import { EnumField } from "@/components/panels/EnumField";
@@ -61,11 +62,18 @@ const StepSchema = z.object({
   tipoEntrada: z.string().optional(),
   esquema: z.string().optional(),
   dataInicio: z.date().nullable().optional(),
-  // Real TDO vocabulary — matches the Postgres enum `tdo_status`
-  // (was previously the wrong `sim / não / N/A`).
   tdoStatus: z.string().optional(),
   encerramentoMotivo: z.string().optional(),
   encerramentoData: z.date().nullable().optional(),
+  // Advanced
+  ppdMm: z.number().int().min(0).max(30).optional(),
+  histopatologia: z.string().optional(),
+  rxTorax: z.string().optional(),
+  outrosExames: z.string().optional(),
+  formaTratamento: z.string().optional(),
+  contatosCoabitantes: z.number().int().min(0).optional(),
+  contatosExaminados: z.number().int().min(0).optional(),
+  todosContatosExaminados: z.boolean().optional(),
 });
 
 type StepValues = z.infer<typeof StepSchema>;
@@ -95,7 +103,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
   } = useForm<StepValues>({
     resolver: zodResolver(StepSchema),
     defaultValues: {
-      tipo: (prev.tipo as "Pulmonar" | "Extrapulmonar" | undefined),
+      tipo: prev.tipo as "Pulmonar" | "Extrapulmonar" | undefined,
       galRegistro: (prev.galRegistro as string | undefined) ?? "",
       baciloscopiaResultado: (prev.baciloscopiaResultado as string | undefined) ?? "",
       culturaMTuberculosis: (prev.culturaMTuberculosis as string | undefined) ?? "",
@@ -105,10 +113,19 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       tdoStatus: (prev.tdoStatus as string | undefined) ?? undefined,
       trmResultado: (prev.trmResultado as string | undefined) ?? "",
       encerramentoMotivo: (prev.encerramentoMotivo as string | undefined) ?? "",
+      ppdMm: prev.ppdMm as number | undefined,
+      histopatologia: (prev.histopatologia as string | undefined) ?? "",
+      rxTorax: (prev.rxTorax as string | undefined) ?? "",
+      outrosExames: (prev.outrosExames as string | undefined) ?? "",
+      formaTratamento: (prev.formaTratamento as string | undefined) ?? "",
+      contatosCoabitantes: prev.contatosCoabitantes as number | undefined,
+      contatosExaminados: prev.contatosExaminados as number | undefined,
+      todosContatosExaminados: (prev.todosContatosExaminados as boolean | undefined) ?? false,
     },
   });
 
   const [serverIssues, setServerIssues] = useState<string[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const onSubmit = handleSubmit((values) => {
     const raw: Record<string, unknown> = {
@@ -118,6 +135,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       baciloscopiaSegundaData: fmtDate(values.baciloscopiaRange?.to) || null,
       baciloscopiaResultado: values.baciloscopiaResultado || null,
       trmPrimeiraData: fmtDate(values.trmRange?.from) || null,
+      trmSegundaData: fmtDate(values.trmRange?.to) || null,
       trmResultado: values.trmResultado || null,
       culturaMTuberculosis: values.culturaMTuberculosis || null,
       formaClinica: values.formaClinica || null,
@@ -127,6 +145,14 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       tdoStatus: values.tdoStatus ?? null,
       encerramentoMotivo: values.encerramentoMotivo || null,
       encerramentoData: fmtDate(values.encerramentoData) || null,
+      ppdMm: values.ppdMm ?? null,
+      histopatologia: values.histopatologia || null,
+      rxTorax: values.rxTorax || null,
+      outrosExames: values.outrosExames || null,
+      formaTratamento: values.formaTratamento || null,
+      contatosCoabitantes: values.contatosCoabitantes ?? null,
+      contatosExaminados: values.contatosExaminados ?? null,
+      todosContatosExaminados: values.todosContatosExaminados ?? null,
     };
     const parsed = TuberculosePatchSchema.safeParse(raw);
     if (!parsed.success) {
@@ -362,6 +388,83 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
       </div>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="text-xs text-muted-foreground"
+      >
+        {showAdvanced ? "Ocultar" : "Mostrar"} campos avançados
+      </Button>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-lg border border-dashed p-3">
+          <Field label="PPD (mm)" className="col-span-1" error={errors.ppdMm?.message}>
+            <Input
+              {...register("ppdMm", { valueAsNumber: true })}
+              type="number"
+              min={0}
+              max={30}
+              aria-label="PPD em milímetros"
+            />
+          </Field>
+          <Field label="Forma de tratamento" className="col-span-1">
+            <Input {...register("formaTratamento")} aria-label="Forma de tratamento" />
+          </Field>
+          <Field label="Histopatologia" className="col-span-2">
+            <Input {...register("histopatologia")} aria-label="Histopatologia" />
+          </Field>
+          <Field label="RX tórax" className="col-span-2">
+            <Input {...register("rxTorax")} aria-label="RX tórax" />
+          </Field>
+          <Field label="Outros exames" className="col-span-2">
+            <Input {...register("outrosExames")} aria-label="Outros exames" />
+          </Field>
+          <Field
+            label="Contatos coabitantes"
+            className="col-span-1"
+            error={errors.contatosCoabitantes?.message}
+          >
+            <Input
+              {...register("contatosCoabitantes", { valueAsNumber: true })}
+              type="number"
+              min={0}
+              aria-label="Número de contatos coabitantes"
+            />
+          </Field>
+          <Field
+            label="Contatos examinados"
+            className="col-span-1"
+            error={errors.contatosExaminados?.message}
+          >
+            <Input
+              {...register("contatosExaminados", { valueAsNumber: true })}
+              type="number"
+              min={0}
+              aria-label="Número de contatos examinados"
+            />
+          </Field>
+          <Field label="Todos os contatos examinados" className="col-span-2">
+            <Controller
+              control={control}
+              name="todosContatosExaminados"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={field.value ?? false}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    className="accent-brand"
+                  />
+                  Todos os contatos foram examinados
+                </label>
+              )}
+            />
+          </Field>
+        </div>
+      )}
     </form>
   );
 }

@@ -857,6 +857,86 @@ function GestanteCardBody({
               {(data.dataUltimaConsulta as string | null) ?? "—"}
             </span>
           </Field>
+          <Field label="Acompanhamento peso/altura">
+            <span className="text-sm text-neutral-800">
+              {(data.acompanhamentoPesoAltura as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Nº visitas domiciliares">
+            <span className="text-sm text-neutral-800">
+              {data.numeroVisitasDomiciliares != null
+                ? String(data.numeroVisitasDomiciliares as number)
+                : "—"}
+            </span>
+          </Field>
+          <Field label="Avaliação odonto">
+            <span className="text-sm text-neutral-800">
+              {(data.avaliacaoOdontoStatus as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TR Sífilis/HIV — 1º tri">
+            <span className="text-sm text-neutral-800">
+              {(data.trPrimeiroTri as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TR Sífilis/HIV — 2º tri">
+            <span className="text-sm text-neutral-800">
+              {(data.trSegundoTri as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TR Sífilis/HIV — 3º tri">
+            <span className="text-sm text-neutral-800">
+              {(data.trTerceiroTri as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Resultado teste rápido">
+            <span className="text-sm text-neutral-800">
+              {(data.resultadoTr as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TR/Aval. Síf+HIV+HepB+HepC — 1º tri">
+            <span className="text-sm text-neutral-800">
+              {(data.trHepBHepCPrimeiroTri as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TR/Aval. Síf+HIV — 3º tri">
+            <span className="text-sm text-neutral-800">
+              {(data.trSifHivTerceiroTri as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Exposta (HIV/sífilis)">
+            <span className="text-sm text-neutral-800">
+              {data.isExposta === true
+                ? "Sim"
+                : data.isExposta === false
+                  ? "Não"
+                  : "—"}
+            </span>
+          </Field>
+          <Field label="Puérpera">
+            <span className="text-sm text-neutral-800">
+              {data.isPuerpera === true
+                ? "Sim"
+                : data.isPuerpera === false
+                  ? "Não"
+                  : "—"}
+            </span>
+          </Field>
+          <Field label="Puerpério — consulta">
+            <span className="text-sm text-neutral-800">
+              {(data.puerperioConsulta as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Puerpério — visita domiciliar">
+            <span className="text-sm text-neutral-800">
+              {(data.puerperioVisitaDomiciliar as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Puerpério — avaliação odonto">
+            <span className="text-sm text-neutral-800">
+              {(data.puerperioAvaliacaoOdonto as string | null) ?? "—"}
+            </span>
+          </Field>
         </div>
       )}
       <AdvancedToggle isAdvanced={isAdvanced} onToggle={onToggleAdvanced} />
@@ -923,6 +1003,84 @@ function TuberculoseCardBody({
           <Field label="GAL">
             <span className="text-sm text-neutral-800">
               {(data.galRegistro as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TRM (resultado)">
+            <span className="text-sm text-neutral-800">
+              {(data.trmResultado as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Cultura M. tuberculosis">
+            <span className="text-sm text-neutral-800">
+              {(data.culturaMTuberculosis as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Baciloscopia 1ª amostra">
+            <span className="text-sm text-neutral-800">
+              {(data.baciloscopiaPrimeiraData as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Baciloscopia 2ª amostra">
+            <span className="text-sm text-neutral-800">
+              {(data.baciloscopiaSegundaData as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TRM 1ª amostra">
+            <span className="text-sm text-neutral-800">
+              {(data.trmPrimeiraData as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="TRM 2ª amostra">
+            <span className="text-sm text-neutral-800">
+              {(data.trmSegundaData as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="PPD (mm)">
+            <span className="text-sm text-neutral-800">
+              {data.ppdMm != null ? String(data.ppdMm as number) : "—"}
+            </span>
+          </Field>
+          <Field label="Histopatologia">
+            <span className="text-sm text-neutral-800">
+              {(data.histopatologia as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="RX tórax">
+            <span className="text-sm text-neutral-800">
+              {(data.rxTorax as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Outros exames">
+            <span className="text-sm text-neutral-800">
+              {(data.outrosExames as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Forma de tratamento">
+            <span className="text-sm text-neutral-800">
+              {(data.formaTratamento as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Contatos coabitantes">
+            <span className="text-sm text-neutral-800">
+              {data.contatosCoabitantes != null
+                ? String(data.contatosCoabitantes as number)
+                : "—"}
+            </span>
+          </Field>
+          <Field label="Contatos examinados">
+            <span className="text-sm text-neutral-800">
+              {data.contatosExaminados != null
+                ? String(data.contatosExaminados as number)
+                : "—"}
+            </span>
+          </Field>
+          <Field label="Todos os contatos examinados">
+            <span className="text-sm text-neutral-800">
+              {data.todosContatosExaminados === true
+                ? "Sim"
+                : data.todosContatosExaminados === false
+                  ? "Não"
+                  : "—"}
             </span>
           </Field>
         </div>

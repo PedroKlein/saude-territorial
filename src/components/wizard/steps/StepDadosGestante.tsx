@@ -22,13 +22,6 @@ import { AlertTriangle } from "lucide-react";
 import { GestantesPatchSchema } from "@/lib/patients/schemas";
 import { computeDpp, computeIg, formatIg } from "@/lib/patients/dates";
 import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/panels/Field";
 import { Computed } from "@/components/panels/Computed";
@@ -36,10 +29,18 @@ import { PressureInput } from "@/components/ui/masked-input";
 import { Button } from "@/components/ui/button";
 import { EnumField } from "@/components/panels/EnumField";
 import {
+  ACOMPANHAMENTO_STATUS_LABELS,
+  ACOMPANHAMENTO_STATUS_VALUES,
+  IG_ABERTURA_LABELS,
+  IG_ABERTURA_VALUES,
+  RESULTADO_TR_LABELS,
+  RESULTADO_TR_VALUES,
   RISCO_LABELS,
   RISCO_VALUES,
   STATUS_REALIZACAO_LABELS,
   STATUS_REALIZACAO_VALUES,
+  TR_STATUS_LABELS,
+  TR_STATUS_VALUES,
 } from "@/lib/patients/enums";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
@@ -51,13 +52,29 @@ import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 const StepSchema = z.object({
   dum: z.date().nullable().optional(),
   risco: z.enum(["habitual", "alto"]).optional(),
+  igAbertura: z.string().optional(),
   dataUltimaConsulta: z.date().nullable().optional(),
   dataProximaConsulta: z.date().nullable().optional(),
   numeroConsultas: z.number().int().min(0).optional(),
   pressaoArterial: z.string().optional(),
+  hasPreviaTag: z.string().optional(),
+  diabetesPreviaTag: z.string().optional(),
   // Advanced
+  acompanhamentoPesoAltura: z.string().optional(),
+  numeroVisitasDomiciliares: z.number().int().min(0).optional(),
+  avaliacaoOdontoStatus: z.string().optional(),
   vacinaDtpa: z.string().optional(),
+  trPrimeiroTri: z.string().optional(),
+  trSegundoTri: z.string().optional(),
+  trTerceiroTri: z.string().optional(),
+  resultadoTr: z.string().optional(),
+  trHepBHepCPrimeiroTri: z.string().optional(),
+  trSifHivTerceiroTri: z.string().optional(),
   isPuerpera: z.boolean().optional(),
+  puerperioConsulta: z.string().optional(),
+  puerperioVisitaDomiciliar: z.string().optional(),
+  puerperioAvaliacaoOdonto: z.string().optional(),
+  isExposta: z.boolean().optional(),
 });
 
 type StepValues = z.infer<typeof StepSchema>;
@@ -97,16 +114,35 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
     defaultValues: {
       dum: toDateOrNull(prev.dum as string | undefined),
       risco: (prev.risco as "habitual" | "alto" | undefined) ?? "habitual",
+      igAbertura: (prev.igAbertura as string | undefined) ?? "",
       dataUltimaConsulta: toDateOrNull(prev.dataUltimaConsulta as string | undefined),
       dataProximaConsulta: toDateOrNull(prev.dataProximaConsulta as string | undefined),
+      numeroConsultas: prev.numeroConsultas as number | undefined,
       pressaoArterial: (prev.pressaoArterial as string | undefined) ?? "",
+      hasPreviaTag: (prev.hasPreviaTag as string | undefined) ?? "",
+      diabetesPreviaTag: (prev.diabetesPreviaTag as string | undefined) ?? "",
+      acompanhamentoPesoAltura: (prev.acompanhamentoPesoAltura as string | undefined) ?? "",
+      numeroVisitasDomiciliares: prev.numeroVisitasDomiciliares as number | undefined,
+      avaliacaoOdontoStatus: (prev.avaliacaoOdontoStatus as string | undefined) ?? "",
       vacinaDtpa: (prev.vacinaDtpa as string | undefined) ?? "",
+      trPrimeiroTri: (prev.trPrimeiroTri as string | undefined) ?? "",
+      trSegundoTri: (prev.trSegundoTri as string | undefined) ?? "",
+      trTerceiroTri: (prev.trTerceiroTri as string | undefined) ?? "",
+      resultadoTr: (prev.resultadoTr as string | undefined) ?? "",
+      trHepBHepCPrimeiroTri: (prev.trHepBHepCPrimeiroTri as string | undefined) ?? "",
+      trSifHivTerceiroTri: (prev.trSifHivTerceiroTri as string | undefined) ?? "",
+      isPuerpera: (prev.isPuerpera as boolean | undefined) ?? false,
+      puerperioConsulta: (prev.puerperioConsulta as string | undefined) ?? "",
+      puerperioVisitaDomiciliar: (prev.puerperioVisitaDomiciliar as string | undefined) ?? "",
+      puerperioAvaliacaoOdonto: (prev.puerperioAvaliacaoOdonto as string | undefined) ?? "",
+      isExposta: (prev.isExposta as boolean | undefined) ?? false,
     },
   });
 
   // useWatch (not `watch()`) — React Compiler-compatible and no perf tax.
   const watchedDum = useWatch({ control, name: "dum" });
   const watchedRisco = useWatch({ control, name: "risco" });
+  const watchedIsPuerpera = useWatch({ control, name: "isPuerpera" });
 
 
   const liveDpp = watchedDum ? format(computeDpp(watchedDum), "dd/MM/yyyy") : null;
@@ -122,12 +158,28 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
     const raw = {
       dum: fmtDate(values.dum),
       risco: values.risco,
+      igAbertura: values.igAbertura || null,
       dataUltimaConsulta: fmtDate(values.dataUltimaConsulta),
       dataProximaConsulta: fmtDate(values.dataProximaConsulta),
       numeroConsultas: values.numeroConsultas,
       pressaoArterial: values.pressaoArterial ?? null,
-      vacinaDtpa: values.vacinaDtpa ?? null,
+      hasPreviaTag: values.hasPreviaTag || null,
+      diabetesPreviaTag: values.diabetesPreviaTag || null,
+      acompanhamentoPesoAltura: values.acompanhamentoPesoAltura || null,
+      numeroVisitasDomiciliares: values.numeroVisitasDomiciliares,
+      avaliacaoOdontoStatus: values.avaliacaoOdontoStatus || null,
+      vacinaDtpa: values.vacinaDtpa || null,
+      trPrimeiroTri: values.trPrimeiroTri || null,
+      trSegundoTri: values.trSegundoTri || null,
+      trTerceiroTri: values.trTerceiroTri || null,
+      resultadoTr: values.resultadoTr || null,
+      trHepBHepCPrimeiroTri: values.trHepBHepCPrimeiroTri || null,
+      trSifHivTerceiroTri: values.trSifHivTerceiroTri || null,
       isPuerpera: values.isPuerpera ?? false,
+      puerperioConsulta: values.puerperioConsulta || null,
+      puerperioVisitaDomiciliar: values.puerperioVisitaDomiciliar || null,
+      puerperioAvaliacaoOdonto: values.puerperioAvaliacaoOdonto || null,
+      isExposta: values.isExposta ?? false,
     };
     const parsed = GestantesPatchSchema.safeParse(raw);
     if (!parsed.success) {
@@ -317,6 +369,221 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                     className="accent-brand"
                   />
                   Puérpera (pós-parto)
+                </label>
+              )}
+            />
+          </Field>
+          {watchedIsPuerpera && (
+            <>
+              <Field label="Puerpério — consulta" className="col-span-2">
+                <Controller
+                  control={control}
+                  name="puerperioConsulta"
+                  render={({ field }) => (
+                    <EnumField
+                      values={STATUS_REALIZACAO_VALUES}
+                      labels={STATUS_REALIZACAO_LABELS}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ariaLabel="Consulta de puerpério"
+                    />
+                  )}
+                />
+              </Field>
+              <Field label="Puerpério — visita domiciliar" className="col-span-2">
+                <Controller
+                  control={control}
+                  name="puerperioVisitaDomiciliar"
+                  render={({ field }) => (
+                    <EnumField
+                      values={STATUS_REALIZACAO_VALUES}
+                      labels={STATUS_REALIZACAO_LABELS}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ariaLabel="Visita domiciliar de puerpério"
+                    />
+                  )}
+                />
+              </Field>
+              <Field label="Puerpério — avaliação odonto" className="col-span-2">
+                <Controller
+                  control={control}
+                  name="puerperioAvaliacaoOdonto"
+                  render={({ field }) => (
+                    <EnumField
+                      values={STATUS_REALIZACAO_VALUES}
+                      labels={STATUS_REALIZACAO_LABELS}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ariaLabel="Avaliação odonto de puerpério"
+                    />
+                  )}
+                />
+              </Field>
+            </>
+          )}
+          <Field label="IG na abertura PN" className="col-span-1">
+            <Controller
+              control={control}
+              name="igAbertura"
+              render={({ field }) => (
+                <EnumField
+                  values={IG_ABERTURA_VALUES}
+                  labels={IG_ABERTURA_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="IG na abertura do pré-natal"
+                />
+              )}
+            />
+          </Field>
+          <Field label="Nº visitas domiciliares" className="col-span-1">
+            <Input
+              {...register("numeroVisitasDomiciliares", { valueAsNumber: true })}
+              type="number"
+              min={0}
+              aria-label="Número de visitas domiciliares"
+            />
+          </Field>
+          <Field label="Acompanhamento peso/altura" className="col-span-2">
+            <Controller
+              control={control}
+              name="acompanhamentoPesoAltura"
+              render={({ field }) => (
+                <EnumField
+                  values={ACOMPANHAMENTO_STATUS_VALUES}
+                  labels={ACOMPANHAMENTO_STATUS_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="Acompanhamento peso/altura"
+                />
+              )}
+            />
+          </Field>
+          <Field label="Avaliação odonto" className="col-span-2">
+            <Controller
+              control={control}
+              name="avaliacaoOdontoStatus"
+              render={({ field }) => (
+                <EnumField
+                  values={STATUS_REALIZACAO_VALUES}
+                  labels={STATUS_REALIZACAO_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="Avaliação odontológica"
+                />
+              )}
+            />
+          </Field>
+          <Field label="TR Sífilis/HIV — 1º tri" className="col-span-2">
+            <Controller
+              control={control}
+              name="trPrimeiroTri"
+              render={({ field }) => (
+                <EnumField
+                  values={TR_STATUS_VALUES}
+                  labels={TR_STATUS_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="TR Sífilis/HIV 1º trimestre"
+                />
+              )}
+            />
+          </Field>
+          <Field label="TR Sífilis/HIV — 2º tri" className="col-span-2">
+            <Controller
+              control={control}
+              name="trSegundoTri"
+              render={({ field }) => (
+                <EnumField
+                  values={TR_STATUS_VALUES}
+                  labels={TR_STATUS_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="TR Sífilis/HIV 2º trimestre"
+                />
+              )}
+            />
+          </Field>
+          <Field label="TR Sífilis/HIV — 3º tri" className="col-span-2">
+            <Controller
+              control={control}
+              name="trTerceiroTri"
+              render={({ field }) => (
+                <EnumField
+                  values={TR_STATUS_VALUES}
+                  labels={TR_STATUS_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="TR Sífilis/HIV 3º trimestre"
+                />
+              )}
+            />
+          </Field>
+          <Field label="Resultado teste rápido" className="col-span-2">
+            <Controller
+              control={control}
+              name="resultadoTr"
+              render={({ field }) => (
+                <EnumField
+                  values={RESULTADO_TR_VALUES}
+                  labels={RESULTADO_TR_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="Resultado do teste rápido"
+                />
+              )}
+            />
+          </Field>
+          <Field label="TR/Aval. Síf+HIV+HepB+HepC — 1º tri" className="col-span-2">
+            <Controller
+              control={control}
+              name="trHepBHepCPrimeiroTri"
+              render={({ field }) => (
+                <EnumField
+                  values={STATUS_REALIZACAO_VALUES}
+                  labels={STATUS_REALIZACAO_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="TR ou avaliação Sífilis+HIV+HepB+HepC 1º trimestre"
+                />
+              )}
+            />
+          </Field>
+          <Field label="TR/Aval. Síf+HIV — 3º tri" className="col-span-2">
+            <Controller
+              control={control}
+              name="trSifHivTerceiroTri"
+              render={({ field }) => (
+                <EnumField
+                  values={STATUS_REALIZACAO_VALUES}
+                  labels={STATUS_REALIZACAO_LABELS}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ariaLabel="TR ou avaliação Sífilis+HIV 3º trimestre"
+                />
+              )}
+            />
+          </Field>
+          <Field label="HAS prévia" className="col-span-1">
+            <Input {...register("hasPreviaTag")} aria-label="HAS prévia" />
+          </Field>
+          <Field label="Diabetes prévia" className="col-span-1">
+            <Input {...register("diabetesPreviaTag")} aria-label="Diabetes prévia" />
+          </Field>
+          <Field label="Exposta (HIV/sífilis)" className="col-span-2">
+            <Controller
+              control={control}
+              name="isExposta"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={field.value ?? false}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    className="accent-brand"
+                  />
+                  Marcada como exposta
                 </label>
               )}
             />
