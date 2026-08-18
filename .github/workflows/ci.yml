@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, type-check, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm type-check
+
+      - run: pnpm lint
+
+      - run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          # The app reaches Postgres lazily, so the build never connects; it
+          # only needs these to be set. See src/db/client.ts and src/lib/auth.ts.
+          DATABASE_URL: postgresql://placeholder@localhost:5432/placeholder
+          BETTER_AUTH_SECRET: ci-build-only-not-a-real-secret
+
+  database:
+    name: Migrations and seed (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: saude
+          POSTGRES_PASSWORD: saude
+          POSTGRES_DB: saude_territorial
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saude -d saude_territorial"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The db:* scripts read .env.local; the example points at the service above.
+      - run: cp .env.local.example .env.local
+
+      - run: pnpm db:migrate
+
+      - run: pnpm db:seed
