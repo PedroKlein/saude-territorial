@@ -136,7 +136,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
   // 'hydrated' = coords came from saved data (show neutral "Localização salva" banner).
   // 'user'     = user explicitly dragged the pin.
   // null       = no manual placement yet.
-  const manualOrigin = useRef<"hydrated" | "user" | null>(
+  const [manualOrigin, setManualOrigin] = useState<"hydrated" | "user" | null>(
     ctx.geocodedCoords ? "hydrated" : null,
   );
 
@@ -329,7 +329,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
             lat={geoResult.lat}
             lng={geoResult.lng}
             onPickCoords={(c) => {
-              manualOrigin.current = "user";
+              setManualOrigin("user");
               setGeoResult({ status: "manual", ...c });
             }}
           />
@@ -343,7 +343,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
             <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
               <MapPin className="size-3.5" />
               {geoResult.status === "manual"
-                ? manualOrigin.current === "hydrated"
+                ? manualOrigin === "hydrated"
                   ? "Localização salva — arraste o pino para ajustar"
                   : "Pino posicionado manualmente"
                 : "Clique no mapa para posicionar o pino"}
@@ -353,7 +353,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
               <button
                 type="button"
                 onClick={() => {
-                  manualOrigin.current = null;
+                  setManualOrigin(null);
                   setGeoResult({ status: "idle" });
                 }}
                 className="text-xs text-blue-600 underline hover:text-blue-800"
@@ -374,7 +374,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
                 : (ctx.geocodedCoords?.lng ?? US_MOAB_CALDAS[1])
             }
             onPickCoords={(c) => {
-              manualOrigin.current = "user";
+              setManualOrigin("user");
               setGeoResult({ status: "manual", ...c });
               setManualMode(false);
             }}

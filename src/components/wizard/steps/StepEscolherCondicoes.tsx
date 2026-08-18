@@ -74,7 +74,6 @@ export function StepEscolherCondicoes({
   const {
     handleSubmit,
     control,
-    formState: { errors },
   } = useForm<CondicoesValues>({
     resolver: zodResolver(CondicoesSchema),
     defaultValues: {
