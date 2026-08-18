@@ -8,12 +8,12 @@ import type { AlertLevel } from "@/types/alerts";
 
 // leaflet.markercluster types are not shipped with @types/leaflet; define the
 // minimal interface we actually use so we stay type-safe without adding a dep.
-interface MarkerCluster {
+type MarkerCluster = {
   getChildCount(): number;
   getAllChildMarkers(): L.Marker[];
 }
 
-interface ClusteredLayerProps {
+type ClusteredLayerProps = {
   children: ReactNode;
 }
 

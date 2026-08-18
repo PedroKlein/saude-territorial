@@ -91,7 +91,7 @@ describe("useUpdatePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ patient: { gestantes: { id: PATIENT_ID, nomeCompleto: "Nome Novo" } } }),
+      json: () => ({ patient: { gestantes: { id: PATIENT_ID, nomeCompleto: "Nome Novo" } } }),
     });
 
     const { result } = renderHook(() => useUpdatePatient(), {
@@ -115,7 +115,7 @@ describe("useUpdatePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 422,
-      json: async () => ({
+      json: () => ({
         error: "Endereço não encontrado. Arraste o pin para posicionar.",
         requiresManualPin: true,
       }),
@@ -152,7 +152,7 @@ describe("useUpdatePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
-      json: async () => ({ error: "Erro ao salvar. Tente novamente." }),
+      json: () => ({ error: "Erro ao salvar. Tente novamente." }),
     });
 
     const { result } = renderHook(() => useUpdatePatient(), {
@@ -184,7 +184,7 @@ describe("useUpdatePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ patient: {} }),
+      json: () => ({ patient: {} }),
     });
 
     const { result } = renderHook(() => useUpdatePatient(), {

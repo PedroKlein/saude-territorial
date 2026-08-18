@@ -11,7 +11,7 @@ import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import type { PatientRecord } from "@/hooks/usePatientData";
 
-interface FilterChipsProps {
+type FilterChipsProps = {
   /** All candidate patients to count and bulk-add. */
   candidates: PatientRecord[];
 }
@@ -47,7 +47,7 @@ function Chip({
       role="button"
       tabIndex={0}
       onClick={onToggle}
-      onKeyDown={(e) => e.key === "Enter" && onToggle()}
+        onKeyDown={(e) => { if (e.key === "Enter") onToggle(); }}
       className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition select-none ${
         active
           ? activeClass
@@ -105,8 +105,8 @@ export function FilterChips({ candidates }: FilterChipsProps) {
             <Chip
               key={ma}
               active={filters.microarea.includes(ma)}
-              onToggle={() => toggleMicroarea(ma)}
-              onRemove={() => toggleMicroarea(ma)}
+              onToggle={() => { toggleMicroarea(ma); }}
+              onRemove={() => { toggleMicroarea(ma); }}
             >
               {ma}
             </Chip>
@@ -123,8 +123,8 @@ export function FilterChips({ candidates }: FilterChipsProps) {
             <Chip
               key={id}
               active={filters.conditions.includes(id)}
-              onToggle={() => toggleCondition(id)}
-              onRemove={() => toggleCondition(id)}
+              onToggle={() => { toggleCondition(id); }}
+              onRemove={() => { toggleCondition(id); }}
             >
               <Icon className="h-3 w-3" />
               {label}
@@ -142,8 +142,8 @@ export function FilterChips({ candidates }: FilterChipsProps) {
             <Chip
               key={id}
               active={filters.alertLevels.includes(id)}
-              onToggle={() => toggleAlert(id)}
-              onRemove={() => toggleAlert(id)}
+              onToggle={() => { toggleAlert(id); }}
+              onRemove={() => { toggleAlert(id); }}
               activeClass={colorClass}
             >
               <span

@@ -330,7 +330,7 @@ describe("PATCH /api/patients/[id]", () => {
     mocks.findFirst.mockResolvedValueOnce(SYNTHETIC_CURRENT);
     mocks.findFirst.mockResolvedValueOnce({
       ...SYNTHETIC_CURRENT,
-      gestantes: { ...SYNTHETIC_CURRENT.gestantes!, dpp: "2026-09-01" },
+      gestantes: { ...SYNTHETIC_CURRENT.gestantes, dpp: "2026-09-01" },
     });
 
     const res = await PATCH(

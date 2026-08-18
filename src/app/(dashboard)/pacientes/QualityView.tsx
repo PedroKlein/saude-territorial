@@ -5,16 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { UnifiedPatient } from "./page";
 
-interface IssueDef {
+type IssueDef = {
   id: string;
   title: string;
   /** Deprioritize in card visual — reduced opacity */
   muted?: boolean;
 }
 
-interface QualityGroup extends IssueDef {
+type QualityGroup = {
   patients: UnifiedPatient[];
-}
+} & IssueDef
 
 function hasIssue(group: string, p: UnifiedPatient): boolean {
   const r = p as Record<string, unknown>;
@@ -115,15 +115,16 @@ function QualityCard({
           <li key={p.id}>
             <div className="flex items-center gap-2 px-4 py-2.5">
               <span className="flex-1 truncate text-sm font-medium text-foreground">
+                {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string after trim should also show the dash */}
                 {p.nomeCompleto?.trim() || "—"}
               </span>
               <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                {p.cns ?? "—"}
+                {p.cns}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(p.id)}
+                onClick={() => { onEdit(p.id); }}
               >
                 Editar
               </Button>
@@ -141,7 +142,7 @@ function QualityCard({
       {!showAll && hiddenCount > 0 && (
         <div className="border-t border-border px-4 py-2">
           <button
-            onClick={() => setShowAll(true)}
+            onClick={() => { setShowAll(true); }}
             className="text-xs text-muted-foreground hover:text-foreground"
           >
             Mostrar mais {hiddenCount}

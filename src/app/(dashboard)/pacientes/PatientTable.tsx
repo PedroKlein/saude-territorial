@@ -49,7 +49,7 @@ function parseBrForSort(s: string | null): string {
 function getPatientAlertLevel(p: UnifiedPatient): AlertLevel {
   let highest: AlertLevel = "verde";
   for (const layerId of p.conditions) {
-    const result = evaluatePatient(ALERT_RULES, p as Record<string, unknown>, layerId);
+    const result = evaluatePatient(ALERT_RULES, p, layerId);
     highest = getHighestAlert(highest, result.level);
   }
   return highest;
@@ -183,7 +183,7 @@ export function PatientTable({
         cmp = parseBrForSort(a.dataUltimaAtualizacao).localeCompare(
           parseBrForSort(b.dataUltimaAtualizacao),
         );
-      } else if (sortKey === "alerta") {
+      } else {
         cmp = ALERT_ORDER[getPatientAlertLevel(a)] - ALERT_ORDER[getPatientAlertLevel(b)];
       }
       return sortDir === "asc" ? cmp : -cmp;
@@ -209,7 +209,7 @@ export function PatientTable({
         <Input
           placeholder="Buscar por nome..."
           value={nameSearch}
-          onChange={(e) => setNameSearch(e.target.value)}
+          onChange={(e) => { setNameSearch(e.target.value); }}
           className="h-8 w-48 text-sm"
         />
 
@@ -235,7 +235,7 @@ export function PatientTable({
               return (
                 <button
                   key={layerId}
-                  onClick={() => toggleConditionFilter(layerId)}
+                  onClick={() => { toggleConditionFilter(layerId); }}
                   className={`rounded-full border px-2 py-0.5 text-xs font-medium transition-colors ${
                     active
                       ? "border-transparent text-white"
@@ -266,7 +266,7 @@ export function PatientTable({
                   sortKey="nome"
                   current={sortKey}
                   dir={sortDir}
-                  onClick={() => handleSort("nome")}
+                  onClick={() => { handleSort("nome"); }}
                 />
               </th>
               <th className="px-4 py-2.5 text-left">
@@ -275,7 +275,7 @@ export function PatientTable({
                   sortKey="microarea"
                   current={sortKey}
                   dir={sortDir}
-                  onClick={() => handleSort("microarea")}
+                  onClick={() => { handleSort("microarea"); }}
                 />
               </th>
               <th className="px-4 py-2.5 text-left">
@@ -289,7 +289,7 @@ export function PatientTable({
                   sortKey="updatedAt"
                   current={sortKey}
                   dir={sortDir}
-                  onClick={() => handleSort("updatedAt")}
+                  onClick={() => { handleSort("updatedAt"); }}
                 />
               </th>
               <th className="px-4 py-2.5 text-left">
@@ -298,7 +298,7 @@ export function PatientTable({
                   sortKey="alerta"
                   current={sortKey}
                   dir={sortDir}
-                  onClick={() => handleSort("alerta")}
+                  onClick={() => { handleSort("alerta"); }}
                 />
               </th>
               <th className="w-10 px-2 py-2.5 text-left">
@@ -326,7 +326,7 @@ export function PatientTable({
                 return (
                   <tr
                     key={p.id}
-                    onClick={() => handleRowClick(p)}
+                    onClick={() => { handleRowClick(p); }}
                     className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40"
                   >
                     <td className="px-4 py-3 font-medium text-foreground">

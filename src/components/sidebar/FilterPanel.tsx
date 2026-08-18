@@ -52,7 +52,7 @@ export function FilterPanel() {
     <div>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { setIsOpen(!isOpen); }}
         className="flex w-full items-center justify-between py-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-700"
       >
         <span className="flex items-center gap-1.5">
@@ -78,7 +78,7 @@ export function FilterPanel() {
                 <button
                   key={ma}
                   type="button"
-                  onClick={() => toggleMicroarea(ma)}
+                  onClick={() => { toggleMicroarea(ma); }}
                   className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
                     microareas.includes(ma)
                       ? "bg-brand text-white"
@@ -100,7 +100,7 @@ export function FilterPanel() {
                 <button
                   key={level.id}
                   type="button"
-                  onClick={() => toggleAlertLevel(level.id)}
+                  onClick={() => { toggleAlertLevel(level.id); }}
                   className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
                     alertLevels.includes(level.id)
                       ? "bg-brand text-white"
@@ -118,7 +118,7 @@ export function FilterPanel() {
             <input
               type="checkbox"
               checked={hideUncertain}
-              onChange={(e) => setHideUncertain(e.target.checked)}
+              onChange={(e) => { setHideUncertain(e.target.checked); }}
               className="h-3.5 w-3.5 rounded border-neutral-300 accent-brand"
             />
             <span>Ocultar incertos</span>

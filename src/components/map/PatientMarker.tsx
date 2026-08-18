@@ -39,7 +39,7 @@ const ALERT_ON_CHIP: Record<AlertLevel, boolean> = {
 /** Brand teal ring for selected state (DS-11). */
 const SELECTED_RING = "oklch(58% 0.10 195)";
 
-interface ChipProps {
+type ChipProps = {
   layerId: LayerId;
   alertLevel: AlertLevel;
   coincidenceCount: number;
@@ -192,7 +192,7 @@ function buildChipIcon(
   });
 }
 
-export interface PatientMarkerProps {
+export type PatientMarkerProps = {
   /** DB UUID — required for mutations and selection. */
   id: string;
   name: string | null;
@@ -224,8 +224,11 @@ export function PatientMarker({
   // Planner map-select subscriptions (fine-grained selectors → minimal re-renders).
   const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
   const isInPlan = usePlannerStore((s) => s.stops.some((st) => st.patientId === id));
+   
   const addStopIfBelowLimit = usePlannerStore((s) => s.addStopIfBelowLimit);
+   
   const removeStop = usePlannerStore((s) => s.removeStop);
+   
   const setLimitBannerVisible = usePlannerStore((s) => s.setLimitBannerVisible);
 
   const isSelected = selectedPatient === id;

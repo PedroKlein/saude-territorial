@@ -39,10 +39,16 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
+/** Converts undefined or empty string to null; non-empty strings pass through. */
+function emptyToNull(v: string | undefined): string | null {
+  if (v === undefined || v === "") return null;
+  return v;
+}
+
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 
 export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
-  const prev = ctx.hipertensao as Record<string, unknown>;
+  const prev = ctx.hipertensao;
 
   const {
     handleSubmit,
@@ -67,9 +73,9 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
       dataUltimaConsulta: fmtDate(values.dataUltimaConsulta) || null,
       dataProximaConsulta: fmtDate(values.dataProximaConsulta) || null,
       dataUltimaAfericaoPa: fmtDate(values.dataUltimaAfericaoPa) || null,
-      pressaoArterial: values.pressaoArterial || null,
-      registroNotas: values.registroNotas || null,
-      encaminhamentos: values.encaminhamentos || null,
+      pressaoArterial: emptyToNull(values.pressaoArterial),
+      registroNotas: emptyToNull(values.registroNotas),
+      encaminhamentos: emptyToNull(values.encaminhamentos),
     };
     const parsed = HasPatchSchema.safeParse(raw);
     if (!parsed.success) {
@@ -77,12 +83,12 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
       return;
     }
     setServerIssues([]);
-    setCtx({ hipertensao: parsed.data as Record<string, unknown> });
+    setCtx({ hipertensao: parsed.data });
     goNext();
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
       {serverIssues.length > 0 && (
         <div
           role="alert"

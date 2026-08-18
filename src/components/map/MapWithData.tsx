@@ -21,7 +21,9 @@ export function MapWithData() {
   const drawerOpen = usePlannerStore((s) => s.drawerOpen);
   const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
   const plannerStopsCount = usePlannerStore((s) => s.stops.length);
+   
   const setMapSelectMode = usePlannerStore((s) => s.setMapSelectMode);
+   
   const setDrawerOpen = usePlannerStore((s) => s.setDrawerOpen);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -39,7 +41,7 @@ export function MapWithData() {
   return (
     <div className="flex h-full w-full">
       <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
+        onClick={() => { setSidebarOpen(!sidebarOpen); }}
         className="fixed bottom-4 left-4 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg md:hidden"
         aria-label="Abrir menu"
       >
@@ -62,7 +64,7 @@ export function MapWithData() {
           >
             <div className="flex justify-center py-2 md:hidden">
               <button
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => { setSidebarOpen(false); }}
                 className="h-1.5 w-10 rounded-full bg-gray-300"
                 aria-label="Fechar menu"
               />
@@ -76,7 +78,7 @@ export function MapWithData() {
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-[1040] bg-black/30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => { setSidebarOpen(false); }}
         />
       )}
 
@@ -101,7 +103,7 @@ export function MapWithData() {
               Concluir
             </button>
             <button
-              onClick={() => setMapSelectMode(false)}
+              onClick={() => { setMapSelectMode(false); }}
               className="text-sm text-white/80 hover:text-white"
             >
               Cancelar

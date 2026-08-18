@@ -38,7 +38,7 @@ vi.mock("better-auth/next-js", () => ({
 // The betterAuth mock stashes the config it received on the returned instance,
 // so we read it back per-instance instead of indexing the shared mock's call
 // log (which accumulates across resetModules).
-interface CapturedConfig {
+type CapturedConfig = {
   emailAndPassword?: { enabled?: boolean };
   plugins?: unknown[];
   socialProviders?: { google?: { scope?: string[] } };

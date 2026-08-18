@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface FilterablePatient {
+type FilterablePatient = {
   cns?: string;
   microarea?: string;
   alertLevel?: string;
@@ -11,7 +11,7 @@ interface FilterablePatient {
   [key: string]: unknown;
 }
 
-interface FilterState {
+type FilterState = {
   microareas: string[];
   alertLevels: string[];
   dateRange: { from: string; to: string } | null;
@@ -19,7 +19,7 @@ interface FilterState {
   hideUncertain: boolean;
 }
 
-interface FilterActions {
+type FilterActions = {
   setMicroareaFilter: (ids: string[]) => void;
   setAlertFilter: (levels: string[]) => void;
   setDateRange: (range: { from: string; to: string } | null) => void;

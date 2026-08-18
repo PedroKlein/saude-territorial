@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface UiState {
+type UiState = {
   showSidebar: boolean;
   showPanel: boolean;
   showLegend: boolean;
 }
 
-interface UiActions {
+type UiActions = {
   toggleSidebar: () => void;
   togglePanel: () => void;
   toggleLegend: () => void;

@@ -95,12 +95,12 @@ export async function geocode(
         headers: { "User-Agent": USER_AGENT },
       });
 
-      let results: Array<{
+      let results: {
         lat: string;
         lon: string;
         importance: number;
         display_name: string;
-      }>;
+      }[];
       try {
         // Clone before reading so the same mock Response can be read by multiple
         // calls in tests (real fetch always returns fresh responses).

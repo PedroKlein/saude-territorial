@@ -44,6 +44,7 @@ async function submitForm(container: HTMLElement) {
   expect(form).not.toBeNull();
   await act(async () => {
     fireEvent.submit(form!);
+    await Promise.resolve(); // flush RHF's async resolver microtasks
   });
 }
 

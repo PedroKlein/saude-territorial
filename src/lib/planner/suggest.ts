@@ -12,7 +12,7 @@ import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { Stop } from "@/stores/plannerStore";
 
-export interface SuggestInput {
+export type SuggestInput = {
   patients: PatientRecord[];
   /** Maps each patient to the layer it lives in, used for rule evaluation. */
   layerFor: (p: PatientRecord) => LayerId;

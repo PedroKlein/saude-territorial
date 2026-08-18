@@ -10,7 +10,7 @@ export function coincidenceKey(lat: number, lng: number): string {
  * Used to render the coincidence badge when N > 1 patients share coordinates.
  */
 export function buildCoincidenceMap(
-  patients: ReadonlyArray<{ lat: number | null; lng: number | null }>,
+  patients: readonly { lat: number | null; lng: number | null }[],
 ): Map<string, number> {
   const map = new Map<string, number>();
   for (const p of patients) {

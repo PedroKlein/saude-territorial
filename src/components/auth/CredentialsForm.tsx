@@ -31,7 +31,7 @@ export function CredentialsForm() {
       : "/map";
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
@@ -52,7 +52,7 @@ export function CredentialsForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-left">
+    <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4 text-left">
       {mode === "signup" && (
         <div className="space-y-1.5">
           <Label htmlFor="name">Nome</Label>
@@ -61,7 +61,7 @@ export function CredentialsForm() {
             type="text"
             autoComplete="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); }}
             placeholder="Seu nome"
           />
         </div>
@@ -74,7 +74,7 @@ export function CredentialsForm() {
           required
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { setEmail(e.target.value); }}
           placeholder="dev@local.dev"
         />
       </div>
@@ -86,7 +86,7 @@ export function CredentialsForm() {
           required
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => { setPassword(e.target.value); }}
           placeholder={mode === "signup" ? "mínimo 8 caracteres" : "dev12345"}
         />
       </div>

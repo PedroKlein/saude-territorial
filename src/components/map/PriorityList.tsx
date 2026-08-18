@@ -27,11 +27,11 @@ const URGENCY_BORDER_COLORS: Record<AlertLevel, string> = {
   verde: "#16a34a",
 };
 
-interface PriorityListProps {
+type PriorityListProps = {
   data: LayeredPatientData | undefined;
 }
 
-interface PriorityItem {
+type PriorityItem = {
   id: string;
   cns: string;
   name: string | null;
@@ -53,9 +53,10 @@ export function PriorityList({ data }: PriorityListProps) {
   const items = useMemo((): PriorityItem[] => {
     if (!data) return [];
 
-    let allEnriched: Array<PatientRecord & { alertLevel: AlertLevel; triggeredCount: number }> = [];
+    let allEnriched: (PatientRecord & { alertLevel: AlertLevel; triggeredCount: number })[] = [];
 
     for (const [layerId, patients] of Object.entries(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime despite Object.values() type
       if (!patients || patients.length === 0) continue;
       if (!activeLayers[layerId as LayerId]) continue;
 
@@ -63,7 +64,7 @@ export function PriorityList({ data }: PriorityListProps) {
         const result = evaluatePatient(ALERT_RULES, p, layerId);
         return {
           ...p,
-          alertLevel: result.level as AlertLevel,
+          alertLevel: result.level,
           triggeredCount: result.triggeredRules.length,
         };
       });
@@ -105,7 +106,7 @@ export function PriorityList({ data }: PriorityListProps) {
           <p className="text-xs text-gray-500">{items.length} pacientes</p>
         </div>
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => { setIsCollapsed(!isCollapsed); }}
           className="text-lg text-gray-400 hover:text-gray-600"
         >
           {isCollapsed ? "▶" : "▼"}
@@ -118,7 +119,7 @@ export function PriorityList({ data }: PriorityListProps) {
           {items.map((item) => (
             <button
               key={item.cns}
-            onClick={() => setSelectedPatient(item.id)}
+            onClick={() => { setSelectedPatient(item.id); }}
               className="flex w-full cursor-pointer items-start gap-2 border-b border-gray-50 px-3 py-2 text-left transition-colors hover:bg-blue-50"
               style={{ borderLeft: `3px solid ${URGENCY_BORDER_COLORS[item.alertLevel]}` }}
             >

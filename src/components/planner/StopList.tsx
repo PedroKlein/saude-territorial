@@ -27,7 +27,7 @@ import type { Stop } from "@/stores/plannerStore";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 
-interface StopListProps {
+type StopListProps = {
   /** Full patient records keyed by patient id — caller builds from usePatientData. */
   patientMap: Map<string, { record: PatientRecord; layerId: LayerId }>;
 }
@@ -114,7 +114,7 @@ function SortableStopRow({
       </div>
 
       <button
-        onClick={() => removeStop(stop.patientId)}
+        onClick={() => { removeStop(stop.patientId); }}
         className="mt-1 rounded p-0.5 text-neutral-300 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700"
         aria-label="Remover parada"
       >

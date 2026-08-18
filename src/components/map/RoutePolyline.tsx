@@ -4,7 +4,7 @@ import { Polyline } from "react-leaflet";
 import type { RouteResult, RouteProfile } from "@/types/routing";
 import type { LatLngExpression } from "leaflet";
 
-interface RoutePolylineProps {
+type RoutePolylineProps = {
   geometry: RouteResult["geometry"];
   profile: RouteProfile;
 }

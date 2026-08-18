@@ -11,7 +11,7 @@ export type LayerConfig = {
   label: string;
   /** Columns to show in the detail panel */
   visibleColumns: string[];
-};
+}
 
 export const LAYER_CONFIG = {
   gestantes: {

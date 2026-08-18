@@ -29,7 +29,7 @@ type Props = {
    * against the just-created patient.
    */
   onAddAnotherCondition?: () => void;
-};
+}
 
 export function StepSucesso({
   resolvedMode,

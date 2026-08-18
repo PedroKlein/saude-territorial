@@ -30,12 +30,12 @@ export const dailyPlans = pgTable(
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
-    profileCheck: check(
+  (table) => [
+    check(
       "daily_plans_profile_check",
       sql`${table.profile} IN ('foot', 'car')`,
     ),
-  }),
+  ],
 );
 
 export type DailyPlan = typeof dailyPlans.$inferSelect;
@@ -56,9 +56,9 @@ export const dailyPlanStops = pgTable(
       .references(() => patients.id, { onDelete: "restrict" }),
     stopOrder: integer("stop_order").notNull(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.planId, table.stopOrder] }),
-  }),
+  (table) => [
+    primaryKey({ columns: [table.planId, table.stopOrder] }),
+  ],
 );
 
 export type DailyPlanStop = typeof dailyPlanStops.$inferSelect;

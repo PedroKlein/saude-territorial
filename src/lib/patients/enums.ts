@@ -47,7 +47,7 @@ function makeEnumSchema<T extends readonly [string, ...string[]]>(
       const found = lookup.get(trimmed.toLowerCase());
       if (found !== undefined) return found;
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Valor inválido para ${fieldLabel}. Aceitos: ${values.join(", ")}.`,
       });
       return z.NEVER;

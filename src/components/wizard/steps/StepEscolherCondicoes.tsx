@@ -62,7 +62,7 @@ export const CARDS = [
 ];
 
 type CondicoesStepProps = Parameters<WizardStep<PatientWizardCtx>["render"]>[0] & {
-  alreadyAttached?: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  alreadyAttached?: ("gestantes" | "tuberculose" | "hipertensao")[];
 };
 
 export function StepEscolherCondicoes({
@@ -91,7 +91,7 @@ export function StepEscolherCondicoes({
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-3">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-3">
       <Controller
         control={control}
         name="chosen"

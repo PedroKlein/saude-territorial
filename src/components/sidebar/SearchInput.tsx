@@ -18,7 +18,7 @@ export function SearchInput() {
       <input
         type="text"
         value={searchText}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => { setSearch(e.target.value); }}
         placeholder="Buscar paciente ou endereço…"
         className="w-full rounded-md border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-3 text-sm placeholder:text-neutral-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/15"
       />

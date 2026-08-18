@@ -67,7 +67,7 @@ const MaskedInputInternal = React.forwardRef<HTMLInputElement, MaskedInputIntern
     // Normalizing to digits here keeps every existing row round-trippable
     // without a data migration.
     const normalized = React.useMemo(
-      () => (value == null ? "" : String(value).replace(/\D/g, "")),
+      () => (value == null ? "" : value.replace(/\D/g, "")),
       [value],
     );
     return (
@@ -78,7 +78,7 @@ const MaskedInputInternal = React.forwardRef<HTMLInputElement, MaskedInputIntern
         lazy={false}
         placeholderChar="_"
         // react-imask forwards to a plain <input>; the ref hop lets RHF focus it.
-        inputRef={ref as React.Ref<HTMLInputElement>}
+        inputRef={ref}
         value={normalized}
         onAccept={(unmasked: string, maskRef) => {
           onValueChange?.(unmasked, maskRef.value);
@@ -148,7 +148,7 @@ export const PressureInput = React.forwardRef<HTMLInputElement, BaseProps>(
     // Preserve the `/`. If a legacy row carries something like "120x80",
     // strip non-digit/non-slash so the mask can accept the rest.
     const normalized = React.useMemo(
-      () => (value == null ? "" : String(value).replace(/[^\d/]/g, "")),
+      () => (value == null ? "" : value.replace(/[^\d/]/g, "")),
       [value],
     );
     return (
@@ -156,7 +156,7 @@ export const PressureInput = React.forwardRef<HTMLInputElement, BaseProps>(
         mask={[{ mask: "00/00" }, { mask: "000/00" }, { mask: "000/000" }, { mask: "00/000" }]}
         lazy
         placeholder="120/80"
-        inputRef={ref as React.Ref<HTMLInputElement>}
+        inputRef={ref}
         value={normalized}
         onAccept={(masked: string) => {
           onValueChange?.(masked, masked);

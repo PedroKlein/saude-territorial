@@ -69,7 +69,7 @@ const dateFlex = z
     const m = BR_DATE_RE.exec(s);
     if (m) return `${m[3]}-${m[2]}-${m[1]}`;
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Data inválida. Use dd/MM/yyyy.",
     });
     return z.NEVER;
@@ -97,7 +97,7 @@ const cepOrNull = z
     if (digits === "") return null;
     if (digits.length !== 8) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "CEP deve ter 8 dígitos.",
       });
       return z.NEVER;
@@ -193,14 +193,14 @@ export const GestantesPatchSchema = z
     const today = todayIso();
     if (typeof v.dataUltimaConsulta === "string" && v.dataUltimaConsulta > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataUltimaConsulta"],
         message: "Data da última consulta não pode ser no futuro.",
       });
     }
     if (typeof v.dum === "string" && v.dum > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dum"],
         message: "DUM não pode ser no futuro.",
       });
@@ -215,7 +215,7 @@ export const GestantesPatchSchema = z
         v.dataUltimaConsulta === v.dataProximaConsulta)
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataProximaConsulta"],
         message: "A próxima consulta deve ser depois da última.",
       });
@@ -266,28 +266,28 @@ export const TuberculosePatchSchema = z
     const today = todayIso();
     if (isoAfter(v.baciloscopiaPrimeiraData, v.baciloscopiaSegundaData)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["baciloscopiaSegundaData"],
         message: "A 2ª baciloscopia não pode ser anterior à 1ª.",
       });
     }
     if (isoAfter(v.dataInicio, v.encerramentoData)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["encerramentoData"],
         message: "A data de encerramento não pode ser anterior ao início.",
       });
     }
     if (typeof v.dataInicio === "string" && v.dataInicio > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataInicio"],
         message: "Data de início não pode ser no futuro.",
       });
     }
     if (typeof v.encerramentoData === "string" && v.encerramentoData > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["encerramentoData"],
         message: "Data de encerramento não pode ser no futuro.",
       });
@@ -296,7 +296,7 @@ export const TuberculosePatchSchema = z
     // fecha o diagnóstico que autoriza iniciar o esquema.
     if (isoAfter(v.baciloscopiaPrimeiraData, v.dataInicio)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataInicio"],
         message: "Início do tratamento não pode ser anterior à 1ª baciloscopia.",
       });
@@ -307,7 +307,7 @@ export const TuberculosePatchSchema = z
       v.contatosExaminados > v.contatosCoabitantes
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["contatosExaminados"],
         message: "Contatos examinados não pode exceder o número de coabitantes.",
       });
@@ -330,14 +330,14 @@ export const HasPatchSchema = z
     const today = todayIso();
     if (typeof v.dataUltimaConsulta === "string" && v.dataUltimaConsulta > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataUltimaConsulta"],
         message: "Data da última consulta não pode ser no futuro.",
       });
     }
     if (typeof v.dataUltimaAfericaoPa === "string" && v.dataUltimaAfericaoPa > today) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataUltimaAfericaoPa"],
         message: "Data da aferição não pode ser no futuro.",
       });
@@ -349,7 +349,7 @@ export const HasPatchSchema = z
         v.dataUltimaConsulta === v.dataProximaConsulta)
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["dataProximaConsulta"],
         message: "A próxima consulta deve ser depois da última.",
       });
@@ -434,8 +434,7 @@ export const PatientCreateSchema = z
       }
       if (data.condicao === "gestantes") return data.gestantes !== undefined;
       if (data.condicao === "tuberculose") return data.tuberculose !== undefined;
-      if (data.condicao === "hipertensao") return data.hipertensao !== undefined;
-      return false;
+      return data.hipertensao !== undefined;
     },
     { message: "Dados da condição são obrigatórios." },
   );

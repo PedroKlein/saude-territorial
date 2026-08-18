@@ -54,7 +54,7 @@ function withLocation(href: string, run: () => void): void {
   Object.defineProperty(window, "location", {
     configurable: true,
     writable: true,
-    value: new URL(href) as unknown as Location,
+    value: new URL(href),
   });
   try {
     run();

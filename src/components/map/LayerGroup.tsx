@@ -9,9 +9,8 @@ import { ALERT_RULES } from "@/config/alert-rules.config";
 import { coincidenceKey } from "@/components/map/markerHelpers";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
-import type { AlertLevel } from "@/types/alerts";
 
-interface LayerGroupProps {
+type LayerGroupProps = {
   layerId: LayerId;
   patients: PatientRecord[];
   /** Cross-layer coincidence map (coord key → total count). */
@@ -37,7 +36,7 @@ export function LayerGroup({
   const visibleMarkers = useMemo(() => {
     const enriched = patients.map((p) => ({
       ...p,
-      alertLevel: (alertResults.get(p.cns)?.level ?? "verde") as AlertLevel,
+      alertLevel: (alertResults.get(p.cns)?.level ?? "verde"),
     }));
 
     const alertFiltered = alertsOnly
@@ -51,8 +50,9 @@ export function LayerGroup({
     // Base-only patients (sem-condicao layer with no address) carry null
     // coords — they exist in /pacientes but never render on the map.
     const withCoords = filtered.filter(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- PatientRecord.lat/lng are doublePrecision (nullable at DB level); the type may be widened to include null at runtime
       (p) => p.lat != null && p.lng != null,
-    ) as Array<(typeof filtered)[number] & { lat: number; lng: number }>;
+    ) as ((typeof filtered)[number] & { lat: number; lng: number })[];
 
     return withCoords.map((p) => (
       <PatientMarker

@@ -2,7 +2,7 @@
 
 import type { RouteResult } from "@/types/routing";
 
-interface PlanStatsProps {
+type PlanStatsProps = {
   route: RouteResult | null;
   stopCount: number;
 }

@@ -163,7 +163,7 @@ describe("POST /api/plans", () => {
   it("returns 201 with plan on happy path", async () => {
     mocks.getSession.mockResolvedValueOnce({ user: { id: "u1" } });
     mocks.transactionSpy.mockImplementationOnce(
-      async (fn: (tx: {
+      (fn: (tx: {
         insert: (t: unknown) => {
           values: (v: unknown) => { returning: () => Promise<typeof PLAN_ROW[]> }
         }

@@ -155,8 +155,9 @@ export default function MapView() {
   // Memoised so the stable Map reference avoids re-rendering every LayerGroup.
   const coincidenceMap = useMemo(() => {
     if (!data) return new Map<string, number>();
-    const all: Array<{ lat: number; lng: number }> = [];
+    const all: { lat: number; lng: number }[] = [];
     for (const patients of Object.values(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- LayeredPatientData is Partial<Record<...>>; Object.values() strips undefined from the type but values can be undefined at runtime
       if (patients) all.push(...patients);
     }
     return buildCoincidenceMap(all);
@@ -168,6 +169,7 @@ export default function MapView() {
     const out: { order: number; lat: number; lng: number }[] = [];
     for (const stop of plannerStops) {
       for (const patients of Object.values(data)) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- same as above: Partial values may be undefined at runtime despite non-undefined TypeScript type
         const p = patients?.find((q) => q.id === stop.patientId);
         if (p && typeof p.lat === "number" && typeof p.lng === "number") {
           out.push({ order: stop.order, lat: p.lat, lng: p.lng });
@@ -300,7 +302,7 @@ export default function MapView() {
       <ManualPinOverlay
         target={pinningPatient}
         pendingCoords={pendingCoords}
-        clearPendingCoords={() => setPendingCoords(null)}
+        clearPendingCoords={() => { setPendingCoords(null); }}
         onPinned={() => {
           setPinningPatient(null);
           setPendingCoords(null);
@@ -314,7 +316,7 @@ export default function MapView() {
         <PatientWizard
           open
           mode={{ kind: "new", initialCoords: rightClickCoords }}
-          onClose={() => setRightClickCoords(null)}
+          onClose={() => { setRightClickCoords(null); }}
         />
       )}
     </>

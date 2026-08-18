@@ -53,7 +53,7 @@ export type PatientWizardMode =
   | {
       kind: "add-condition";
       patientId: string;
-      alreadyAttached: Array<"gestantes" | "tuberculose" | "hipertensao">;
+      alreadyAttached: ("gestantes" | "tuberculose" | "hipertensao")[];
     }
   | {
       kind: "edit";
@@ -100,21 +100,21 @@ export type PatientWizardCtx = {
   geocodedCoords: { lat: number; lng: number } | null;
   /** Free-form landmark note; persisted as patients.geocodeReference. */
   referencia: string;
-  chosenConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  chosenConditions: ("gestantes" | "tuberculose" | "hipertensao")[];
   /**
    * Conditions present at wizard open time (edit mode only).
    * Used to distinguish kept / new / removed when building the PATCH body.
    */
-  originalConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  originalConditions: ("gestantes" | "tuberculose" | "hipertensao")[];
   /**
    * Conditions the user queued for removal (edit mode only).
    * Populated by StepGerenciarCondicoes; committed on Finalizar.
    */
-  toRemove: Array<"gestantes" | "tuberculose" | "hipertensao">;
+  toRemove: ("gestantes" | "tuberculose" | "hipertensao")[];
   gestantes: Record<string, unknown>;
   tuberculose: Record<string, unknown>;
   hipertensao: Record<string, unknown>;
-};
+}
 
 // ---------------------------------------------------------------------------
 // Validation error formatting
@@ -175,7 +175,7 @@ const FIELD_LABELS: Record<string, string> = {
   base: "Dados básicos",
 };
 
-interface RawIssue {
+type RawIssue = {
   path: (string | number)[];
   message: string;
 }
@@ -255,13 +255,17 @@ function buildInitialCtx(mode?: PatientWizardMode | null): PatientWizardCtx {
 function hydrateCtxFromPatient(
   p: Extract<PatientWizardMode, { kind: "edit" }>["patient"],
 ): PatientWizardCtx {
-  const attached: Array<"gestantes" | "tuberculose" | "hipertensao"> = [];
+  const attached: ("gestantes" | "tuberculose" | "hipertensao")[] = [];
   if (p.gestante) attached.push("gestantes");
   if (p.tuberculose) attached.push("tuberculose");
   if (p.has) attached.push("hipertensao");
 
-  const str = (v: unknown): string =>
-    typeof v === "string" ? v : v == null ? "" : String(v);
+  const str = (v: unknown): string => {
+    if (typeof v === "string") return v;
+    if (v == null) return "";
+    if (typeof v === "number" || typeof v === "boolean") return String(v);
+    return JSON.stringify(v);
+  };
 
   return {
     cns: str(p.cns),
@@ -283,9 +287,9 @@ function hydrateCtxFromPatient(
     chosenConditions: attached,
     originalConditions: attached,
     toRemove: [],
-    gestantes: (p.gestante ?? {}) as Record<string, unknown>,
-    tuberculose: (p.tuberculose ?? {}) as Record<string, unknown>,
-    hipertensao: (p.has ?? {}) as Record<string, unknown>,
+    gestantes: (p.gestante ?? {}),
+    tuberculose: (p.tuberculose ?? {}),
+    hipertensao: (p.has ?? {}),
   };
 }
 
@@ -318,7 +322,7 @@ function buildCreatePayload(
     },
     condicao,
     [extKey]: ctx[extKey],
-  } as PatientCreate;
+  };
 }
 
 /**
@@ -344,7 +348,7 @@ function buildCreatePayloadNoCondition(ctx: PatientWizardCtx): PatientCreate {
         ? { lat: ctx.geocodedCoords.lat, lng: ctx.geocodedCoords.lng }
         : {}),
     },
-  } as PatientCreate;
+  };
 }
 
 /**
@@ -355,7 +359,7 @@ function buildAttachPayload(
   condicao: "gestantes" | "tuberculose" | "hipertensao",
 ): ConditionAttach {
   const extKey = condicao === "hipertensao" ? "hipertensao" : condicao;
-  return { condicao, data: ctx[extKey] } as ConditionAttach;
+  return { condicao, data: ctx[extKey] };
 }
 
 /**
@@ -397,13 +401,13 @@ function buildPatchPayload(ctx: PatientWizardCtx): PatientPatch {
     },
   };
   if (keptConditions.includes("gestantes")) {
-    body.gestantes = ctx.gestantes as PatientPatch["gestantes"];
+    body.gestantes = ctx.gestantes;
   }
   if (keptConditions.includes("tuberculose")) {
-    body.tuberculose = ctx.tuberculose as PatientPatch["tuberculose"];
+    body.tuberculose = ctx.tuberculose;
   }
   if (keptConditions.includes("hipertensao")) {
-    body.hipertensao = ctx.hipertensao as PatientPatch["hipertensao"];
+    body.hipertensao = ctx.hipertensao;
   }
   return body;
 }
@@ -416,7 +420,7 @@ type PatientWizardProps = {
   open: boolean;
   mode: PatientWizardMode;
   onClose: () => void;
-};
+}
 
 export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   // Internal mode can switch mid-flow on 409 CNS collision.
@@ -438,7 +442,8 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   const onFinish = useCallback(
     async (ctx: PatientWizardCtx) => {
       if (internalMode.kind === "new") {
-        const [firstCond, ...restConds] = ctx.chosenConditions;
+        const firstCond = ctx.chosenConditions.at(0);
+        const restConds = ctx.chosenConditions.slice(1);
 
         let newId: string;
         try {
@@ -451,18 +456,18 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           newId = d?.patient?.id ?? "";
         } catch (err) {
           if (isCreatePatientError(err) && err.status === 400) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- err.body is typed non-null but actual API response may not match at runtime
             const issues = err.body?.issues;
             throw new Error(formatIssues(issues));
           }
           if (isCreatePatientError(err) && err.status === 409) {
             // CNS collision: switch to add-condition mode for the existing patient.
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- err.body typed non-null; defensive chain guards against unexpected API shapes
             const existing = err.body?.patient as
               | { id?: string; attached?: string[] }
               | undefined;
             const existingId = existing?.id ?? "";
-            const existingAttached = (existing?.attached ?? []) as Array<
-              "gestantes" | "tuberculose" | "hipertensao"
-            >;
+            const existingAttached = (existing?.attached ?? []) as ("gestantes" | "tuberculose" | "hipertensao")[];
 
             setCollisionBanner(
               "Este CNS já está cadastrado. Suas condições serão adicionadas ao paciente existente.",
@@ -554,7 +559,7 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   const alreadyAttached =
     internalMode.kind === "add-condition" ? internalMode.alreadyAttached : [];
 
-  const steps = useMemo<Array<WizardStep<PatientWizardCtx>>>(
+  const steps = useMemo<WizardStep<PatientWizardCtx>[]>(
     () => {
       const condStep: WizardStep<PatientWizardCtx> = {
         id: "condicoes",
@@ -568,7 +573,7 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
       };
 
       // Data pages skip when the condition is not chosen OR is queued for removal.
-      const dataPages: Array<WizardStep<PatientWizardCtx>> = [
+      const dataPages: WizardStep<PatientWizardCtx>[] = [
         {
           id: "dados-gestante",
           label: "Gestante",
@@ -685,7 +690,7 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           {collisionBanner}
           <button
             type="button"
-            onClick={() => setCollisionBanner(null)}
+            onClick={() => { setCollisionBanner(null); }}
             className="ml-3 text-xs text-amber-700 underline hover:text-amber-900"
           >
             OK

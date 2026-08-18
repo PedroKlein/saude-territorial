@@ -21,7 +21,7 @@ export function toBRDate(iso: string | Date | null | undefined): string | null {
   const s =
     iso instanceof Date
       ? iso.toISOString().slice(0, 10)
-      : String(iso).slice(0, 10);
+      : iso.slice(0, 10);
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
 }
@@ -31,7 +31,7 @@ export function timestampToBRDate(
   value: Date | string | null | undefined,
 ): string | null {
   if (!value) return null;
-  const iso = value instanceof Date ? value.toISOString() : String(value);
+  const iso = value instanceof Date ? value.toISOString() : value;
   return toBRDate(iso.slice(0, 10));
 }
 
@@ -49,14 +49,14 @@ export function computeIg(dumIso: string | null | undefined): number | null {
  * Matches the shape returned by:
  *   db.query.patients.findFirst({ with: { gestantes: true, tuberculose: true, has: true } })
  */
-export interface Loaded extends Patient {
+export type Loaded = {
   gestantes: GestanteData | null;
   tuberculose: TuberculoseData | null;
   has: HasData | null;
-}
+} & Patient
 
 /** Response shape returned by mutation routes (POST, PATCH). */
-export interface PatientShape {
+export type PatientShape = {
   gestantes?: Record<string, unknown>;
   tuberculose?: Record<string, unknown>;
   hipertensao?: Record<string, unknown>;

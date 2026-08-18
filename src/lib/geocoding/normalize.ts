@@ -12,7 +12,7 @@ import type { NormalizedAddress } from "@/lib/geocoding/types";
 
 // Abbreviation table — order matters: longer prefixes must come before shorter
 // ones so "Trav." is matched before a hypothetical single-letter prefix.
-const ABBREVIATIONS: Array<[RegExp, string]> = [
+const ABBREVIATIONS: [RegExp, string][] = [
   [/^trav\.\s*/i, "Travessa "],
   [/^est\.\s*/i, "Estrada "],
   [/^pç\.\s*/i, "Praça "],
@@ -48,7 +48,7 @@ function cleanNumber(numero: string): string | null {
   if (/^s\/n$/i.test(trimmed)) return null;
 
   // Keep only the leading numeric portion
-  const match = trimmed.match(/^(\d+)/);
+  const match = /^(\d+)/.exec(trimmed);
   if (!match) return null;
   return match[1];
 }

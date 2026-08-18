@@ -15,7 +15,7 @@ import { MapPinPlus } from "lucide-react";
 import { PatientWizard } from "@/components/wizard/PatientWizard";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
 
-interface EmptyMapOverlayProps {
+type EmptyMapOverlayProps = {
   data: LayeredPatientData | undefined;
 }
 
@@ -24,6 +24,7 @@ export function EmptyMapOverlay({ data }: EmptyMapOverlayProps) {
 
   if (!data) return null;
   const totalPatients = Object.values(data).reduce(
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime; Object.values() types strip undefined
     (sum, list) => sum + (list?.length ?? 0),
     0,
   );
@@ -49,7 +50,7 @@ export function EmptyMapOverlay({ data }: EmptyMapOverlayProps) {
           </p>
           <button
             type="button"
-            onClick={() => setWizardOpen(true)}
+            onClick={() => { setWizardOpen(true); }}
             className="mt-4 inline-flex items-center rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             + Adicionar paciente
@@ -59,7 +60,7 @@ export function EmptyMapOverlay({ data }: EmptyMapOverlayProps) {
       <PatientWizard
         open={wizardOpen}
         mode={{ kind: "new" }}
-        onClose={() => setWizardOpen(false)}
+        onClose={() => { setWizardOpen(false); }}
       />
     </>
   );

@@ -35,7 +35,7 @@ export type EnumFieldProps = {
   invalid?: boolean;
   placeholder?: string;
   id?: string;
-};
+}
 
 export function EnumField(props: EnumFieldProps) {
   if (props.values.length === 2) {
@@ -55,12 +55,14 @@ function SegmentedEnumField({
   invalid,
   id,
 }: EnumFieldProps) {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- false should omit aria-invalid rather than render aria-invalid="false"; behavior differs in the DOM
+  const ariaInvalid = invalid || undefined;
   return (
     <div
       id={id}
       role="radiogroup"
       aria-label={ariaLabel}
-      aria-invalid={invalid || undefined}
+      aria-invalid={ariaInvalid}
       className={cn(
         "flex items-center gap-1 rounded-md border border-input bg-background p-0.5",
         invalid && "border-destructive ring-3 ring-destructive/20",
@@ -74,7 +76,7 @@ function SegmentedEnumField({
             type="button"
             role="radio"
             aria-checked={active}
-            onClick={() => onChange(v)}
+            onClick={() => { onChange(v); }}
             className={cn(
               "flex-1 rounded px-2.5 py-1.5 text-sm transition",
               active
@@ -102,12 +104,14 @@ function SelectEnumField({
   placeholder,
   id,
 }: EnumFieldProps) {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- false should omit aria-invalid rather than render aria-invalid="false"; behavior differs in the DOM
+  const ariaInvalid = invalid || undefined;
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
-        aria-invalid={invalid || undefined}
+        aria-invalid={ariaInvalid}
         className={cn(
           "w-full",
           invalid && "border-destructive focus-visible:ring-destructive/40",

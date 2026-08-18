@@ -19,7 +19,7 @@ import { patientDetailKeys } from "@/hooks/usePatient";
 import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
 
 /** Matches the `UpdatePatientError` convention from `useUpdatePatient`. */
-export interface CreatePatientError extends Error {
+export type CreatePatientError = {
   status: number;
   body: {
     error?: string;
@@ -27,7 +27,7 @@ export interface CreatePatientError extends Error {
     issues?: unknown[];
     patient?: Record<string, unknown>;
   };
-}
+} & Error
 
 function isCreatePatientError(e: unknown): e is CreatePatientError {
   return e instanceof Error && "status" in e;
@@ -35,9 +35,9 @@ function isCreatePatientError(e: unknown): e is CreatePatientError {
 
 export { isCreatePatientError };
 
-async function postJson<TBody>(
+async function postJson(
   url: string,
-  body: TBody,
+  body: unknown,
 ): Promise<{ status: number; data: unknown }> {
   const res = await fetch(url, {
     method: "POST",
@@ -54,7 +54,7 @@ async function postJson<TBody>(
 
   if (!res.ok) {
     const err = new Error(
-      (data as Record<string, unknown>)?.error as string ??
+      ((data as Record<string, unknown>).error as string | undefined) ??
         "Erro desconhecido.",
     ) as CreatePatientError;
     err.status = res.status;
@@ -90,7 +90,7 @@ export function useCreatePatient() {
       return failureCount < 1;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      void queryClient.invalidateQueries({ queryKey: patientKeys.all });
       const d = result.data as { patient?: { id?: string } } | undefined;
       const id = d?.patient?.id;
       if (id) setSelectedPatient(id);
@@ -128,8 +128,8 @@ export function useAttachCondition() {
       // The panel reads from usePatient(id), which is a distinct query;
       // without this second invalidation, adding a condition doesn't reflect
       // in the open panel until a manual refresh.
-      queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      void queryClient.invalidateQueries({
         queryKey: patientDetailKeys.detail(variables.patientId),
       });
       setSelectedPatient(variables.patientId);

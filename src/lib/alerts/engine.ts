@@ -68,8 +68,9 @@ export function evaluateRule(
 
   // older_than_days — compare date field to threshold
   if (rule.operator === "older_than_days") {
-    const dateStr = String(fieldValue);
-    const date = parseBrazilianDate(dateStr);
+    // Date fields from patient data are strings (dd/MM/yyyy format); other types cannot be parsed.
+    if (typeof fieldValue !== "string") return false;
+    const date = parseBrazilianDate(fieldValue);
     if (!date) return false;
 
     const now = new Date();
@@ -93,8 +94,11 @@ export function evaluateRule(
     case "<=":
       return isNumericComparison && numericField <= numericValue;
     case "=":
+      // Only primitives have a meaningful string form; objects would give [object Object].
+      if (typeof fieldValue !== "string" && typeof fieldValue !== "number" && typeof fieldValue !== "boolean") return false;
       return String(fieldValue) === String(rule.value);
     case "!=":
+      if (typeof fieldValue !== "string" && typeof fieldValue !== "number" && typeof fieldValue !== "boolean") return false;
       return String(fieldValue) !== String(rule.value);
     default:
       return false;
@@ -112,7 +116,7 @@ export function evaluatePatient(
   patient: Record<string, unknown>,
   layerId: string
 ): AlertResult {
-  const cns = String(patient.cns ?? "");
+  const cns = typeof patient.cns === "string" ? patient.cns : "";
   const triggeredRules: AlertRule[] = [];
   let highestLevel: AlertLevel = "verde";
 

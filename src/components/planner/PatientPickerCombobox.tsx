@@ -19,7 +19,7 @@ import {
 import { usePlannerStore } from "@/stores/plannerStore";
 import type { PatientRecord } from "@/hooks/usePatientData";
 
-interface PatientPickerComboboxProps {
+type PatientPickerComboboxProps = {
   patients: PatientRecord[];
 }
 
@@ -61,7 +61,7 @@ export function PatientPickerCombobox({ patients }: PatientPickerComboboxProps) 
                   <CommandItem
                     key={p.id}
                     value={`${p.nomeCompleto ?? ""} ${p.cns}`}
-                    onSelect={() => handleSelect(p.id)}
+                    onSelect={() => { handleSelect(p.id); }}
                     disabled={already}
                     className={already ? "opacity-50" : ""}
                   >

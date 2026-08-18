@@ -32,7 +32,7 @@ type FieldProps = {
   /** Slot for the control (Input, DatePicker, Select, etc.). */
   children: React.ReactNode;
   className?: string;
-};
+}
 
 /**
  * A single form field. Keeps label/control/description in one grid cell.

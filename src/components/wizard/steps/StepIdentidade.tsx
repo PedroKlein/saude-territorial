@@ -93,7 +93,7 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="grid grid-cols-2 gap-x-3 gap-y-4">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="grid grid-cols-2 gap-x-3 gap-y-4">
       {/* CNS */}
       <Field
         label="CNS"
@@ -107,7 +107,7 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
           name="cns"
           render={({ field }) => (
             <CnsInput
-              value={field.value ?? ""}
+              value={field.value}
               onValueChange={field.onChange}
               aria-invalid={Boolean(errors.cns)}
               aria-label="CNS"

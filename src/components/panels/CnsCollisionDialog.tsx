@@ -11,7 +11,7 @@
 import type { ConditionAttach } from "@/lib/patients/schemas";
 import { useAttachCondition } from "@/hooks/useCreatePatient";
 
-interface CnsCollisionDialogProps {
+type CnsCollisionDialogProps = {
   /** Existing patient info returned in the 409 body. */
   existing: {
     id: string;
@@ -84,9 +84,9 @@ export function CnsCollisionDialog({
 
         {attach.isError && (
           <p className="mb-3 text-xs text-red-700">
-            {attach.error?.body?.error === "condition_exists"
+         {attach.error.body.error === "condition_exists"
               ? "Este paciente já possui essa condição."
-              : attach.error?.body?.error ?? "Erro ao adicionar condição."}
+           : attach.error.body.error ?? "Erro ao adicionar condição."}
           </p>
         )}
 

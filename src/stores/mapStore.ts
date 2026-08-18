@@ -4,7 +4,7 @@ import type { LayerId } from "@/config/layers.config";
 import { LAYER_CONFIG } from "@/config/layers.config";
 import type { RouteResult, RouteProfile } from "@/types/routing";
 
-interface ActiveRoute {
+type ActiveRoute = {
   result: RouteResult;
   profile: RouteProfile;
 }
@@ -13,7 +13,7 @@ interface ActiveRoute {
 export type ViewMode = "markers" | "density" | "microarea";
 
 /** Identifies the patient whose pin is being placed manually. */
-export interface PinningTarget {
+export type PinningTarget = {
   /** DB UUID — used by mutation calls. */
   id: string;
   /** CNS — kept for user-facing text (never rendered as a raw log). */
@@ -22,7 +22,7 @@ export interface PinningTarget {
   nomeCompleto: string | null;
 }
 
-interface MapState {
+type MapState = {
   activeLayers: Record<LayerId, boolean>;
   selectedPatient: string | null;
   mapCenter: [number, number];
@@ -35,7 +35,7 @@ interface MapState {
   pinningPatient: PinningTarget | null;
 }
 
-interface MapActions {
+type MapActions = {
   toggleLayer: (id: LayerId) => void;
   setSelectedPatient: (id: string | null) => void;
   setMapView: (center: [number, number], zoom: number) => void;

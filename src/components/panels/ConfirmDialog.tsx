@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
-interface ConfirmDialogProps {
+type ConfirmDialogProps = {
   title: string;
   body: ReactNode;
   confirmLabel: string;
@@ -66,7 +66,7 @@ export function ConfirmDialog({
       }
     };
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    return () => { window.removeEventListener("keydown", handleKey); };
   }, [onCancel, onConfirm, isPending]);
 
   return (

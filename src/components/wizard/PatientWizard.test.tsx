@@ -99,7 +99,7 @@ vi.mock("@/components/ui/masked-input", () => ({
       data-testid="cns-input"
       value={value ?? ""}
       onChange={(e) => onValueChange?.(e.target.value)}
-      {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+      {...(rest)}
     />
   ),
   PhoneInput: () => <input aria-label="Telefone" />,
@@ -328,18 +328,18 @@ describe("PatientWizard", () => {
 
     // Navigate: identidade (pre-filled) → endereco → gerenciar-condicoes → confirmar
     submitStep(); // identidade
-    await waitFor(() => expect(screen.getByLabelText("Rua")).toBeInTheDocument());
+    await waitFor(() => { expect(screen.getByLabelText("Rua")).toBeInTheDocument(); });
 
     submitStep(); // endereco
     // Wait for gerenciar-condicoes step (checkboxes appear)
     await waitFor(() =>
-      expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0),
+      { expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0); },
     );
 
     submitStep(); // gerenciar-condicoes
     // Wait for confirmar step (Finalizar button appears)
     await waitFor(() =>
-      expect(screen.getByText("Finalizar")).toBeInTheDocument(),
+      { expect(screen.getByText("Finalizar")).toBeInTheDocument(); },
     );
 
     fireEvent.click(screen.getByText("Finalizar"));
@@ -380,13 +380,13 @@ describe("PatientWizard", () => {
 
     // Step 1: identidade (pre-filled with VALID_CNS + nomeCompleto)
     submitStep();
-    await waitFor(() => expect(screen.getByLabelText("Rua")).toBeInTheDocument());
+    await waitFor(() => { expect(screen.getByLabelText("Rua")).toBeInTheDocument(); });
 
     // Step 2: endereco
     submitStep();
     // Wait for gerenciar-condicoes step — condition checkboxes visible
     await waitFor(() =>
-      expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0),
+      { expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0); },
     );
 
     // Step 3: gerenciar-condicoes
@@ -401,13 +401,13 @@ describe("PatientWizard", () => {
 
     // Step 4: dados-tuberculose (now visible since tuberculose was added)
     await waitFor(() =>
-      expect(document.getElementById("wizard-step-form")).toBeInTheDocument(),
+      { expect(document.getElementById("wizard-step-form")).toBeInTheDocument(); },
     );
     submitStep(); // all fields optional — advance
 
     // Step 5: confirmar → Finalizar
     await waitFor(() =>
-      expect(screen.getByText("Finalizar")).toBeInTheDocument(),
+      { expect(screen.getByText("Finalizar")).toBeInTheDocument(); },
     );
     fireEvent.click(screen.getByText("Finalizar"));
 

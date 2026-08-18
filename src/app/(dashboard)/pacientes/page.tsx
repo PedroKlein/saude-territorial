@@ -11,10 +11,10 @@ import {
 import { PatientTable } from "./PatientTable";
 import { QualityView } from "./QualityView";
 
-export interface UnifiedPatient extends PatientRecord {
+export type UnifiedPatient = {
   conditions: LayerId[];
   dataUltimaAtualizacao: string | null;
-}
+} & PatientRecord
 
 export default function PacientesPage() {
   const { data, isLoading, isError } = usePatientData();
@@ -25,6 +25,7 @@ export default function PacientesPage() {
     const map = new Map<string, UnifiedPatient>();
 
     for (const [layerId, records] of Object.entries(data) as [LayerId, PatientRecord[]][]) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cast as [LayerId, PatientRecord[]][] strips undefined but Partial<Record<...>> values can be undefined at runtime
       if (!records) continue;
       for (const p of records) {
         const existing = map.get(p.id);
@@ -77,7 +78,7 @@ export default function PacientesPage() {
               patients={patients}
               isLoading={isLoading}
               onEdit={(p) =>
-                setWizardMode({ kind: "edit", patientId: p.id, patient: p })
+                { setWizardMode({ kind: "edit", patientId: p.id, patient: p }); }
               }
             />
           </TabsContent>
@@ -99,7 +100,7 @@ export default function PacientesPage() {
         <PatientWizard
           open
           mode={wizardMode}
-          onClose={() => setWizardMode(null)}
+          onClose={() => { setWizardMode(null); }}
         />
       )}
     </div>

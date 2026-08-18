@@ -112,7 +112,7 @@ describe("StepEndereco — hydrated coords guard", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows 'Localização salva' banner when ctx has hydrated geocodedCoords", async () => {
+  it("shows 'Localização salva' banner when ctx has hydrated geocodedCoords", () => {
     const ctx: PatientWizardCtx = {
       ...BASE_CTX,
       rua: "Rua das Flores",

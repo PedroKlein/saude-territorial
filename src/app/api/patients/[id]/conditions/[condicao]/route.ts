@@ -100,6 +100,7 @@ export async function DELETE(
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TS control flow does not track mutations inside async callbacks; found is set to true inside the transaction when the delete succeeds
   if (!found) {
     return NextResponse.json(
       { error: "Condição não encontrada para este paciente." },

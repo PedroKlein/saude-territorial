@@ -27,7 +27,7 @@ describe("usePatientData", () => {
   });
 
   it("returns loading state initially", () => {
-    mockFetch.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockFetch.mockImplementation(() => new Promise(() => { /* intentionally never resolves */ })); // never resolves
     const { result } = renderHook(() => usePatientData(), {
       wrapper: createWrapper(),
     });
@@ -65,7 +65,7 @@ describe("usePatientData", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true); });
     expect(result.current.data?.gestantes).toHaveLength(1);
     expect(result.current.data?.tuberculose).toHaveLength(1);
     expect(mockFetch).toHaveBeenCalledWith("/api/patients");
@@ -82,7 +82,7 @@ describe("usePatientData", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => { expect(result.current.isError).toBe(true); });
     expect(result.current.error).toBeDefined();
   });
 
@@ -97,8 +97,8 @@ describe("usePatientData", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect((result.current.error as Error).message).toContain("401");
+    await waitFor(() => { expect(result.current.isError).toBe(true); });
+    expect((result.current.error!).message).toContain("401");
   });
 
   it("returns empty layer map when response has no rows", async () => {
@@ -111,7 +111,7 @@ describe("usePatientData", () => {
       wrapper: createWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true); });
     expect(result.current.data?.gestantes).toEqual([]);
     expect(result.current.data?.tuberculose).toEqual([]);
     expect(result.current.data?.hipertensao).toEqual([]);

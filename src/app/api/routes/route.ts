@@ -18,11 +18,10 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { getRoute } from "@/lib/routing/client";
-import type { RouteProfile } from "@/types/routing";
 
 const CoordSchema = z.object({
-  lat: z.number().finite().gte(-90).lte(90),
-  lng: z.number().finite().gte(-180).lte(180),
+  lat: z.number().gte(-90).lte(90),
+  lng: z.number().gte(-180).lte(180),
 });
 
 const BodySchema = z.object({
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { waypoints, profile } = parsed.data;
 
   try {
-    const result = await getRoute(waypoints, profile as RouteProfile);
+    const result = await getRoute(waypoints, profile);
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(

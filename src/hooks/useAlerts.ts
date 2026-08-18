@@ -17,7 +17,7 @@ export function useAlerts(
     const results = new Map<string, AlertResult>();
 
     for (const patient of patients) {
-      const cns = String(patient.cns ?? "");
+      const cns = typeof patient.cns === "string" ? patient.cns : "";
       if (!cns) continue;
 
       const result = evaluatePatient(rules, patient, layerId);

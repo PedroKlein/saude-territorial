@@ -43,14 +43,14 @@ import { isUuid } from "@/lib/db/errors";
 
 function toBRDate(iso: string | Date | null | undefined): string | null {
   if (!iso) return null;
-  const s = iso instanceof Date ? iso.toISOString().slice(0, 10) : String(iso).slice(0, 10);
+  const s = iso instanceof Date ? iso.toISOString().slice(0, 10) : iso.slice(0, 10);
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
 }
 
 function timestampToBRDate(value: Date | string | null | undefined): string | null {
   if (!value) return null;
-  const iso = value instanceof Date ? value.toISOString() : String(value);
+  const iso = value instanceof Date ? value.toISOString() : value;
   return toBRDate(iso.slice(0, 10));
 }
 
@@ -142,8 +142,7 @@ export async function PATCH(
   let coord: CoordResult = { kind: "none" };
 
   if (
-    basePatch &&
-    basePatch.lat !== undefined &&
+    basePatch?.lat !== undefined &&
     basePatch.lng !== undefined
   ) {
     coord = {
@@ -492,6 +491,7 @@ function shape(p: Loaded): {
     hipertensao?: Record<string, unknown>;
   } = {};
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (p.gestantes) {
     const g = p.gestantes;
     out.gestantes = {
@@ -523,6 +523,7 @@ function shape(p: Loaded): {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (p.tuberculose) {
     const t = p.tuberculose;
     out.tuberculose = {
@@ -549,6 +550,7 @@ function shape(p: Loaded): {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (p.has) {
     const h = p.has;
     out.hipertensao = {
@@ -603,7 +605,7 @@ export type UnifiedPatient = {
   gestante: Record<string, unknown> | null;
   tuberculose: Record<string, unknown> | null;
   has: Record<string, unknown> | null;
-};
+}
 
 function shapeUnified(p: Loaded): UnifiedPatient {
   return {
@@ -625,6 +627,7 @@ function shapeUnified(p: Loaded): UnifiedPatient {
     geocodeReference: p.geocodeReference,
     vulnerabilidades: p.vulnerabilidades,
     updatedAt: timestampToBRDate(p.updatedAt),
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
     gestante: p.gestantes
       ? {
           dum: toBRDate(p.gestantes.dum),
@@ -656,6 +659,7 @@ function shapeUnified(p: Loaded): UnifiedPatient {
           updatedAt: timestampToBRDate(p.gestantes.updatedAt),
         }
       : null,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
     tuberculose: p.tuberculose
       ? {
           tipo: p.tuberculose.tipo,
@@ -685,6 +689,7 @@ function shapeUnified(p: Loaded): UnifiedPatient {
           updatedAt: timestampToBRDate(p.tuberculose.updatedAt),
         }
       : null,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
     has: p.has
       ? {
           dataUltimaConsulta: toBRDate(p.has.dataUltimaConsulta),

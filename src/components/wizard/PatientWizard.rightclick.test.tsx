@@ -92,7 +92,7 @@ vi.mock("@/components/ui/masked-input", () => ({
       data-testid="cns-input"
       value={value ?? ""}
       onChange={(e) => onValueChange?.(e.target.value)}
-      {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+      {...(rest)}
     />
   ),
   PhoneInput: () => <input aria-label="Telefone" />,
@@ -155,7 +155,7 @@ const VALID_CNS = "100000000000007";
 /** Submit the active wizard step (footer button wired via form="wizard-step-form"). */
 function submitStep() {
   fireEvent.click(
-    document.querySelector('button[form="wizard-step-form"]') as HTMLElement,
+    document.querySelector('button[form="wizard-step-form"]')!,
   );
 }
 
@@ -193,7 +193,7 @@ describe("PatientWizard right-click flow", () => {
     });
 
     // Rua must be empty — right-click sets coords only, not address text
-    expect((screen.getByLabelText("Rua") as HTMLInputElement).value).toBe("");
+    expect(screen.getByLabelText<HTMLInputElement>("Rua").value).toBe("");
 
     // Manual picker must be visible because geoResult was seeded as "manual"
     // from ctx.geocodedCoords (right-click path: rua empty, coords set)

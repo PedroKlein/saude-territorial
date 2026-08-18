@@ -6,7 +6,7 @@
 export type RouteProfile = "foot" | "car";
 
 /** Result from OSRM route calculation */
-export interface RouteResult {
+export type RouteResult = {
   /** Total route distance in meters */
   distance: number;
   /** Total route duration in seconds */

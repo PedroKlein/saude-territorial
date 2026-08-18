@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import type { LayerId } from "@/config/layers.config";
 
-export interface PatientRecord {
+export type PatientRecord = {
   /** Internal DB UUID (source of truth for mutations). */
   id: string;
   cns: string;
@@ -16,7 +16,7 @@ export interface PatientRecord {
 
 export type LayeredPatientData = Partial<Record<LayerId, PatientRecord[]>>;
 
-interface SyncState {
+type SyncState = {
   lastSyncTime: number | null;
   isSyncing: boolean;
   setLastSync: (time: number) => void;
@@ -26,8 +26,8 @@ interface SyncState {
 export const useSyncStore = create<SyncState>()((set) => ({
   lastSyncTime: null,
   isSyncing: false,
-  setLastSync: (time) => set({ lastSyncTime: time }),
-  setIsSyncing: (syncing) => set({ isSyncing: syncing }),
+  setLastSync: (time) => { set({ lastSyncTime: time }); },
+  setIsSyncing: (syncing) => { set({ isSyncing: syncing }); },
 }));
 
 export const patientKeys = {
@@ -39,8 +39,8 @@ async function fetchPatientData(): Promise<LayeredPatientData> {
   if (!res.ok) {
     throw new Error(`Falha ao carregar dados: ${res.status}`);
   }
-  const json = await res.json();
-  return json.layers as LayeredPatientData;
+  const json = (await res.json()) as { layers: LayeredPatientData };
+  return json.layers;
 }
 
 /**

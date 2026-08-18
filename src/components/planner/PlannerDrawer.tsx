@@ -37,7 +37,7 @@ import { PlanPickerDialog } from "./PlanPickerDialog";
 import { useMapStore } from "@/stores/mapStore";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
-import type { AlertLevel } from "@/types/alerts";
+import type { RouteResult } from "@/types/routing";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
 
 function todayDisplay(): string {
@@ -55,6 +55,7 @@ function buildPatientMap(
   const map = new Map<string, { record: PatientRecord; layerId: LayerId }>();
   if (!data) return map;
   for (const [layerId, patients] of Object.entries(data)) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Object.entries on Partial<Record> can yield undefined values at runtime; TypeScript's Object.entries types omit this
     if (!patients) continue;
     for (const p of patients) {
       if (!map.has(p.id)) {
@@ -72,6 +73,7 @@ function layerForPatient(
 ): LayerId {
   if (!data) return "gestantes";
   for (const [layerId, patients] of Object.entries(data)) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- patients from Object.entries on Partial<Record> can be undefined at runtime
     if (patients?.some((q) => q.id === p.id)) return layerId as LayerId;
   }
   return "gestantes";
@@ -122,7 +124,7 @@ function useOsrmRoute(
         body: JSON.stringify({ waypoints: coords, profile }),
       });
       if (!res.ok) return;
-      setRoute(await res.json());
+      setRoute((await res.json()) as RouteResult);
     } catch {
       // Silent — route is non-blocking.
     }
@@ -130,7 +132,7 @@ function useOsrmRoute(
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(fetchRoute, ROUTE_DEBOUNCE_MS);
+    timerRef.current = setTimeout(() => { void fetchRoute(); }, ROUTE_DEBOUNCE_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
@@ -169,6 +171,7 @@ export function PlannerDrawer() {
     const list: PatientRecord[] = [];
     if (!data) return list;
     for (const patients of Object.values(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Object.values on Partial<Record> can yield undefined values at runtime
       if (!patients) continue;
       for (const p of patients) {
         if (!seen.has(p.id)) {
@@ -195,7 +198,7 @@ export function PlannerDrawer() {
       if (filters.alertLevels.length > 0) {
         const layerId = layerForPatient(p, data);
         const result = evaluatePatient(ALERT_RULES, p, layerId);
-        if (!filters.alertLevels.includes(result.level as AlertLevel)) return false;
+        if (!filters.alertLevels.includes(result.level)) return false;
       }
       return true;
     });
@@ -310,8 +313,8 @@ export function PlannerDrawer() {
            * (leftovers from Dialog root) — the map counts as "outside", so
            * we block those specific dismissals below and let the user close
            * via the explicit X, Esc, or the "Fechar" affordance. */
-          onInteractOutside={(e) => e.preventDefault()}
-          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => { e.preventDefault(); }}
+          onPointerDownOutside={(e) => { e.preventDefault(); }}
         >
           <SheetHeader className="border-b border-neutral-200 p-4">
             <div className="flex items-start justify-between gap-2">
@@ -329,7 +332,7 @@ export function PlannerDrawer() {
                 </div>
               </div>
               <button
-                onClick={() => setDrawerOpen(false)}
+                onClick={() => { setDrawerOpen(false); }}
                 className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
                 aria-label="Fechar planejador"
               >
@@ -341,7 +344,7 @@ export function PlannerDrawer() {
               type="text"
               placeholder="Nome do ACS (opcional)"
               value={acsName}
-              onChange={(e) => setAcsName(e.target.value)}
+              onChange={(e) => { setAcsName(e.target.value); }}
               className="mt-2 w-full rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm text-neutral-800 placeholder-neutral-400 focus:border-brand/50 focus:bg-white focus:outline-none"
             />
 
@@ -360,7 +363,7 @@ export function PlannerDrawer() {
                   Limite de {PLAN_LIMIT} pacientes por plano atingido. Remova algum para adicionar mais.
                 </span>
                 <button
-                  onClick={() => setLimitBannerVisible(false)}
+                  onClick={() => { setLimitBannerVisible(false); }}
                   className="shrink-0 text-amber-700 hover:text-amber-900"
                   aria-label="Fechar aviso"
                 >
@@ -403,7 +406,7 @@ export function PlannerDrawer() {
 
             <div className="border-b border-neutral-200">
               <button
-                onClick={() => setFiltersOpen((v) => !v)}
+                onClick={() => { setFiltersOpen((v) => !v); }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50"
               >
                 <Filter className="h-3.5 w-3.5 text-neutral-400" />
@@ -475,7 +478,7 @@ export function PlannerDrawer() {
               {(["foot", "car"] as const).map((p) => (
                 <button
                   key={p}
-                  onClick={() => setProfile(p)}
+                  onClick={() => { setProfile(p); }}
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition ${
                     profile === p
                       ? "bg-neutral-900 text-white"
@@ -494,14 +497,14 @@ export function PlannerDrawer() {
 
             <div className="flex gap-2">
               <button
-                onClick={() => setPickDialogOpen(true)}
+                onClick={() => { setPickDialogOpen(true); }}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
               >
                 <FolderOpen className="h-4 w-4" />
                 Carregar
               </button>
               <button
-                onClick={() => setSaveDialogOpen(true)}
+                onClick={() => { setSaveDialogOpen(true); }}
                 disabled={stops.length === 0}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -524,12 +527,12 @@ export function PlannerDrawer() {
 
       <PlanSaveDialog
         open={saveDialogOpen}
-        onClose={() => setSaveDialogOpen(false)}
+        onClose={() => { setSaveDialogOpen(false); }}
         acsName={acsName.trim() || null}
       />
       <PlanPickerDialog
         open={pickDialogOpen}
-        onClose={() => setPickDialogOpen(false)}
+        onClose={() => { setPickDialogOpen(false); }}
       />
     </>
   );

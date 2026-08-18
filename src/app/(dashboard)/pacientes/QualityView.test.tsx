@@ -38,7 +38,7 @@ function makePatient(
     conditions: [],
     dataUltimaAtualizacao: null,
     ...overrides,
-  } as unknown as UnifiedPatient;
+  };
 }
 
 /** Triggers: sem-telefone only */

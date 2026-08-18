@@ -17,7 +17,7 @@ export type AlertOperator =
 
 export type AlertLevel = "vermelho" | "amarelo" | "verde";
 
-export interface AlertRule {
+export type AlertRule = {
   /** Which layer (sheet tab) this rule applies to */
   layer: string;
   /** Column/field name to evaluate */
@@ -30,7 +30,7 @@ export interface AlertRule {
   level: AlertLevel;
 }
 
-export interface AlertResult {
+export type AlertResult = {
   /** Patient CNS identifier */
   patientCns: string;
   /** Highest alert level from all triggered rules */

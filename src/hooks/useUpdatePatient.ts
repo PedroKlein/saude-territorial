@@ -29,7 +29,7 @@ import type { PatientPatch } from "@/lib/patients/schemas";
  * is worth surfacing once, not retrying blindly on a stale UI state.
  */
 
-export interface UpdatePatientInput {
+export type UpdatePatientInput = {
   /** Patient UUID (from `PatientRecord.id`). */
   id: string;
   /** Structured PATCH body — see `PatientPatchSchema`. */
@@ -46,16 +46,16 @@ export interface UpdatePatientInput {
 }
 
 /** Server error surface. `body.requiresManualPin` maps to the 422 fallback. */
-export interface UpdatePatientError extends Error {
+export type UpdatePatientError = {
   status?: number;
   body?: {
     error?: string;
     requiresManualPin?: boolean;
     issues?: unknown[];
   };
-}
+} & Error
 
-interface MutationContext {
+type MutationContext = {
   /** Snapshot of `patientKeys.all` before the optimistic write. */
   previous: LayeredPatientData | undefined;
 }
@@ -88,7 +88,7 @@ export function useUpdatePatient() {
         throw err;
       }
 
-      return res.json();
+      return res.json() as Promise<unknown>;
     },
 
     onMutate: async ({ id, optimisticPatch }) => {
@@ -118,8 +118,8 @@ export function useUpdatePatient() {
       // Invalidate the list AND this patient's detail so the open panel
       // hydrates from the authoritative server envelope (recomputed ig,
       // updated dataUltimaAtualizacao, merged fields).
-      queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      void queryClient.invalidateQueries({
         queryKey: patientDetailKeys.detail(variables.id),
       });
     },
@@ -134,23 +134,19 @@ function applyOptimisticPatch(
   patch: Partial<PatientRecord>,
 ): LayeredPatientData {
   const next: LayeredPatientData = {};
-  let mutated = false;
+  let changed = false;
 
-  for (const [layerId, patients] of Object.entries(data) as Array<
-    [LayerId, PatientRecord[] | undefined]
-  >) {
+  for (const [layerId, patients] of Object.entries(data) as [LayerId, PatientRecord[] | undefined][]) {
     if (!patients) {
       continue;
     }
-    let touched = false;
-    const patched = patients.map((p) => {
-      if (p.id !== id) return p;
-      touched = true;
-      return { ...p, ...patch };
-    });
-    next[layerId] = touched ? patched : patients;
-    mutated = mutated || touched;
+    if (patients.some((p) => p.id === id)) {
+      changed = true;
+      next[layerId] = patients.map((p) => p.id === id ? { ...p, ...patch } : p);
+    } else {
+      next[layerId] = patients;
+    }
   }
 
-  return mutated ? next : data;
+  return changed ? next : data;
 }

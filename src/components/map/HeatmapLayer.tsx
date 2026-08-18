@@ -8,16 +8,16 @@ type LeafletHeatMod = typeof L & {
   heatLayer: (
     data: [number, number, number][],
     opts: { radius?: number; blur?: number; maxZoom?: number },
-  ) => { addTo: (m: unknown) => unknown; remove: () => void };
+  ) => { addTo: (m: unknown) => { remove: () => void }; remove: () => void };
 };
 
-interface HeatmapPoint {
+type HeatmapPoint = {
   lat: number;
   lng: number;
   intensity: number;
 }
 
-interface HeatmapLayerProps {
+type HeatmapLayerProps = {
   points: HeatmapPoint[];
   radius?: number;
   blur?: number;
@@ -38,8 +38,7 @@ export function HeatmapLayer({
   const map = useMap();
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let heatLayer: any = null;
+    let heatLayer: { remove: () => void } | null = null;
 
     void Promise.all([import("leaflet"), import("leaflet.heat")]).then(
       ([leafletMod]) => {

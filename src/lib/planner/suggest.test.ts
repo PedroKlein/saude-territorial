@@ -151,7 +151,7 @@ describe("suggestPlan", () => {
   });
 
   it("excludes patients with no coordinates", () => {
-    const noCoord = makePatient({ id: "no-coord", lat: undefined as unknown as number, lng: undefined as unknown as number });
+    const noCoord = makePatient({ id: "no-coord", lat: undefined, lng: undefined });
     const stops = suggestPlan({
       patients: [noCoord, RED_PATIENT_1],
       layerFor,

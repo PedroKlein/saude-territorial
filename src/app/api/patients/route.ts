@@ -33,7 +33,7 @@ import { isPgUniqueViolation } from "@/lib/db/errors";
 /** ISO `YYYY-MM-DD` → Brazilian `dd/MM/yyyy`. Returns null for null/malformed input. */
 function toBRDate(iso: string | Date | null | undefined): string | null {
   if (!iso) return null;
-  const s = iso instanceof Date ? iso.toISOString().slice(0, 10) : String(iso).slice(0, 10);
+  const s = iso instanceof Date ? iso.toISOString().slice(0, 10) : iso.slice(0, 10);
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
 }
@@ -41,7 +41,7 @@ function toBRDate(iso: string | Date | null | undefined): string | null {
 /** Timestamp → dd/MM/yyyy (drops time portion; the alert engine is day-granular). */
 function timestampToBRDate(value: Date | string | null | undefined): string | null {
   if (!value) return null;
-  const iso = value instanceof Date ? value.toISOString() : String(value);
+  const iso = value instanceof Date ? value.toISOString() : value;
   return toBRDate(iso.slice(0, 10));
 }
 
@@ -84,7 +84,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // condition; base-only rows fall through to sem-condicao below.
       const hasCoords =
         p.lat != null && p.lng != null && p.geocodeStatus !== "unresolved";
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle eager relations are typed non-null but can be null at runtime when the patient has no extension row
       const hasAnyCondition = p.gestantes || p.tuberculose || p.has;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- hasAnyCondition derives from Drizzle relations that TypeScript types as always-truthy
       if (!hasCoords && hasAnyCondition) continue;
 
       const baseRecord = {
@@ -107,6 +109,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         vulnerabilidades: p.vulnerabilidades,
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
       if (p.gestantes) {
         const g = p.gestantes;
         gestantes.push({
@@ -138,6 +141,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
       if (p.tuberculose) {
         const t = p.tuberculose;
         tuberculose.push({
@@ -165,6 +169,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
       if (p.has) {
         const h = p.has;
         hipertensao.push({
@@ -181,6 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relations typed non-null; this branch is the condition-less patient path
       if (!p.gestantes && !p.tuberculose && !p.has) {
         semCondicao.push({
           ...baseRecord,
@@ -249,10 +255,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     with: { gestantes: true, tuberculose: true, has: true },
   });
   if (existing) {
-    const attached: Array<"gestantes" | "tuberculose" | "hipertensao"> = [];
-    if (existing.gestantes) attached.push("gestantes");
-    if (existing.tuberculose) attached.push("tuberculose");
-    if (existing.has) attached.push("hipertensao");
+    const attached: ("gestantes" | "tuberculose" | "hipertensao")[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
+      if (existing.gestantes) attached.push("gestantes");
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
+      if (existing.tuberculose) attached.push("tuberculose");
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
+      if (existing.has) attached.push("hipertensao");
     return NextResponse.json(
       {
         error: "cns_exists",

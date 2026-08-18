@@ -86,6 +86,12 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
+/** Converts undefined or empty string to null; non-empty strings pass through. */
+function emptyToNull(v: string | undefined): string | null {
+  if (v === undefined || v === "") return null;
+  return v;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -93,7 +99,7 @@ function fmtDate(d: Date | null | undefined): string {
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 
 export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
-  const prev = ctx.tuberculose as Record<string, unknown>;
+  const prev = ctx.tuberculose;
 
   const {
     handleSubmit,
@@ -130,26 +136,26 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
   const onSubmit = handleSubmit((values) => {
     const raw: Record<string, unknown> = {
       tipo: values.tipo ?? null,
-      galRegistro: values.galRegistro || null,
+      galRegistro: emptyToNull(values.galRegistro),
       baciloscopiaPrimeiraData: fmtDate(values.baciloscopiaRange?.from) || null,
       baciloscopiaSegundaData: fmtDate(values.baciloscopiaRange?.to) || null,
-      baciloscopiaResultado: values.baciloscopiaResultado || null,
+      baciloscopiaResultado: emptyToNull(values.baciloscopiaResultado),
       trmPrimeiraData: fmtDate(values.trmRange?.from) || null,
       trmSegundaData: fmtDate(values.trmRange?.to) || null,
-      trmResultado: values.trmResultado || null,
-      culturaMTuberculosis: values.culturaMTuberculosis || null,
-      formaClinica: values.formaClinica || null,
-      tipoEntrada: values.tipoEntrada || null,
-      esquema: values.esquema || null,
+      trmResultado: emptyToNull(values.trmResultado),
+      culturaMTuberculosis: emptyToNull(values.culturaMTuberculosis),
+      formaClinica: emptyToNull(values.formaClinica),
+      tipoEntrada: emptyToNull(values.tipoEntrada),
+      esquema: emptyToNull(values.esquema),
       dataInicio: fmtDate(values.dataInicio) || null,
       tdoStatus: values.tdoStatus ?? null,
-      encerramentoMotivo: values.encerramentoMotivo || null,
+      encerramentoMotivo: emptyToNull(values.encerramentoMotivo),
       encerramentoData: fmtDate(values.encerramentoData) || null,
       ppdMm: values.ppdMm ?? null,
-      histopatologia: values.histopatologia || null,
-      rxTorax: values.rxTorax || null,
-      outrosExames: values.outrosExames || null,
-      formaTratamento: values.formaTratamento || null,
+      histopatologia: emptyToNull(values.histopatologia),
+      rxTorax: emptyToNull(values.rxTorax),
+      outrosExames: emptyToNull(values.outrosExames),
+      formaTratamento: emptyToNull(values.formaTratamento),
       contatosCoabitantes: values.contatosCoabitantes ?? null,
       contatosExaminados: values.contatosExaminados ?? null,
       todosContatosExaminados: values.todosContatosExaminados ?? null,
@@ -160,12 +166,12 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       return;
     }
     setServerIssues([]);
-    setCtx({ tuberculose: parsed.data as Record<string, unknown> });
+    setCtx({ tuberculose: parsed.data });
     goNext();
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
       {serverIssues.length > 0 && (
         <div
           role="alert"
@@ -393,7 +399,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         type="button"
         variant="ghost"
         size="sm"
-        onClick={() => setShowAdvanced((v) => !v)}
+        onClick={() => { setShowAdvanced((v) => !v); }}
         className="text-xs text-muted-foreground"
       >
         {showAdvanced ? "Ocultar" : "Mostrar"} campos avançados
@@ -455,7 +461,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
                   <input
                     type="checkbox"
                     checked={field.value ?? false}
-                    onChange={(e) => field.onChange(e.target.checked)}
+                    onChange={(e) => { field.onChange(e.target.checked); }}
                     className="accent-brand"
                   />
                   Todos os contatos foram examinados

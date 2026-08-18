@@ -39,7 +39,7 @@ const URGENCY_ORDER: Record<AlertLevel, number> = {
   verde: 2,
 };
 
-interface PriorityItem {
+type PriorityItem = {
   id: string;
   name: string | null;
   alertLevel: AlertLevel;
@@ -48,7 +48,7 @@ interface PriorityItem {
   microarea: string | null;
 }
 
-interface PriorityListSectionProps {
+type PriorityListSectionProps = {
   data: LayeredPatientData | undefined;
 }
 
@@ -81,6 +81,7 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
 
     for (const [rawId, patients] of Object.entries(data)) {
       const layerId = rawId as LayerId;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime despite Object.values() type
       if (!patients || patients.length === 0) continue;
       if (!activeLayers[layerId]) continue;
 
@@ -88,7 +89,7 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
         const result = evaluatePatient(ALERT_RULES, p, layerId);
         return {
           ...p,
-          alertLevel: result.level as AlertLevel,
+          alertLevel: result.level,
           triggeredCount: result.triggeredRules.length,
           layerId,
         };
@@ -143,7 +144,7 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
               <button
                 type="button"
                 className="group flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left hover:bg-neutral-50"
-                onClick={() => setSelectedPatient(item.id)}
+                onClick={() => { setSelectedPatient(item.id); }}
               >
                 <span
                   className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${colorClass}`}

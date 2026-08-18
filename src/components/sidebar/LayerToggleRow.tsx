@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 
-interface LayerToggleRowProps {
+type LayerToggleRowProps = {
   /** Lucide icon for the layer. */
   icon: LucideIcon;
   /**

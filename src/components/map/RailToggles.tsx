@@ -23,7 +23,7 @@ export function RailToggles() {
     <>
       {focusMode && (
         <button
-          onClick={() => setFocusMode(false)}
+          onClick={() => { setFocusMode(false); }}
           className="absolute top-3 left-1/2 z-[1001] -translate-x-1/2 rounded-full bg-foreground/80 px-4 py-1.5 text-xs font-medium text-background shadow-md backdrop-blur-sm transition-opacity hover:opacity-90"
           aria-label="Sair do modo foco"
         >

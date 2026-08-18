@@ -25,7 +25,7 @@ export const TelefoneSchema = z
     if (digits === "") return null;
     if (!TELEFONE_DIGITS_RE.test(digits)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Telefone deve ter DDD + 8 ou 9 dígitos.",
       });
       return z.NEVER;
@@ -50,7 +50,7 @@ export const PressaoArterialSchema = z
     const match = PA_RE.exec(trimmed);
     if (!match) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Pressão arterial deve estar no formato NNN/NN (ex: 120/80).",
       });
       return z.NEVER;
@@ -59,21 +59,21 @@ export const PressaoArterialSchema = z
     const dia = Number(match[2]);
     if (sys < 60 || sys > 260) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Pressão sistólica fora da faixa clínica (60–260 mmHg).",
       });
       return z.NEVER;
     }
     if (dia < 30 || dia > 160) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Pressão diastólica fora da faixa clínica (30–160 mmHg).",
       });
       return z.NEVER;
     }
     if (sys <= dia) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Pressão sistólica deve ser maior que a diastólica.",
       });
       return z.NEVER;

@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlannerStore } from "@/stores/plannerStore";
 import type { Stop } from "@/stores/plannerStore";
 
-interface PlanSummary {
+type PlanSummary = {
   id: string;
   date: string;
   acsName: string | null;
@@ -25,7 +25,7 @@ interface PlanSummary {
   stopCount: number;
 }
 
-interface PlanPickerDialogProps {
+type PlanPickerDialogProps = {
   open: boolean;
   onClose: () => void;
 }
@@ -51,10 +51,10 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
     setError(null);
 
     fetch("/api/plans?limit=30")
-      .then((r) => r.json())
-      .then((body) => setPlans(body.plans ?? []))
-      .catch(() => setError("Falha ao carregar planos."))
-      .finally(() => setLoading(false));
+      .then((r) => r.json() as Promise<{ plans?: PlanSummary[] }>)
+      .then((body) => { setPlans(body.plans ?? []); })
+      .catch(() => { setError("Falha ao carregar planos."); })
+      .finally(() => { setLoading(false); });
   }, [open]);
 
   async function handleLoad(planId: string) {
@@ -65,8 +65,8 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
         setError("Erro ao carregar plano.");
         return;
       }
-      const body = await res.json();
-      const stops: Stop[] = (body.plan.stops as { patientId: string; order: number }[]).map(
+      const body = (await res.json()) as { plan: { stops: { patientId: string; order: number }[]; profile: string } };
+      const stops: Stop[] = body.plan.stops.map(
         (s) => ({ patientId: s.patientId, order: s.order }),
       );
       loadPlan({ id: planId, stops, profile: body.plan.profile as "foot" | "car" });
@@ -101,7 +101,7 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+  <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Carregar plano salvo</DialogTitle>
@@ -137,7 +137,7 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
                   >
                     <button
                       type="button"
-                      onClick={() => handleLoad(plan.id)}
+                      onClick={() => { void handleLoad(plan.id); }}
                       disabled={loadingId === plan.id || isDeleting}
                       className="flex flex-1 items-start gap-3 text-left disabled:opacity-60"
                     >
@@ -170,7 +170,7 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
                       <div className="flex shrink-0 items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => handleDelete(plan.id)}
+                          onClick={() => { void handleDelete(plan.id); }}
                           disabled={isDeleting}
                           className="rounded-md bg-alert-red px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-alert-red/90 disabled:opacity-60"
                           aria-label={`Confirmar exclusão do plano de ${formatDate(plan.date)}`}
@@ -183,7 +183,7 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setConfirmDeleteId(null)}
+                          onClick={() => { setConfirmDeleteId(null); }}
                           disabled={isDeleting}
                           className="rounded-md px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-100"
                         >
@@ -193,7 +193,7 @@ export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setConfirmDeleteId(plan.id)}
+                        onClick={() => { setConfirmDeleteId(plan.id); }}
                         disabled={loadingId === plan.id}
                         className="mt-0.5 shrink-0 rounded-md p-1.5 text-neutral-400 hover:bg-red-50 hover:text-alert-red disabled:opacity-40"
                         aria-label={`Excluir plano de ${formatDate(plan.date)}`}

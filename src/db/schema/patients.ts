@@ -61,9 +61,9 @@ export const patients = pgTable(
     createdBy: text("created_by"), // Better Auth session.user.id; nullable for seed rows.
     updatedBy: text("updated_by"),
   },
-  (table) => ({
-    microareaIdx: index("patients_microarea_idx").on(table.microarea),
-  }),
+  (table) => [
+    index("patients_microarea_idx").on(table.microarea),
+  ],
 );
 
 export type Patient = typeof patients.$inferSelect;

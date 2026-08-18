@@ -39,6 +39,7 @@ export async function GET(
     .limit(1)
     .then((rows) => rows[0] ?? null);
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle select types rows[0] as always present but the query may return zero rows at runtime
   if (!plan) {
     return NextResponse.json({ error: "Plano não encontrado." }, { status: 404 });
   }

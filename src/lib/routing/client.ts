@@ -8,6 +8,39 @@
 
 import type { RouteProfile, RouteResult } from "@/types/routing";
 
+/** Minimal OSRM response shapes for the route and trip endpoints. */
+type OsrmRoute = {
+  distance: number;
+  duration: number;
+  geometry: RouteResult["geometry"];
+};
+
+type OsrmRouteResponse = {
+  code: string;
+  message?: string;
+  routes: OsrmRoute[];
+};
+
+type OsrmWaypoint = {
+  waypoint_index: number;
+  name: string;
+  location: [number, number];
+  trips_index: number;
+};
+
+type OsrmTripRoute = {
+  distance: number;
+  duration: number;
+  geometry: RouteResult["geometry"];
+};
+
+type OsrmTripResponse = {
+  code: string;
+  message?: string;
+  trips: OsrmTripRoute[];
+  waypoints: OsrmWaypoint[];
+};
+
 const OSRM_BASE_URL =
   process.env.OSRM_BASE_URL ?? "https://router.project-osrm.org";
 
@@ -16,7 +49,7 @@ const OSRM_PROFILE_MAP: Record<RouteProfile, string> = {
   car: "driving",
 };
 
-export interface Coord {
+export type Coord = {
   lat: number;
   lng: number;
 }
@@ -45,7 +78,7 @@ export async function getRoute(
   const url = `${OSRM_BASE_URL}/route/v1/${osrmProfile}/${coordinates}?overview=full&geometries=geojson`;
 
   const response = await fetch(url);
-  const data = await response.json();
+  const data = (await response.json() as unknown) as OsrmRouteResponse;
 
   if (data.code !== "Ok") {
     throw new Error(`OSRM error: ${data.code} — ${data.message ?? "unknown"}`);
@@ -80,7 +113,7 @@ export async function getRoute(
  * The trip service is a heuristic TSP solver — good for <= ~25 stops which
  * is well within ACS-visit-plan scale.
  */
-export interface TripResult {
+export type TripResult = {
   /**
    * Permutation of input indices in optimized order. `order[0]` = index of
    * the stop that should be visited first, etc.
@@ -116,7 +149,7 @@ export async function getTrip(
     `?source=first&destination=last&roundtrip=false&overview=full&geometries=geojson`;
 
   const response = await fetch(url);
-  const data = await response.json();
+  const data = (await response.json() as unknown) as OsrmTripResponse;
 
   if (data.code !== "Ok") {
     throw new Error(`OSRM trip error: ${data.code} — ${data.message ?? "unknown"}`);
@@ -125,8 +158,8 @@ export async function getTrip(
   // `waypoints[i].waypoint_index` = the position in the optimized order for
   // the INPUT-order coordinate i. Invert to `order[j] = i` where the j-th
   // stop to visit is input index i.
-  const wps = data.waypoints as Array<{ waypoint_index: number }>;
-  const order: number[] = new Array(wps.length).fill(0);
+  const wps = data.waypoints;
+  const order = new Array<number>(wps.length).fill(0);
   wps.forEach((wp, inputIdx) => {
     order[wp.waypoint_index] = inputIdx;
   });

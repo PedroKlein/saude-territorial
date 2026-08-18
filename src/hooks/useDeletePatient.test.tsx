@@ -100,7 +100,7 @@ describe("useDeletePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 204,
-      json: async () => ({}),
+      json: () => ({}),
     });
 
     const { result } = renderHook(() => useDeletePatient(), {
@@ -124,7 +124,7 @@ describe("useDeletePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 204,
-      json: async () => ({}),
+      json: () => ({}),
     });
 
     const { result } = renderHook(() => useDeletePatient(), {
@@ -146,7 +146,7 @@ describe("useDeletePatient", () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
-      json: async () => ({ error: "Erro ao excluir. Tente novamente." }),
+      json: () => ({ error: "Erro ao excluir. Tente novamente." }),
     });
 
     const { result } = renderHook(() => useDeletePatient(), {
@@ -180,7 +180,7 @@ describe("useDeleteCondition", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 204,
-      json: async () => ({}),
+      json: () => ({}),
     });
 
     const { result } = renderHook(() => useDeleteCondition(), {
@@ -204,7 +204,7 @@ describe("useDeleteCondition", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 204,
-      json: async () => ({}),
+      json: () => ({}),
     });
 
     const { result } = renderHook(() => useDeleteCondition(), {
@@ -227,7 +227,7 @@ describe("useDeleteCondition", () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
-      json: async () => ({ error: "Erro ao remover condição." }),
+      json: () => ({ error: "Erro ao remover condição." }),
     });
 
     const { result } = renderHook(() => useDeleteCondition(), {

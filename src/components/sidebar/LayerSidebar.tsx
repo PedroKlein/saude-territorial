@@ -25,7 +25,6 @@ import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
-import type { AlertLevel } from "@/types/alerts";
 import { SearchInput } from "./SearchInput";
 import { LayerToggleRow } from "./LayerToggleRow";
 import { PriorityListSection } from "./PriorityListSection";
@@ -58,7 +57,7 @@ const LAYER_COLOR_CLASS: Record<LayerId, string> = {
   "sem-condicao": "bg-muted-foreground",
 };
 
-interface LayerSidebarProps {
+type LayerSidebarProps = {
   data?: LayeredPatientData;
 }
 
@@ -94,7 +93,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
       if (!patients) continue;
       for (const p of patients) {
         const result = evaluatePatient(ALERT_RULES, p, layerId);
-        const level = result.level as AlertLevel;
+        const level = result.level;
         if (level === "vermelho" || level === "amarelo") count++;
       }
     }
@@ -121,7 +120,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
       <div className="border-b border-neutral-200 px-3 py-2">
         <button
           type="button"
-          onClick={() => setAlertsOnly(!alertsOnly)}
+          onClick={() => { setAlertsOnly(!alertsOnly); }}
           className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium transition ${
             alertsOnly
               ? "bg-red-50 text-alert-red ring-1 ring-alert-red/30"
@@ -163,7 +162,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
               label={LAYER_CONFIG[id].label}
               count={data?.[id]?.length ?? 0}
               active={activeLayers[id]}
-              onToggle={() => toggleLayer(id)}
+              onToggle={() => { toggleLayer(id); }}
             />
           ))}
         </div>
@@ -183,7 +182,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
                 label={LAYER_CONFIG[id].label}
                 count={data?.[id]?.length ?? 0}
                 active={activeLayers[id]}
-                onToggle={() => toggleLayer(id)}
+                onToggle={() => { toggleLayer(id); }}
                 muted
               />
             ))}
@@ -208,7 +207,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
             <button
               key={mode}
               type="button"
-              onClick={() => setViewMode(mode)}
+              onClick={() => { setViewMode(mode); }}
               title={label}
               className={`flex flex-1 min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[11px] font-medium transition ${
                 viewMode === mode

@@ -209,7 +209,7 @@ export function PatientDetailPanel() {
   return (
     <PanelInner
       id={selectedPatient}
-      onClose={() => setSelectedPatient(null)}
+      onClose={() => { setSelectedPatient(null); }}
     />
   );
 }
@@ -236,9 +236,11 @@ function CoincidencePicker({
     const seen = new Set<string>();
     const list: { id: string; name: string }[] = [];
     for (const patients of Object.values(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Object.values on Partial<Record> can yield undefined values at runtime
       if (!patients) continue;
       for (const p of patients) {
         if (seen.has(p.id)) continue;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- PatientRecord.lat/lng are typed number but ungeocoded patients have null coords at runtime
         if (p.lat == null || p.lng == null) continue;
         if (coincidenceKey(p.lat, p.lng) !== key) continue;
         seen.add(p.id);
@@ -262,7 +264,7 @@ function CoincidencePicker({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <button
-          onClick={() => setSelectedPatient(prev.id)}
+          onClick={() => { setSelectedPatient(prev.id); }}
           className="rounded-md p-1 text-amber-900 hover:bg-amber-100"
           aria-label={`Ir para ${prev.name}`}
           title={prev.name}
@@ -273,7 +275,7 @@ function CoincidencePicker({
           {position + 1}/{coincidents.length}
         </span>
         <button
-          onClick={() => setSelectedPatient(next.id)}
+          onClick={() => { setSelectedPatient(next.id); }}
           className="rounded-md p-1 text-amber-900 hover:bg-amber-100"
           aria-label={`Ir para ${next.name}`}
           title={next.name}
@@ -327,7 +329,7 @@ function PanelContent({
   // Alert evaluation
   // ---------------------------------------------------------------------------
 
-  const alerts: Array<{ level: "vermelho" | "amarelo"; label: string }> = [];
+  const alerts: { level: "vermelho" | "amarelo"; label: string }[] = [];
 
   const gestantePayload = patient.gestante
     ? { ...patient, ...patient.gestante }
@@ -335,19 +337,19 @@ function PanelContent({
   if (gestantePayload) {
     const r = evaluatePatient(ALERT_RULES, gestantePayload, "gestantes");
     if (r.level === "vermelho" || r.level === "amarelo") {
-      alerts.push({ level: r.level as "vermelho" | "amarelo", label: "Gestante" });
+      alerts.push({ level: r.level, label: "Gestante" });
     }
   }
   if (patient.tuberculose) {
     const r = evaluatePatient(ALERT_RULES, { ...patient, ...patient.tuberculose }, "tuberculose");
     if (r.level === "vermelho" || r.level === "amarelo") {
-      alerts.push({ level: r.level as "vermelho" | "amarelo", label: "TB" });
+      alerts.push({ level: r.level, label: "TB" });
     }
   }
   if (patient.has) {
     const r = evaluatePatient(ALERT_RULES, { ...patient, ...patient.has }, "hipertensao");
     if (r.level === "vermelho" || r.level === "amarelo") {
-      alerts.push({ level: r.level as "vermelho" | "amarelo", label: "HAS" });
+      alerts.push({ level: r.level, label: "HAS" });
     }
   }
 
@@ -427,6 +429,8 @@ function PanelContent({
     .filter(Boolean)
     .join(", ");
   const bairroLine = patient.bairro ?? null;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty address strings should also suppress the block; ?? would pass "" through and show blank address lines
+  const hasAddressInfo = endereco || bairroLine || patient.cep;
 
   // ---------------------------------------------------------------------------
   // Render
@@ -502,7 +506,7 @@ function PanelContent({
 
           {/* Contact / identity details */}
           <dl className="mt-3 space-y-1.5 text-sm">
-            {(endereco || bairroLine || patient.cep) && (
+            {hasAddressInfo && (
               <div className="flex items-start gap-2 text-neutral-600">
                 <MapPin className="mt-0.5 size-3.5 shrink-0 text-neutral-400" />
                 <div className="min-w-0 flex-1">
@@ -597,11 +601,9 @@ function PanelContent({
                               <div className="text-xs text-neutral-500">
                                 {card.key === "gestante" && (
                                   <>
-                                    {liveIg
-                                      ? `${liveIg}`
-                                      : data.ig != null
-                                        ? `${data.ig as number} sem`
-                                        : null}
+                                    {liveIg ?? (data.ig != null
+                                      ? `${data.ig as number} sem`
+                                      : null)}
                                     {data.risco
                                       ? ` · risco ${data.risco as string}`
                                       : null}
@@ -634,10 +636,10 @@ function PanelContent({
                               data={data}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
-                                setShowAdvanced((s) => ({
+                                { setShowAdvanced((s) => ({
                                   ...s,
                                   [card.key]: !s[card.key],
-                                }))
+                                })); }
                               }
                               liveIg={liveIg}
                               liveDpp={liveDpp}
@@ -648,10 +650,10 @@ function PanelContent({
                               data={data}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
-                                setShowAdvanced((s) => ({
+                                { setShowAdvanced((s) => ({
                                   ...s,
                                   [card.key]: !s[card.key],
-                                }))
+                                })); }
                               }
                             />
                           )}
@@ -660,10 +662,10 @@ function PanelContent({
                               data={data}
                               isAdvanced={isAdvanced}
                               onToggleAdvanced={() =>
-                                setShowAdvanced((s) => ({
+                                { setShowAdvanced((s) => ({
                                   ...s,
                                   [card.key]: !s[card.key],
-                                }))
+                                })); }
                               }
                             />
                           )}
@@ -701,7 +703,7 @@ function PanelContent({
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => setConfirmState({ type: "patient" })}
+            onClick={() => { setConfirmState({ type: "patient" }); }}
           >
             <Trash2 className="mr-1 size-3.5" />
             Excluir
@@ -724,7 +726,7 @@ function PanelContent({
           destructive
           isPending={deletePatient.isPending}
           onConfirm={() => void handleDeletePatient()}
-          onCancel={() => setConfirmState(null)}
+          onCancel={() => { setConfirmState(null); }}
         />
       )}
 
@@ -732,7 +734,7 @@ function PanelContent({
         <PatientWizard
           open
           mode={wizardMode}
-          onClose={() => setWizardMode(null)}
+          onClose={() => { setWizardMode(null); }}
         />
       )}
     </aside>
@@ -747,7 +749,7 @@ type CardBodyProps = {
   data: Record<string, unknown>;
   isAdvanced: boolean;
   onToggleAdvanced: () => void;
-};
+}
 
 /**
  * "Mostrar mais / Mostrar menos" toggle rendered at the bottom of each
@@ -815,7 +817,7 @@ function GestanteCardBody({
         <Field label="Nº consultas">
           <span className="text-sm text-neutral-800">
             {data.numeroConsultas != null
-              ? String(data.numeroConsultas as number)
+              ? (data.numeroConsultas as number)
               : "—"}
           </span>
         </Field>
@@ -865,7 +867,7 @@ function GestanteCardBody({
           <Field label="Nº visitas domiciliares">
             <span className="text-sm text-neutral-800">
               {data.numeroVisitasDomiciliares != null
-                ? String(data.numeroVisitasDomiciliares as number)
+              ? (data.numeroVisitasDomiciliares as number)
                 : "—"}
             </span>
           </Field>
@@ -1037,7 +1039,7 @@ function TuberculoseCardBody({
           </Field>
           <Field label="PPD (mm)">
             <span className="text-sm text-neutral-800">
-              {data.ppdMm != null ? String(data.ppdMm as number) : "—"}
+              {data.ppdMm != null ? (data.ppdMm as number) : "—"}
             </span>
           </Field>
           <Field label="Histopatologia">
@@ -1063,14 +1065,14 @@ function TuberculoseCardBody({
           <Field label="Contatos coabitantes">
             <span className="text-sm text-neutral-800">
               {data.contatosCoabitantes != null
-                ? String(data.contatosCoabitantes as number)
+                ? (data.contatosCoabitantes as number)
                 : "—"}
             </span>
           </Field>
           <Field label="Contatos examinados">
             <span className="text-sm text-neutral-800">
               {data.contatosExaminados != null
-                ? String(data.contatosExaminados as number)
+                ? (data.contatosExaminados as number)
                 : "—"}
             </span>
           </Field>

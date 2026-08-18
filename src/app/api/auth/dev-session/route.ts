@@ -16,6 +16,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import crypto from "crypto";
 
+// eslint-disable-next-line @typescript-eslint/require-await -- better-sqlite3 is synchronous; async preserves the Next.js route handler return type Promise<NextResponse>
 export async function GET(request: NextRequest): Promise<NextResponse> {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const signature = crypto.createHmac("sha256", secret).update(token).digest("base64");
     const signedToken = `${token}.${signature}`;
 
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string redirect should fall back to the default path, not be used as-is
     const redirectTo = new URL(request.url).searchParams.get("redirect") || "/map";
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
     response.cookies.set("better-auth.session_token", signedToken, {

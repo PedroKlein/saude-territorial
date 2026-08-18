@@ -45,7 +45,7 @@ type CommonProps = {
   onBlur?: React.FocusEventHandler<HTMLButtonElement>;
   /** aria-label — the trigger has no visible label of its own. */
   ariaLabel?: string;
-};
+}
 
 export type DatePickerProps = CommonProps & {
   value: Date | null;
@@ -163,7 +163,7 @@ export function DateRangePicker({
         <Calendar
           mode="range"
           selected={value ?? undefined}
-          onSelect={(next) => onChange(next ?? null)}
+          onSelect={(next) => { onChange(next ?? null); }}
           disabled={
             min || max
               ? (d) =>

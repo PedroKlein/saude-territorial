@@ -5,7 +5,7 @@ import type { Feature, FeatureCollection } from "geojson";
 import { useMemo } from "react";
 import type L from "leaflet";
 
-interface MicroareaOutlinesProps {
+type MicroareaOutlinesProps = {
   geojson: FeatureCollection;
   /** IDs of currently filtered microareas (from filterStore). */
   filteredIds: string[];
@@ -31,7 +31,7 @@ export function MicroareaOutlines({
   const styleFeature = useMemo(
     () =>
       (feature?: Feature): L.PathOptions => {
-        const id: string = feature?.properties?.id ?? "";
+        const id: string = (feature?.properties?.id as string | undefined) ?? "";
         const isHighlighted = singleFilter === id;
         const isFaded = singleFilter !== null && !isHighlighted;
 

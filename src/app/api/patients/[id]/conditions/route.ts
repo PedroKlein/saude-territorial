@@ -68,18 +68,21 @@ export async function POST(
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (body.condicao === "gestantes" && current.gestantes) {
     return NextResponse.json(
       { error: "condition_exists" },
       { status: 409 },
     );
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (body.condicao === "tuberculose" && current.tuberculose) {
     return NextResponse.json(
       { error: "condition_exists" },
       { status: 409 },
     );
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Drizzle relation typed non-null; null at runtime when patient lacks this extension
   if (body.condicao === "hipertensao" && current.has) {
     return NextResponse.json(
       { error: "condition_exists" },

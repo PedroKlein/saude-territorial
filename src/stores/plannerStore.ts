@@ -8,18 +8,18 @@ import type { RouteResult } from "@/types/routing";
 export const PLAN_LIMIT = 12;
 
 /** A single ordered stop in the daily plan. */
-export interface Stop {
+export type Stop = {
   patientId: string;
   order: number; // 1-indexed display order
 }
 
-export interface PlannerFilters {
+export type PlannerFilters = {
   microarea: string[];
   conditions: LayerId[];
   alertLevels: AlertLevel[];
 }
 
-interface PlannerState {
+type PlannerState = {
   drawerOpen: boolean;
   stops: Stop[];
   profile: "foot" | "car";
@@ -33,31 +33,31 @@ interface PlannerState {
   limitBannerVisible: boolean;
 }
 
-interface PlannerActions {
-  setDrawerOpen(open: boolean): void;
-  addStop(patientId: string): void;
-  removeStop(patientId: string): void;
-  reorderStops(fromIndex: number, toIndex: number): void;
-  setStops(stops: Stop[]): void;
-  setProfile(p: "foot" | "car"): void;
-  setFilters(next: Partial<PlannerFilters>): void;
-  setRoute(r: RouteResult | null): void;
-  loadPlan(plan: { id: string; stops: Stop[]; profile: "foot" | "car" }): void;
-  clear(): void;
+type PlannerActions = {
+  setDrawerOpen: (open: boolean) => void;
+  addStop: (patientId: string) => void;
+  removeStop: (patientId: string) => void;
+  reorderStops: (fromIndex: number, toIndex: number) => void;
+  setStops: (stops: Stop[]) => void;
+  setProfile: (p: "foot" | "car") => void;
+  setFilters: (next: Partial<PlannerFilters>) => void;
+  setRoute: (r: RouteResult | null) => void;
+  loadPlan: (plan: { id: string; stops: Stop[]; profile: "foot" | "car" }) => void;
+  clear: () => void;
   /** Toggle map-select mode on/off. */
-  setMapSelectMode(v: boolean): void;
+  setMapSelectMode: (v: boolean) => void;
   /** Toggle the over-limit alert banner. */
-  setLimitBannerVisible(v: boolean): void;
+  setLimitBannerVisible: (v: boolean) => void;
   /**
    * Bulk-add up to `PLAN_LIMIT - stops.length` new ids (deduped).
    * Returns how many were actually appended.
    */
-  addStopsUpTo(ids: string[]): number;
+  addStopsUpTo: (ids: string[]) => number;
   /**
    * Add a single stop only if the plan is below PLAN_LIMIT.
    * Returns true when the stop was added, false when rejected.
    */
-  addStopIfBelowLimit(id: string): boolean;
+  addStopIfBelowLimit: (id: string) => boolean;
 }
 
 type PlannerStore = PlannerState & PlannerActions;

@@ -11,7 +11,7 @@ export function AddPatientButton() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); }}
         className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         + Adicionar paciente
@@ -19,7 +19,7 @@ export function AddPatientButton() {
       <PatientWizard
         open={open}
         mode={{ kind: "new" }}
-        onClose={() => setOpen(false)}
+        onClose={() => { setOpen(false); }}
       />
     </>
   );

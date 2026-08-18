@@ -155,10 +155,10 @@ export const tuberculoseConsultas = pgTable(
     observacao: text("observacao"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.patientId, table.mes] }),
-    mesRange: check("tuberculose_consultas_mes_range", sql`${table.mes} BETWEEN 1 AND 9`),
-  }),
+  (table) => [
+    primaryKey({ columns: [table.patientId, table.mes] }),
+    check("tuberculose_consultas_mes_range", sql`${table.mes} BETWEEN 1 AND 9`),
+  ],
 );
 
 export type TuberculoseConsulta = typeof tuberculoseConsultas.$inferSelect;

@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { usePlannerStore } from "@/stores/plannerStore";
 
-interface PlanSaveDialogProps {
+type PlanSaveDialogProps = {
   open: boolean;
   onClose: () => void;
   /**
@@ -53,6 +53,7 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           date,
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty acsName should collapse to null for the API; ?? would pass "" through
           acsName: acsName || null,
           profile,
           notes: notes || null,
@@ -61,12 +62,12 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
       });
 
       if (!res.ok) {
-        const body = await res.json();
+        const body = (await res.json()) as { error?: string };
         setError(body.error ?? "Erro ao salvar.");
         return;
       }
 
-      const body = await res.json();
+      const body = (await res.json()) as { plan: { id: string } };
       loadPlan({ id: body.plan.id, stops, profile });
       onClose();
     } catch {
@@ -77,7 +78,7 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+  <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Salvar plano do dia</DialogTitle>
@@ -90,7 +91,7 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
               id="plan-date"
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => { setDate(e.target.value); }}
             />
           </div>
           <p className="rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
@@ -107,7 +108,7 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
               placeholder="Opcional"
               rows={3}
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => { setNotes(e.target.value); }}
             />
           </div>
 
@@ -124,7 +125,7 @@ export function PlanSaveDialog({ open, onClose, acsName }: PlanSaveDialogProps) 
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving || stops.length === 0}>
+          <Button onClick={() => { void handleSave(); }} disabled={saving || stops.length === 0}>
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Salvando…" : "Salvar"}
           </Button>

@@ -20,7 +20,7 @@
 
 import type { AlertLevel } from "@/types/alerts";
 
-interface AlertShapeProps {
+type AlertShapeProps = {
   level: AlertLevel;
   /** Outer size in pixels. Default 12 — legend/stats scale. */
   size?: number;

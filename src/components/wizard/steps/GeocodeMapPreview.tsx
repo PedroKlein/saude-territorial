@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-type Coords = { lat: number; lng: number };
+type Coords = { lat: number; lng: number }
 
 /** Must render inside <MapContainer>. Fires onPickCoords on every map click. */
 function PickHandler({ onPickCoords }: { onPickCoords: (c: Coords) => void }) {

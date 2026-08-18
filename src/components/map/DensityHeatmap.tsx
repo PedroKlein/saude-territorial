@@ -7,7 +7,7 @@ import type L from "leaflet";
 // leaflet.heat augments L at runtime; mirror the shape used by HeatmapLayer.tsx.
 type LeafletHeatMod = typeof L & {
   heatLayer: (
-    latlngs: Array<[number, number, number]>,
+    latlngs: [number, number, number][],
     options?: {
       minOpacity?: number;
       maxZoom?: number;
@@ -19,13 +19,13 @@ type LeafletHeatMod = typeof L & {
   ) => { addTo: (m: unknown) => unknown; remove(): void };
 };
 
-export interface DensityPoint {
+export type DensityPoint = {
   lat: number;
   lng: number;
   weight?: number;
 }
 
-interface DensityHeatmapProps {
+type DensityHeatmapProps = {
   points: DensityPoint[];
 }
 
@@ -61,7 +61,7 @@ export function DensityHeatmap({ points }: DensityHeatmapProps) {
             0.7: "oklch(75% 0.14 75)",
             1.0: "oklch(58% 0.19 25)",
           },
-        }).addTo(map) as { remove(): void };
+        }).addTo(map);
       },
     );
 

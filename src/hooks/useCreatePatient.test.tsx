@@ -63,13 +63,14 @@ describe("useCreatePatient", () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ patient: { id: SYNTH_PATIENT_ID } }),
+      json: () => ({ patient: { id: SYNTH_PATIENT_ID } }),
     });
 
     const { result } = renderHook(() => useCreatePatient(), {
       wrapper: createWrapper(qc),
     });
 
+    // eslint-disable-next-line @typescript-eslint/require-await -- async is needed so act() returns a Promise<void> for awaiting
     await act(async () => {
       result.current.mutate({
         body: {
@@ -82,7 +83,7 @@ describe("useCreatePatient", () => {
     });
 
     // Allow mutation callbacks to settle
-    await act(async () => {});
+    await act(async () => { /* let mutation callbacks settle */ });
 
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: patientKeys.all }),
@@ -95,7 +96,7 @@ describe("useCreatePatient", () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 409,
-      json: async () => ({
+      json: () => ({
         error: "cns_exists",
         patient: { id: "existing-id", cns: SYNTH_CNS, nomeCompleto: "OUTRO" },
       }),
@@ -114,9 +115,9 @@ describe("useCreatePatient", () => {
       },
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => { expect(result.current.isError).toBe(true); });
     expect(result.current.error?.status).toBe(409);
-    expect(result.current.error?.body?.error).toBe("cns_exists");
+    expect(result.current.error?.body.error).toBe("cns_exists");
     // No cache invalidation on error
     expect(setSelectedPatientMock).not.toHaveBeenCalled();
   });
@@ -126,7 +127,7 @@ describe("useCreatePatient", () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 422,
-      json: async () => ({
+      json: () => ({
         error: "Endereço não encontrado.",
         requiresManualPin: true,
       }),
@@ -147,9 +148,9 @@ describe("useCreatePatient", () => {
       });
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => { expect(result.current.isError).toBe(true); });
     expect(result.current.error?.status).toBe(422);
-    expect(result.current.error?.body?.requiresManualPin).toBe(true);
+    expect(result.current.error?.body.requiresManualPin).toBe(true);
   });
 });
 
@@ -165,20 +166,21 @@ describe("useAttachCondition", () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ patient: { id: "existing-id" } }),
+      json: () => ({ patient: { id: "existing-id" } }),
     });
 
     const { result } = renderHook(() => useAttachCondition(), {
       wrapper: createWrapper(qc),
     });
 
+    // eslint-disable-next-line @typescript-eslint/require-await -- async is needed so act() returns a Promise<void> for awaiting
     await act(async () => {
       result.current.mutate({
         patientId: "existing-id",
         body: { condicao: "hipertensao", data: {} },
       });
     });
-    await act(async () => {});
+    await act(async () => { /* let mutation callbacks settle */ });
 
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: patientKeys.all }),

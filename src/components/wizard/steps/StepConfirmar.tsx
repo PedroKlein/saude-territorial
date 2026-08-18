@@ -120,7 +120,7 @@ export function StepConfirmar({ ctx }: Props) {
                     <p className="text-[11px] font-semibold text-ok-green">
                       Adicionar:{" "}
                       {toAdd
-                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .map((c) => CONDITION_CONFIG[c].label)
                         .join(", ")}
                     </p>
                   </div>
@@ -130,7 +130,7 @@ export function StepConfirmar({ ctx }: Props) {
                     <p className="text-[11px] font-semibold text-alert-red">
                       Remover:{" "}
                       {ctx.toRemove
-                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .map((c) => CONDITION_CONFIG[c].label)
                         .join(", ")}
                     </p>
                   </div>
@@ -140,7 +140,7 @@ export function StepConfirmar({ ctx }: Props) {
                     <p className="text-[11px] font-semibold text-muted-foreground">
                       Atualizar:{" "}
                       {toUpdate
-                        .map((c) => CONDITION_CONFIG[c]?.label ?? c)
+                        .map((c) => CONDITION_CONFIG[c].label)
                         .join(", ")}
                     </p>
                   </div>
@@ -159,7 +159,6 @@ export function StepConfirmar({ ctx }: Props) {
           </p>
           {ctx.chosenConditions.map((cond) => {
             const cfg = CONDITION_CONFIG[cond];
-            if (!cfg) return null;
             return (
               <div
                 key={cond}

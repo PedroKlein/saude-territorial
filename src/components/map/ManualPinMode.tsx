@@ -26,7 +26,7 @@ import type { PinningTarget } from "@/stores/mapStore";
  * `PATCH /api/patients/[id]` with `{ base: { lat, lng, geocodeReference } }`
  * sets `geocode_status='manual'` server-side.
  */
-interface PinClickCatcherProps {
+type PinClickCatcherProps = {
   active: boolean;
   onPick: (coords: { lat: number; lng: number }) => void;
 }
@@ -42,7 +42,7 @@ export function PinClickCatcher({ active, onPick }: PinClickCatcherProps) {
   return null;
 }
 
-interface ManualPinOverlayProps {
+type ManualPinOverlayProps = {
   target: PinningTarget | null;
   pendingCoords: { lat: number; lng: number } | null;
   clearPendingCoords: () => void;
@@ -102,6 +102,10 @@ export function ManualPinOverlay({
       },
     );
   };
+  // better-call API errors carry { body: { error: string } } shape; cast is safe —
+  // only optional fields are read and there is a fallback for missing/wrong shape.
+  const apiErr = update.error as { body?: { error?: string } } | null;
+  const saveErrorText = apiErr?.body?.error ?? "Erro ao salvar. Tente novamente.";
 
   return (
     <div ref={rootRef}>
@@ -118,12 +122,12 @@ export function ManualPinOverlay({
             type="text"
             placeholder="Referência (ex: próximo ao mercado)"
             value={referenceText}
-            onChange={(e) => setReferenceText(e.target.value)}
+            onChange={(e) => { setReferenceText(e.target.value); }}
             className="mb-2 w-full rounded border px-2 py-1 text-sm"
           />
           {update.isError && (
             <p className="mb-2 text-xs text-red-700">
-              {update.error?.body?.error ?? "Erro ao salvar. Tente novamente."}
+              {saveErrorText}
             </p>
           )}
           <div className="flex gap-2">

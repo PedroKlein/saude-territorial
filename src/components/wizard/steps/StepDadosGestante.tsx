@@ -93,6 +93,12 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
+/** Converts undefined or empty string to null; non-empty strings pass through. */
+function emptyToNull(v: string | undefined): string | null {
+  if (v === undefined || v === "") return null;
+  return v;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -112,30 +118,30 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
   } = useForm<StepValues>({
     resolver: zodResolver(StepSchema),
     defaultValues: {
-      dum: toDateOrNull(prev.dum as string | undefined),
-      risco: (prev.risco as "habitual" | "alto" | undefined) ?? "habitual",
-      igAbertura: (prev.igAbertura as string | undefined) ?? "",
+      dum: toDateOrNull(prev.dum),
+      risco: (prev.risco) ?? "habitual",
+      igAbertura: (prev.igAbertura) ?? "",
       dataUltimaConsulta: toDateOrNull(prev.dataUltimaConsulta as string | undefined),
       dataProximaConsulta: toDateOrNull(prev.dataProximaConsulta as string | undefined),
-      numeroConsultas: prev.numeroConsultas as number | undefined,
-      pressaoArterial: (prev.pressaoArterial as string | undefined) ?? "",
-      hasPreviaTag: (prev.hasPreviaTag as string | undefined) ?? "",
-      diabetesPreviaTag: (prev.diabetesPreviaTag as string | undefined) ?? "",
-      acompanhamentoPesoAltura: (prev.acompanhamentoPesoAltura as string | undefined) ?? "",
-      numeroVisitasDomiciliares: prev.numeroVisitasDomiciliares as number | undefined,
-      avaliacaoOdontoStatus: (prev.avaliacaoOdontoStatus as string | undefined) ?? "",
-      vacinaDtpa: (prev.vacinaDtpa as string | undefined) ?? "",
-      trPrimeiroTri: (prev.trPrimeiroTri as string | undefined) ?? "",
-      trSegundoTri: (prev.trSegundoTri as string | undefined) ?? "",
-      trTerceiroTri: (prev.trTerceiroTri as string | undefined) ?? "",
-      resultadoTr: (prev.resultadoTr as string | undefined) ?? "",
-      trHepBHepCPrimeiroTri: (prev.trHepBHepCPrimeiroTri as string | undefined) ?? "",
-      trSifHivTerceiroTri: (prev.trSifHivTerceiroTri as string | undefined) ?? "",
-      isPuerpera: (prev.isPuerpera as boolean | undefined) ?? false,
-      puerperioConsulta: (prev.puerperioConsulta as string | undefined) ?? "",
-      puerperioVisitaDomiciliar: (prev.puerperioVisitaDomiciliar as string | undefined) ?? "",
-      puerperioAvaliacaoOdonto: (prev.puerperioAvaliacaoOdonto as string | undefined) ?? "",
-      isExposta: (prev.isExposta as boolean | undefined) ?? false,
+      numeroConsultas: prev.numeroConsultas,
+      pressaoArterial: (prev.pressaoArterial) ?? "",
+      hasPreviaTag: (prev.hasPreviaTag) ?? "",
+      diabetesPreviaTag: (prev.diabetesPreviaTag) ?? "",
+      acompanhamentoPesoAltura: (prev.acompanhamentoPesoAltura) ?? "",
+      numeroVisitasDomiciliares: prev.numeroVisitasDomiciliares,
+      avaliacaoOdontoStatus: (prev.avaliacaoOdontoStatus) ?? "",
+      vacinaDtpa: (prev.vacinaDtpa) ?? "",
+      trPrimeiroTri: (prev.trPrimeiroTri) ?? "",
+      trSegundoTri: (prev.trSegundoTri) ?? "",
+      trTerceiroTri: (prev.trTerceiroTri) ?? "",
+      resultadoTr: (prev.resultadoTr) ?? "",
+      trHepBHepCPrimeiroTri: (prev.trHepBHepCPrimeiroTri) ?? "",
+      trSifHivTerceiroTri: (prev.trSifHivTerceiroTri) ?? "",
+      isPuerpera: (prev.isPuerpera) ?? false,
+      puerperioConsulta: (prev.puerperioConsulta) ?? "",
+      puerperioVisitaDomiciliar: (prev.puerperioVisitaDomiciliar) ?? "",
+      puerperioAvaliacaoOdonto: (prev.puerperioAvaliacaoOdonto) ?? "",
+      isExposta: (prev.isExposta) ?? false,
     },
   });
 
@@ -158,27 +164,27 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
     const raw = {
       dum: fmtDate(values.dum),
       risco: values.risco,
-      igAbertura: values.igAbertura || null,
+      igAbertura: emptyToNull(values.igAbertura),
       dataUltimaConsulta: fmtDate(values.dataUltimaConsulta),
       dataProximaConsulta: fmtDate(values.dataProximaConsulta),
       numeroConsultas: values.numeroConsultas,
       pressaoArterial: values.pressaoArterial ?? null,
-      hasPreviaTag: values.hasPreviaTag || null,
-      diabetesPreviaTag: values.diabetesPreviaTag || null,
-      acompanhamentoPesoAltura: values.acompanhamentoPesoAltura || null,
+      hasPreviaTag: emptyToNull(values.hasPreviaTag),
+      diabetesPreviaTag: emptyToNull(values.diabetesPreviaTag),
+      acompanhamentoPesoAltura: emptyToNull(values.acompanhamentoPesoAltura),
       numeroVisitasDomiciliares: values.numeroVisitasDomiciliares,
-      avaliacaoOdontoStatus: values.avaliacaoOdontoStatus || null,
-      vacinaDtpa: values.vacinaDtpa || null,
-      trPrimeiroTri: values.trPrimeiroTri || null,
-      trSegundoTri: values.trSegundoTri || null,
-      trTerceiroTri: values.trTerceiroTri || null,
-      resultadoTr: values.resultadoTr || null,
-      trHepBHepCPrimeiroTri: values.trHepBHepCPrimeiroTri || null,
-      trSifHivTerceiroTri: values.trSifHivTerceiroTri || null,
+      avaliacaoOdontoStatus: emptyToNull(values.avaliacaoOdontoStatus),
+      vacinaDtpa: emptyToNull(values.vacinaDtpa),
+      trPrimeiroTri: emptyToNull(values.trPrimeiroTri),
+      trSegundoTri: emptyToNull(values.trSegundoTri),
+      trTerceiroTri: emptyToNull(values.trTerceiroTri),
+      resultadoTr: emptyToNull(values.resultadoTr),
+      trHepBHepCPrimeiroTri: emptyToNull(values.trHepBHepCPrimeiroTri),
+      trSifHivTerceiroTri: emptyToNull(values.trSifHivTerceiroTri),
       isPuerpera: values.isPuerpera ?? false,
-      puerperioConsulta: values.puerperioConsulta || null,
-      puerperioVisitaDomiciliar: values.puerperioVisitaDomiciliar || null,
-      puerperioAvaliacaoOdonto: values.puerperioAvaliacaoOdonto || null,
+      puerperioConsulta: emptyToNull(values.puerperioConsulta),
+      puerperioVisitaDomiciliar: emptyToNull(values.puerperioVisitaDomiciliar),
+      puerperioAvaliacaoOdonto: emptyToNull(values.puerperioAvaliacaoOdonto),
       isExposta: values.isExposta ?? false,
     };
     const parsed = GestantesPatchSchema.safeParse(raw);
@@ -187,12 +193,12 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
       return;
     }
     setServerIssues([]);
-    setCtx({ gestantes: parsed.data as Record<string, unknown> });
+    setCtx({ gestantes: parsed.data });
     goNext();
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
       {serverIssues.length > 0 && (
         <div
           role="alert"
@@ -242,7 +248,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                 values={RISCO_VALUES}
                 labels={RISCO_LABELS}
                 value={field.value ?? ""}
-                onChange={(v) => field.onChange(v as "habitual" | "alto")}
+                onChange={(v) => { field.onChange(v); }}
                 ariaLabel="Risco gestacional"
                 invalid={Boolean(errors.risco)}
               />
@@ -329,7 +335,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
         type="button"
         variant="ghost"
         size="sm"
-        onClick={() => setShowAdvanced((v) => !v)}
+        onClick={() => { setShowAdvanced((v) => !v); }}
         className="text-xs text-muted-foreground"
       >
         {showAdvanced ? "Ocultar" : "Mostrar"} campos avançados
@@ -365,7 +371,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                   <input
                     type="checkbox"
                     checked={field.value ?? false}
-                    onChange={(e) => field.onChange(e.target.checked)}
+                    onChange={(e) => { field.onChange(e.target.checked); }}
                     className="accent-brand"
                   />
                   Puérpera (pós-parto)
@@ -580,7 +586,7 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
                   <input
                     type="checkbox"
                     checked={field.value ?? false}
-                    onChange={(e) => field.onChange(e.target.checked)}
+                    onChange={(e) => { field.onChange(e.target.checked); }}
                     className="accent-brand"
                   />
                   Marcada como exposta

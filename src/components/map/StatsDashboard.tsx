@@ -10,7 +10,7 @@ import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import { AlertShape } from "@/components/ui/AlertShape";
 
-interface StatsDashboardProps {
+type StatsDashboardProps = {
   data: LayeredPatientData | undefined;
 }
 
@@ -24,9 +24,10 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
   const counts = useMemo(() => {
     if (!data) return { total: 0, vermelho: 0, amarelo: 0, verde: 0 };
 
-    let allEnriched: Array<PatientRecord & { alertLevel: AlertLevel }> = [];
+    let allEnriched: (PatientRecord & { alertLevel: AlertLevel })[] = [];
 
     for (const [layerId, patients] of Object.entries(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime despite Object.values() type
       if (!patients || patients.length === 0) continue;
       if (!activeLayers[layerId as LayerId]) continue;
 
@@ -34,7 +35,7 @@ export function StatsDashboard({ data }: StatsDashboardProps) {
         const result = evaluatePatient(ALERT_RULES, p, layerId);
         return {
           ...p,
-          alertLevel: result.level as AlertLevel,
+          alertLevel: result.level,
         };
       });
 

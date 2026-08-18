@@ -20,7 +20,7 @@
  * pin.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,9 +54,9 @@ const GeocodeMapPreview = dynamic(() => import("./GeocodeMapPreview"), {
 });
 
 const MICROAREA_OPTIONS = (
-  MICROAREAS_GEOJSON.features as Array<{
+  MICROAREAS_GEOJSON.features as {
     properties: { id: string; nome: string } | null;
-  }>
+  }[]
 ).flatMap((f) =>
   f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
 );
@@ -223,14 +223,14 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
   });
 
   return (
-    <form id="wizard-step-form" onSubmit={onSubmit} className="space-y-4">
+    <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
       {/* CEP row with autofill */}
       <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-3">
         <div className="flex items-end gap-2">
           <Field label="CEP" error={cepError ?? errors.cep?.message} className="flex-1">
             <Input
               {...register("cep", {
-                onChange: (e) => {
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
                   e.target.value = formatCep(e.target.value);
                   setCepError(null);
                 },
@@ -288,7 +288,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         <Field label="Microárea" error={errors.microarea?.message} className="col-span-3">
           <Select
             value={currentMicroarea ?? ""}
-            onValueChange={(v) => setValue("microarea", v)}
+            onValueChange={(v) => { setValue("microarea", v); }}
           >
             <SelectTrigger aria-label="Microárea">
               <SelectValue placeholder="Selecionar microárea" />
@@ -391,7 +391,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
           </p>
           <button
             type="button"
-            onClick={() => setManualMode(true)}
+            onClick={() => { setManualMode(true); }}
             className="mt-2 rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
           >
             Ajustar pino manualmente

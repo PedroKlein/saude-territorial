@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
 
-interface MapControllerProps {
+type MapControllerProps = {
   data: LayeredPatientData | undefined;
 }
 
@@ -35,6 +35,7 @@ export function MapController({ data }: MapControllerProps) {
     prevSelected.current = selectedPatient;
 
     for (const patients of Object.values(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- LayeredPatientData is Partial<Record<...>>; Object.values() types strip undefined but values can be undefined at runtime
       if (!patients) continue;
       const patient = patients.find((p) => p.id === selectedPatient);
       if (!patient) continue;

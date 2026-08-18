@@ -11,7 +11,7 @@
 
 export type GeoConfidence = "high" | "medium" | "low";
 
-export interface NormalizedAddress {
+export type NormalizedAddress = {
   street: string;
   number: string | null;
   city: string;
@@ -20,7 +20,7 @@ export interface NormalizedAddress {
   bairro?: string;
 }
 
-export interface Coordinates {
+export type Coordinates = {
   lat: number;
   lng: number;
   confidence: GeoConfidence;

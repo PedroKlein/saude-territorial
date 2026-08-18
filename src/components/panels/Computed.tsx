@@ -21,7 +21,7 @@ type ComputedProps = {
   /** Aria-label for screen readers when the value alone is opaque. */
   ariaLabel?: string;
   className?: string;
-};
+}
 
 export function Computed({ value, suffix, ariaLabel, className }: ComputedProps) {
   return (

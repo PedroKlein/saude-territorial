@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { RouteResult, RouteProfile } from "@/types/routing";
 
-interface ActiveRouteLayerProps {
+type ActiveRouteLayerProps = {
   route: { result: RouteResult; profile: RouteProfile } | null;
   mapRef: React.RefObject<L.Map | null>;
 }

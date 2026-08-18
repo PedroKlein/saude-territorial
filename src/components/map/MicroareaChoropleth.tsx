@@ -8,7 +8,7 @@ import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import type { LayerId } from "@/config/layers.config";
 import type { PatientRecord } from "@/hooks/usePatientData";
 
-interface MicroareaChoroplethProps {
+type MicroareaChoroplethProps = {
   data: Partial<Record<LayerId, PatientRecord[]>>;
 }
 
@@ -50,6 +50,7 @@ export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
   const countsByMicroarea = useMemo(() => {
     const seenIds = new Map<string, Set<string>>();
     for (const patients of Object.values(data)) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime even though Object.values() types them as PatientRecord[]
       if (!patients) continue;
       for (const p of patients) {
         const ma = p.microarea as string | undefined;
@@ -88,8 +89,8 @@ export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
   }
 
   function onEachFeature(feature: Feature, layer: Layer) {
-    const id = feature?.properties?.id as string | undefined;
-    const nome = (feature?.properties?.nome as string | undefined) ?? id ?? "Microárea";
+    const id = feature.properties?.id as string | undefined;
+    const nome = (feature.properties?.nome as string | undefined) ?? id ?? "Microárea";
     const count = id ? (countsByMicroarea.get(id) ?? 0) : 0;
     const label = `${nome} · ${count} paciente${count !== 1 ? "s" : ""}`;
     (layer as FeatureGroup).bindTooltip(label);

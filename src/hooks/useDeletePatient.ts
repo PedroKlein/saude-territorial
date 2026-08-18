@@ -22,24 +22,24 @@ import { useMapStore } from "@/stores/mapStore";
  * Retry policy: no retry on 4xx; one retry on 5xx / network.
  */
 
-export interface DeletePatientInput {
+export type DeletePatientInput = {
   /** Patient UUID. */
   id: string;
 }
 
-export interface DeleteConditionInput {
+export type DeleteConditionInput = {
   /** Patient UUID. */
   id: string;
   /** Extension layer to remove. */
   condicao: ExtensionLayer;
 }
 
-export interface DeletePatientError extends Error {
+export type DeletePatientError = {
   status?: number;
   body?: { error?: string };
-}
+} & Error
 
-interface MutationContext {
+type MutationContext = {
   /** Snapshot of `patientKeys.all` before the optimistic write. */
   previous: LayeredPatientData | undefined;
 }
@@ -92,7 +92,7 @@ export function useDeletePatient() {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      void queryClient.invalidateQueries({ queryKey: patientKeys.all });
     },
 
     retry: (failureCount, error) => {
@@ -148,8 +148,8 @@ export function useDeleteCondition() {
     },
 
     onSettled: (_data, _err, variables) => {
-      queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      void queryClient.invalidateQueries({
         queryKey: patientDetailKeys.detail(variables.id),
       });
     },
@@ -168,9 +168,7 @@ function removePatientFromAllLayers(
   id: string,
 ): LayeredPatientData {
   const next: LayeredPatientData = {};
-  for (const [layerId, records] of Object.entries(data) as Array<
-    [LayerId, PatientRecord[] | undefined]
-  >) {
+  for (const [layerId, records] of Object.entries(data) as [LayerId, PatientRecord[] | undefined][]) {
     if (!records) continue;
     next[layerId] = records.filter((p) => p.id !== id);
   }

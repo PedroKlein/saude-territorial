@@ -15,7 +15,7 @@ import { LAYER_CONFIG } from "@/config/layers.config";
  * onClose: when provided, renders an X button at the top-right to dismiss.
  */
 
-interface LegendProps {
+type LegendProps = {
   onClose?: () => void;
 }
 

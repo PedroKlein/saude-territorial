@@ -14,7 +14,7 @@
  * "Porto Alegre" for the pilot and complemento is user-authored anyway.
  */
 
-export interface ViaCepResult {
+export type ViaCepResult = {
   logradouro: string;
   bairro: string;
 }

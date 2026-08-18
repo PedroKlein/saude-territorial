@@ -21,7 +21,7 @@ const CreatePlanSchema = z.object({
   stops: z
     .array(
       z.object({
-        patientId: z.string().uuid(),
+        patientId: z.uuid(),
         order: z.number().int().min(0),
       }),
     )
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const parsed = CreatePlanSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados inválidos.", details: parsed.error.flatten() },
+      { error: "Dados inválidos.", details: z.flattenError(parsed.error) },
       { status: 400 },
     );
   }

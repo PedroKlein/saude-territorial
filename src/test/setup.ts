@@ -13,10 +13,10 @@ if (typeof window !== "undefined") {
     get length() {
       return store.size;
     },
-    clear: () => store.clear(),
+    clear: () => { store.clear(); },
     getItem: (key) => store.get(key) ?? null,
     setItem: (key, value) => {
-      store.set(key, String(value));
+      store.set(key, value);
     },
     removeItem: (key) => {
       store.delete(key);
@@ -30,6 +30,6 @@ if (typeof window !== "undefined") {
 // Stub Better Auth environment vars so `src/lib/auth.ts` can import cleanly
 // under Vitest without a real .env.local. The `better-auth` module itself is
 // vi.mock'd in auth.test.ts, so these values never hit the network.
-process.env.BETTER_AUTH_SECRET ||= "test-secret-not-used-outside-vitest";
-process.env.GOOGLE_CLIENT_ID ||= "test-client-id.apps.googleusercontent.com";
-process.env.GOOGLE_CLIENT_SECRET ||= "test-client-secret";
+process.env.BETTER_AUTH_SECRET ??= "test-secret-not-used-outside-vitest";
+process.env.GOOGLE_CLIENT_ID ??= "test-client-id.apps.googleusercontent.com";
+process.env.GOOGLE_CLIENT_SECRET ??= "test-client-secret";

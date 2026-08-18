@@ -37,7 +37,7 @@ import { Button } from "@/components/ui/button";
  * import a concrete type instead of decoding it through
  * `Parameters<WizardStep<Ctx>["render"]>[0]` (see rule ts-no-return-type).
  */
-export interface WizardStepRenderProps<Ctx> {
+export type WizardStepRenderProps<Ctx> = {
   ctx: Ctx;
   setCtx: (patch: Partial<Ctx>) => void;
   /**
@@ -73,9 +73,9 @@ export type WizardStep<Ctx> = {
    * own RHF + zodResolver). Kept in the type for documentation and potential
    * server-side re-validation.
    */
-  schema?: z.ZodTypeAny;
+  schema?: z.ZodType;
   render: (props: WizardStepRenderProps<Ctx>) => React.ReactNode;
-};
+}
 
 export type WizardProps<Ctx> = {
   open: boolean;
@@ -89,7 +89,7 @@ export type WizardProps<Ctx> = {
   onFinish: (ctx: Ctx) => void | Promise<void>;
   /** Sub-headline shown in the header above the step label. */
   headline?: string;
-};
+}
 
 // ---------------------------------------------------------------------------
 // Wizard
@@ -206,11 +206,11 @@ export function Wizard<Ctx>({
   const progressIdx = progressSteps.findIndex((s) => s.id === step.id);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
         className="max-w-2xl gap-0 overflow-hidden p-0"
         /* Prevent accidental close on overlay click — user must use X */
-        onInteractOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => { e.preventDefault(); }}
         /* Wizard renders its own X in the header (line ~208). Disable the
          * default shadcn close so there's exactly one close affordance. */
         showCloseButton={false}

@@ -3,7 +3,7 @@
  * Mirrors the Better Auth session/user structure used in this app.
  */
 
-export interface AuthUser {
+export type AuthUser = {
   id: string;
   name: string | null;
   email: string;
@@ -13,7 +13,7 @@ export interface AuthUser {
   updatedAt: Date;
 }
 
-export interface AuthSession {
+export type AuthSession = {
   id: string;
   userId: string;
   expiresAt: Date;
@@ -24,7 +24,7 @@ export interface AuthSession {
   userAgent?: string | null;
 }
 
-export interface SessionWithUser {
+export type SessionWithUser = {
   session: AuthSession;
   user: AuthUser;
 }

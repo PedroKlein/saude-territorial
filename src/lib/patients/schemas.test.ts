@@ -44,7 +44,7 @@ describe("PatientCreateSchema — CNS checksum", () => {
 
   it("rejects a CNS with a tampered digit", () => {
     const tampered =
-      validCns.slice(0, 5) + ((Number(validCns[5]) + 1) % 10) + validCns.slice(6);
+      validCns.slice(0, 5) + String((Number(validCns[5]) + 1) % 10) + validCns.slice(6);
     expect(() => PatientCreateSchema.parse({ ...validBody, cns: tampered })).toThrow();
   });
 
