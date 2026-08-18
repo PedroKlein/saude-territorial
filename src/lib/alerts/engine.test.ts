@@ -180,7 +180,7 @@ describe("evaluatePatient", () => {
     // Evaluate as gestantes → only first rule applies
     const result = evaluatePatient(rules, patient, "gestantes");
     expect(result.triggeredRules).toHaveLength(1);
-    expect(result.triggeredRules[0].column).toBe("ig");
+    expect(result.triggeredRules[0]!.column).toBe("ig");
   });
 });
 

@@ -190,7 +190,7 @@ describe("geocodeWithCache — cache miss, geocode returns result", () => {
     expect(mocks.insert).toHaveBeenCalledOnce();
     expect(mocks.values).toHaveBeenCalledOnce();
 
-    const inserted: Record<string, unknown> = mocks.values.mock.calls[0][0];
+    const inserted: Record<string, unknown> = mocks.values.mock.calls[0]![0];
     expect(inserted).toMatchObject({
       key: "porto alegre|rua inventada|42",
       lat: GEOCODE_RESULT.lat,

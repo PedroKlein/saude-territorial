@@ -61,7 +61,7 @@ describe("filterStore", () => {
 
     const result = applyFilters(patients);
     expect(result).toHaveLength(1);
-    expect(result[0].cns).toBe("001");
+    expect(result[0]!.cns).toBe("001");
   });
 
   it("applies combined filters (microárea + alert)", () => {
@@ -78,7 +78,7 @@ describe("filterStore", () => {
 
     const result = applyFilters(patients);
     expect(result).toHaveLength(1);
-    expect(result[0].cns).toBe("001");
+    expect(result[0]!.cns).toBe("001");
   });
 
   it("clearFilters resets all filters", () => {
@@ -107,7 +107,7 @@ describe("filterStore", () => {
 
     const result = applyFilters(patients);
     expect(result).toHaveLength(1);
-    expect(result[0].cns).toBe("001");
+    expect(result[0]!.cns).toBe("001");
   });
 
   it("returns all patients when no filters are active", () => {

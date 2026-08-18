@@ -79,7 +79,7 @@ describe("addStopIfBelowLimit", () => {
     const wasAdded = usePlannerStore.getState().addStopIfBelowLimit("patient-1");
     expect(wasAdded).toBe(true);
     expect(usePlannerStore.getState().stops).toHaveLength(1);
-    expect(usePlannerStore.getState().stops[0].patientId).toBe("patient-1");
+    expect(usePlannerStore.getState().stops[0]!.patientId).toBe("patient-1");
   });
 
   it("returns false and does not add when at PLAN_LIMIT", () => {

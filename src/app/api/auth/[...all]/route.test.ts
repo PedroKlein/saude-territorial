@@ -74,7 +74,7 @@ describe("app/api/auth/[...all]/route — named exports", () => {
 
     await import("@/app/api/auth/[...all]/route");
 
-    const [authArg] = toNextJsHandlerMock.mock.calls[0];
+    const [authArg] = toNextJsHandlerMock.mock.calls[0]!;
 
     // The auth argument must be a non-null object (the Better Auth instance)
     expect(authArg).toBeDefined();

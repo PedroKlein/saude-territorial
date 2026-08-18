@@ -19,9 +19,12 @@ export function parseBrazilianDate(dateStr: string): Date | null {
   const parts = trimmed.split("/");
   if (parts.length !== 3) return null;
 
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1; // 0-indexed
-  const year = parseInt(parts[2], 10);
+  const [dayStr, monthStr, yearStr] = parts;
+  if (dayStr === undefined || monthStr === undefined || yearStr === undefined) return null;
+
+  const day = parseInt(dayStr, 10);
+  const month = parseInt(monthStr, 10) - 1; // 0-indexed
+  const year = parseInt(yearStr, 10);
 
   if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
   if (day < 1 || day > 31 || month < 0 || month > 11 || year < 1900) return null;

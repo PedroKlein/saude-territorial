@@ -255,6 +255,7 @@ function CoincidencePicker({
   const position = idx === -1 ? 0 : idx;
   const next = coincidents[(position + 1) % coincidents.length];
   const prev = coincidents[(position - 1 + coincidents.length) % coincidents.length];
+  if (!next || !prev) return null;
 
   return (
     <div className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-amber-50 px-5 py-2 text-xs">

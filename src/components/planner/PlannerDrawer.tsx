@@ -287,7 +287,7 @@ export function PlannerDrawer() {
       // input index maps back to `ordered` by subtracting 1 (US = index 0).
       const middle = body.order.slice(1, -1);
       const reordered: Stop[] = middle.map((inputIdx, j) => ({
-        patientId: ordered[inputIdx - 1].patientId,
+        patientId: ordered[inputIdx - 1]?.patientId ?? "",
         order: j + 1,
       }));
       setStops(reordered);

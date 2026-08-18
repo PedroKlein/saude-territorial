@@ -105,13 +105,16 @@ function greedyReorder(
     let bestDist = Infinity;
     for (let i = 0; i < remaining.length; i++) {
       const p = remaining[i];
+      if (p === undefined) continue;
       const d = haversine(current, [p.lat, p.lng]);
       if (d < bestDist) {
         bestDist = d;
         bestIdx = i;
       }
     }
-    const next = remaining.splice(bestIdx, 1)[0];
+    const spliced = remaining.splice(bestIdx, 1);
+    const next = spliced[0];
+    if (next === undefined) break;
     ordered.push(next);
     current = [next.lat, next.lng];
   }

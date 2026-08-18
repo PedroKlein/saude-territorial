@@ -198,15 +198,14 @@ function formatIssues(issues: unknown): string {
   const raw = Array.isArray(issues) ? issues : [];
   const lines = raw.filter(isRawIssue).map((issue) => {
     const fieldKey = issue.path[issue.path.length - 1];
-    const label =
-      (typeof fieldKey === "string" && FIELD_LABELS[fieldKey]) ||
-      fieldKey ||
-      "Campo";
+    const mapped =
+      typeof fieldKey === "string" ? FIELD_LABELS[fieldKey] : undefined;
+    const label = mapped ?? (fieldKey ? String(fieldKey) : "Campo");
     return `• ${label}: ${issue.message}`;
   });
 
   if (lines.length === 0) return "Dados inválidos.";
-  if (lines.length === 1) return lines[0].replace(/^• /, "");
+  if (lines.length === 1) return (lines[0] ?? "").replace(/^• /, "");
   return `Encontramos os seguintes problemas:\n${lines.join("\n")}`;
 }
 

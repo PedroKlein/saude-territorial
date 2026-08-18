@@ -26,7 +26,7 @@ const ABBREVIATIONS: [RegExp, string][] = [
 function capitalizeWords(s: string): string {
   return s
     .split(" ")
-    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
+    .map((w) => (w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(" ");
 }
 
@@ -49,7 +49,7 @@ function cleanNumber(numero: string): string | null {
 
   const match = /^(\d+)/.exec(trimmed);
   if (!match) return null;
-  return match[1];
+  return match[1] ?? null;
 }
 
 /**

@@ -61,6 +61,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .values({ date, acsName: acsName ?? null, profile, notes: notes ?? null })
         .returning();
 
+      if (!plan) throw new Error("Insert returned no rows");
+
       await tx.insert(dailyPlanStops).values(
         stops.map((s) => ({
           planId: plan.id,

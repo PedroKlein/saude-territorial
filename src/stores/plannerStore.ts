@@ -99,6 +99,7 @@ export const usePlannerStore = create<PlannerStore>()(
         set((s) => {
           const updated = [...s.stops];
           const [moved] = updated.splice(fromIndex, 1);
+          if (moved === undefined) return s;
           updated.splice(toIndex, 0, moved);
           return {
             stops: updated.map((st, i) => ({ ...st, order: i + 1 })),

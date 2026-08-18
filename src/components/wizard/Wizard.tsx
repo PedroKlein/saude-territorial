@@ -132,7 +132,7 @@ export function Wizard<Ctx>({
   const nextIdx = useCallback(
     (from: number, hintCtx: Ctx) => {
       let next = from + 1;
-      while (next < steps.length && steps[next].shouldSkip?.(hintCtx)) {
+      while (next < steps.length && steps[next]?.shouldSkip?.(hintCtx)) {
         next++;
       }
       return Math.min(next, steps.length - 1);
@@ -143,7 +143,7 @@ export function Wizard<Ctx>({
   const prevIdx = useCallback(
     (from: number, hintCtx: Ctx) => {
       let prev = from - 1;
-      while (prev > 0 && steps[prev].shouldSkip?.(hintCtx)) {
+      while (prev > 0 && steps[prev]?.shouldSkip?.(hintCtx)) {
         prev--;
       }
       return Math.max(0, prev);
@@ -190,6 +190,7 @@ export function Wizard<Ctx>({
   }, [onFinish, advance]);
 
   const step = steps[currentIdx] ?? steps[0];
+  if (!step) return null;
   const isNoFooter = Boolean(step.noFooter);
   const isFinalize = Boolean(step.isFinalize);
   const canBack = currentIdx > 0 && !isNoFooter;

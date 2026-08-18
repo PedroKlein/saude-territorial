@@ -78,6 +78,9 @@ export async function getRoute(
   }
 
   const route = data.routes[0];
+  if (route === undefined) {
+    throw new Error("OSRM returned no routes");
+  }
 
   // OSRM demo server (router.project-osrm.org) only runs the driving
   // profile; a `foot` request URL returns driving-time results verbatim.
@@ -158,6 +161,9 @@ export async function getTrip(
   });
 
   const trip = data.trips[0];
+  if (trip === undefined) {
+    throw new Error("OSRM trip returned no routes");
+  }
 
   // Same foot-profile override as getRoute: the demo OSRM ignores `foot`.
   const WALKING_SPEED_MPS = 4500 / 3600;

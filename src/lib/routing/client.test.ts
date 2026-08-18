@@ -48,7 +48,7 @@ describe("getRoute", () => {
     expect(result.geometry.coordinates).toHaveLength(2);
 
     // Verify OSRM URL uses lng,lat order and 'foot' profile
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    const calledUrl = mockFetch.mock.calls[0]![0]! as string;
     expect(calledUrl).toContain("/route/v1/foot/");
     expect(calledUrl).toContain("-51.2177,-30.0346");
   });
@@ -112,7 +112,7 @@ describe("getRoute", () => {
       "car",
     );
 
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    const calledUrl = mockFetch.mock.calls[0]![0]! as string;
     expect(calledUrl).toContain("/route/v1/driving/");
     // Car profile trusts OSRM's duration verbatim (no walking override).
     expect(result.duration).toBe(300);
@@ -157,7 +157,7 @@ describe("getRoute", () => {
       "foot",
     );
 
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    const calledUrl = mockFetch.mock.calls[0]![0]! as string;
     expect(calledUrl).toContain("-51.22,-30.03;-51.21,-30.04;-51.2,-30.05");
   });
 });
@@ -206,7 +206,7 @@ describe("getTrip", () => {
     expect(result.duration).toBe(400);
 
     // Verify OSRM URL uses source=first, destination=last, roundtrip=false.
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    const calledUrl = mockFetch.mock.calls[0]![0]! as string;
     expect(calledUrl).toContain("/trip/v1/driving/");
     expect(calledUrl).toContain("source=first");
     expect(calledUrl).toContain("destination=last");

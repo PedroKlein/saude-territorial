@@ -81,7 +81,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("street")).toBe(
       `${SYNTHETIC_ADDRESS.street}, ${SYNTHETIC_ADDRESS.number}`
     );
@@ -95,7 +95,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("city")).toBe("Porto Alegre");
   });
 
@@ -107,7 +107,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("state")).toBe("Rio Grande do Sul");
   });
 
@@ -119,7 +119,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("countrycodes")).toBe("br");
   });
 
@@ -131,7 +131,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("format")).toBe("jsonv2");
   });
 
@@ -143,7 +143,7 @@ describe("geocode — structured query parameters", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const url = new URL(mockFetch.mock.calls[0][0] as string);
+    const url = new URL(mockFetch.mock.calls[0]![0]! as string);
     expect(url.searchParams.get("limit")).toBe("1");
   });
 });
@@ -170,7 +170,7 @@ describe("geocode — User-Agent header", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const fetchInit = mockFetch.mock.calls[0][1] as RequestInit | undefined;
+    const fetchInit = mockFetch.mock.calls[0]![1]! as RequestInit | undefined;
     const headers = new Headers(fetchInit?.headers);
     expect(headers.has("user-agent")).toBe(true);
     expect(headers.get("user-agent")).not.toBe("");
@@ -184,7 +184,7 @@ describe("geocode — User-Agent header", () => {
     const { geocode } = await import("@/lib/geocoding/client");
     await geocode(SYNTHETIC_ADDRESS);
 
-    const fetchInit = mockFetch.mock.calls[0][1] as RequestInit | undefined;
+    const fetchInit = mockFetch.mock.calls[0]![1]! as RequestInit | undefined;
     const headers = new Headers(fetchInit?.headers);
     // Must identify the application per Nominatim usage policy
     expect(headers.get("user-agent")).toMatch(/saude-territorial/i);

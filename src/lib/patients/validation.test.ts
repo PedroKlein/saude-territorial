@@ -94,7 +94,7 @@ describe("Enum coercion — case-insensitive, whitespace-tolerant", () => {
       throw new Error("should have thrown");
     } catch (err) {
       // ZodError#issues[0].message is what lands in Field.error.
-      const first = (err as { issues: { message: string }[] }).issues[0];
+      const first = (err as { issues: { message: string }[] }).issues[0]!;
       expect(first.message).toMatch(/habitual/);
       expect(first.message).toMatch(/alto/);
     }

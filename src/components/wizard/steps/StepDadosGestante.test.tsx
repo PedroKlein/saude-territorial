@@ -84,7 +84,7 @@ describe("StepDadosGestante — full-parity round-trip", () => {
     await submitForm(container);
 
     expect(setCtx).toHaveBeenCalledTimes(1);
-    const g = setCtx.mock.calls[0][0].gestantes as Record<string, unknown>;
+    const g = setCtx.mock.calls[0]![0]!.gestantes as Record<string, unknown>;
     expect(g.igAbertura).toBe("< 12 sem");
     expect(g.acompanhamentoPesoAltura).toBe("Em dia");
     expect(g.numeroVisitasDomiciliares).toBe(3);

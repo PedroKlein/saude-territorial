@@ -114,6 +114,7 @@ export async function geocode(
       if (!results.length) return null;
 
       const hit = results[0];
+      if (hit === undefined) return null;
       return {
         lat: parseFloat(hit.lat),
         lng: parseFloat(hit.lon),

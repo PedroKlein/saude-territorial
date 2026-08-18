@@ -393,9 +393,9 @@ describe("PatientWizard", () => {
     // gestantes is checked (index 0); tuberculose is unchecked (index 1).
     const checkboxes = screen.getAllByRole("checkbox");
     // Uncheck gestantes → queues for removal.
-    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[0]!);
     // Check tuberculose → queues for addition.
-    fireEvent.click(checkboxes[1]);
+    fireEvent.click(checkboxes[1]!);
 
     submitStep(); // advance past gerenciar-condicoes
 

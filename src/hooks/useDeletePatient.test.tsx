@@ -161,8 +161,8 @@ describe("useDeletePatient", () => {
 
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
     // Both layers must be restored
-    expect(cached?.gestantes?.[0].id).toBe(PATIENT_ID);
-    expect(cached?.hipertensao?.[0].id).toBe(PATIENT_ID);
+    expect(cached?.gestantes?.[0]!.id).toBe(PATIENT_ID);
+    expect(cached?.hipertensao?.[0]!.id).toBe(PATIENT_ID);
     // Panel must not be closed on error
     expect(mocks.setSelectedPatient).not.toHaveBeenCalled();
   });
@@ -242,6 +242,6 @@ describe("useDeleteCondition", () => {
 
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
     // gestantes layer must be restored
-    expect(cached?.gestantes?.[0].id).toBe(PATIENT_ID);
+    expect(cached?.gestantes?.[0]!.id).toBe(PATIENT_ID);
   });
 });

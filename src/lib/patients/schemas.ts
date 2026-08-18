@@ -127,7 +127,7 @@ const longitude = z
 
 /** ISO date + integer day offset. Handles month/year rollover via `Date`. */
 function addDaysToIso(iso: string, days: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
+  const [y = 1970, m = 1, d = 1] = iso.split("-").map(Number);
   const base = new Date(Date.UTC(y, m - 1, d));
   base.setUTCDate(base.getUTCDate() + days);
   const yy = base.getUTCFullYear();

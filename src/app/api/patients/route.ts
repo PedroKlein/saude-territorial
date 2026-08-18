@@ -335,6 +335,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           updatedBy: session.user.id,
         })
         .returning({ id: patients.id });
+      if (!inserted) throw new Error("Insert returned no rows");
       newId = inserted.id;
       if (data.condicao === "gestantes") {
         await tx.insert(gestantesData).values({

@@ -74,7 +74,7 @@ describe("StepDadosTB — full-parity round-trip", () => {
     await submitForm(container);
 
     expect(setCtx).toHaveBeenCalledTimes(1);
-    const t = setCtx.mock.calls[0][0].tuberculose as Record<string, unknown>;
+    const t = setCtx.mock.calls[0]![0]!.tuberculose as Record<string, unknown>;
     expect(t.ppdMm).toBe(12);
     expect(t.histopatologia).toBe("Granuloma");
     expect(t.rxTorax).toBe("Infiltrado apical");

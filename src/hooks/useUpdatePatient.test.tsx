@@ -105,7 +105,7 @@ describe("useUpdatePatient", () => {
     });
 
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
-    expect(cached?.gestantes?.[0].nomeCompleto).toBe("Nome Novo");
+    expect(cached?.gestantes?.[0]!.nomeCompleto).toBe("Nome Novo");
   });
 
   it("on 422 requiresManualPin: surfaces status+body and rolls back the cache", async () => {
@@ -142,7 +142,7 @@ describe("useUpdatePatient", () => {
 
     // Cache must be rolled back to the pre-mutation snapshot
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
-    expect(cached?.gestantes?.[0].nomeCompleto).toBe("Nome Sintético Inicial");
+    expect(cached?.gestantes?.[0]!.nomeCompleto).toBe("Nome Sintético Inicial");
   });
 
   it("on generic 500: surfaces status and rolls back the cache", async () => {
@@ -173,8 +173,8 @@ describe("useUpdatePatient", () => {
     expect(error?.status).toBe(500);
 
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
-    expect(cached?.gestantes?.[0].nomeCompleto).toBe("Nome Sintético Inicial");
-    expect(cached?.hipertensao?.[0].nomeCompleto).toBe("Nome Sintético Inicial");
+    expect(cached?.gestantes?.[0]!.nomeCompleto).toBe("Nome Sintético Inicial");
+    expect(cached?.hipertensao?.[0]!.nomeCompleto).toBe("Nome Sintético Inicial");
   });
 
   it("applies optimistic patch to every layer where the patient id matches", async () => {
@@ -199,8 +199,8 @@ describe("useUpdatePatient", () => {
 
     const cached = queryClient.getQueryData<LayeredPatientData>(patientKeys.all);
     // Patch must appear in the gestantes layer
-    expect(cached?.gestantes?.[0].nomeCompleto).toBe("Novo Nome Multi-Layer");
+    expect(cached?.gestantes?.[0]!.nomeCompleto).toBe("Novo Nome Multi-Layer");
     // Patch must also appear in the hipertensao layer (same patient id)
-    expect(cached?.hipertensao?.[0].nomeCompleto).toBe("Novo Nome Multi-Layer");
+    expect(cached?.hipertensao?.[0]!.nomeCompleto).toBe("Novo Nome Multi-Layer");
   });
 });
