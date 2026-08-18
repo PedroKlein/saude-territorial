@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * `EnumField` — the winning enum-render primitive from
- * `/prototype/enum-fields` (Hybrid: Segmented for 2 values, Select for 3+).
+ * `EnumField` — inline enum control. Segmented for 2 values, Select for 3+.
  *
  * Renders as an inline segmented control when `values.length === 2` and as
  * a Radix Select otherwise. Callers pass canonical enum values + a display
