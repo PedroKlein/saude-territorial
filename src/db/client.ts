@@ -8,13 +8,11 @@ import * as schema from "./schema";
  * file — no other `postgres(...)` calls anywhere. See
  * `.agents/skills/drizzle-data-access/SKILL.md` for the boundary rules.
  *
- * Connection notes:
- * - `prepare: false` is required for Supabase's transaction pooler (port
- *   6543). If DATABASE_URL points at the session pooler (5432) or a direct
- *   connection, prepared statements still work, but leaving this off is the
- *   safe default.
- * - `max: 1` keeps the app friendly to Supabase pooler quotas during dev.
- *   Raise for production once the pilot expands.
+ * - `prepare: false` is a safe default: it's required by transaction-pooling
+ *   proxies (e.g. PgBouncer in transaction mode) and harmless on direct
+ *   connections and local Postgres, so we leave it on everywhere.
+ * - `max: 1` keeps the dev connection footprint small. Raise for production
+ *   once the pilot expands.
  *
  * The URL is validated lazily: importing this module from Vitest (`NODE_ENV=test`
  * or `VITEST=true`) does NOT throw — schema tests that mock the DB can skip a

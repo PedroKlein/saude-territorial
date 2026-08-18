@@ -49,21 +49,58 @@ run = "tsc --noEmit"
 description = "Run all quality gates: type-check + lint + test"
 depends = ["type-check", "lint", "test"]
 
+[tasks."db:up"]
+description = "Start the local Postgres (docker compose) and wait until healthy"
+run = "docker compose up -d --wait"
+
+[tasks."db:down"]
+description = "Stop the local Postgres container (keeps data volume)"
+run = "docker compose down"
+
 [tasks."db:auth-migrate"]
-description = "Run Better Auth migrations (creates auth tables in SQLite)"
-run = "echo 'y' | npx auth migrate"
+description = "Create Better Auth tables in the local SQLite store (auth.db)"
+run = "echo y | npx @better-auth/cli migrate"
 
 [tasks."db:migrate"]
-description = "Run Supabase migrations (requires supabase CLI)"
-run = "supabase db push"
+description = "Apply Drizzle SQL migrations to the database (DATABASE_URL)"
+run = "pnpm db:migrate"
+
+[tasks."db:seed"]
+description = "Load synthetic patient data (seed/) into the database"
+run = "pnpm db:seed"
+
+[tasks."db:seed:user"]
+description = "Create the local dev login (dev@local / dev12345)"
+run = "pnpm db:seed:user"
+
+[tasks."db:studio"]
+description = "Open Drizzle Studio against the database"
+run = "pnpm db:studio"
 
 [tasks."db:reset"]
-description = "Reset local Supabase database"
-run = "supabase db reset"
+description = "Wipe and rebuild the local database (drops the docker volume)"
+run = """
+docker compose down -v
+docker compose up -d --wait
+pnpm db:migrate
+pnpm db:seed
+"""
 
-[tasks."db:types"]
-description = "Generate TypeScript types from Supabase schema"
-run = "supabase gen types --lang=typescript --local > src/lib/supabase/database.types.ts"
+[tasks.setup]
+description = "One-command local setup: install, DB, migrations, synthetic data, dev user"
+run = """
+pnpm install
+[ -f .env.local ] || cp .env.local.example .env.local
+docker compose up -d --wait
+echo y | npx @better-auth/cli migrate
+pnpm db:migrate
+pnpm db:seed
+pnpm db:seed:user
+echo ""
+echo "Setup complete."
+echo "  Start the app:  mise run dev"
+echo "  Log in at http://localhost:3000/login  →  dev@local.dev / dev12345"
+"""
 
 [tasks.install]
 description = "Install dependencies with pnpm"

@@ -50,14 +50,11 @@ const gestantesPathIdx = args.indexOf("--gestantes-path");
 const pacientesPathIdx = args.indexOf("--pacientes-path");
 
 const repoRoot = resolve(__dirname, "..");
-const defaultGestantesPath = resolve(
-  repoRoot,
-  "../../extensao-gat4/main/prototypes/mapa-gestantes/src/data/gestantes.json",
-);
-const defaultPacientesPath = resolve(
-  repoRoot,
-  "../../extensao-gat4/main/prototypes/poc-01/data/pacientes.csv",
-);
+// Vendored synthetic seed data (committed under seed/). Self-contained so a
+// fresh clone seeds without the extensao-gat4 sister repo. Override with
+// --gestantes-path / --pacientes-path to point at other synthetic sources.
+const defaultGestantesPath = resolve(repoRoot, "seed/gestantes.json");
+const defaultPacientesPath = resolve(repoRoot, "seed/pacientes.csv");
 const gestantesPath =
   gestantesPathIdx >= 0 && args[gestantesPathIdx + 1]
     ? resolve(args[gestantesPathIdx + 1])

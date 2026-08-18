@@ -1,0 +1,32 @@
+# Local Postgres for development. This is a dev-time convenience only — the
+# app talks to Postgres via a plain DATABASE_URL (Drizzle + postgres-js), so in
+# production you point that URL at any Postgres server (university host, managed
+# Postgres, etc.). No Supabase or other managed service is required.
+#
+# Usage is wrapped by mise tasks: `mise run db:up`, `db:down`, `db:reset`.
+#
+# `name:` pins the Compose project so it never collides with other repos that
+# also live in a `main/` worktree dir (Compose otherwise derives the project
+# name from the directory, which is `main` for every worktree).
+name: saude-territorial
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: saude-territorial-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saude
+      POSTGRES_PASSWORD: saude
+      POSTGRES_DB: saude_territorial
+    ports:
+      - "5432:5432"
+    volumes:
+      - saude-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saude -d saude_territorial"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  saude-pgdata:

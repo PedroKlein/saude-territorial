@@ -1,0 +1,2110 @@
+[
+  {
+    "id": "gest-001",
+    "nome": "Isadora Reis",
+    "cns": "334480929904499",
+    "dataNascimento": "1991-05-16",
+    "telefone": "51 912500095",
+    "endereco": {
+      "rua": "Rua Abelardo Marquês",
+      "numero": "1285",
+      "lat": -30.070791631482578,
+      "lng": -51.21630501274493
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-03-18",
+      "dpp": "2026-12-23",
+      "dataUltimaConsulta": "2026-05-31",
+      "numeroConsultas": 1,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Agendada",
+    "vacinaDTpa": "Não se aplica",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-002",
+    "nome": "Cecília Barros",
+    "cns": "160832710919618",
+    "dataNascimento": "1994-02-22",
+    "telefone": "51 914244250",
+    "endereco": {
+      "rua": "Rua Banco Inglês",
+      "numero": "1183",
+      "lat": -30.072258722869577,
+      "lng": -51.22102730880171
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-03-11",
+      "dpp": "2026-12-16",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 1,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Agendada",
+    "vacinaDTpa": "Não se aplica",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-003",
+    "nome": "Margarida Albuquerque",
+    "cns": "827246541027915",
+    "dataNascimento": "2005-01-23",
+    "telefone": "51 993972603",
+    "endereco": {
+      "rua": "Rua Gabriel Fialho Camargo",
+      "numero": "1243",
+      "lat": -30.069108198330394,
+      "lng": -51.21591528606562
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-10",
+      "dpp": "2026-09-16",
+      "dataUltimaConsulta": "2026-05-23",
+      "numeroConsultas": 4,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-004",
+    "nome": "Ofélia Braga Jr.",
+    "cns": "601764711415494",
+    "dataNascimento": "1997-07-02",
+    "telefone": "51 924323282",
+    "endereco": {
+      "rua": "Rua Banco Inglês",
+      "numero": "245",
+      "lat": -30.0722844,
+      "lng": -51.2209007
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-03",
+      "dpp": "2026-09-09",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-005",
+    "nome": "Lorraine Franco",
+    "cns": "418798053509568",
+    "dataNascimento": "2000-02-14",
+    "telefone": "51 966281322",
+    "endereco": {
+      "rua": "Rua Santa Cruz",
+      "numero": "149",
+      "lat": -30.06740744873651,
+      "lng": -51.22286903735762
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-01-28",
+      "dpp": "2026-11-04",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-006",
+    "nome": "Carla Macedo",
+    "cns": "778651569001596",
+    "dataNascimento": "2000-10-03",
+    "telefone": "51 931805639",
+    "endereco": {
+      "rua": "Avenida Joracy Camargo",
+      "numero": "285",
+      "lat": -30.076871430262422,
+      "lng": -51.22127949947541
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-31",
+      "dpp": "2026-10-07",
+      "dataUltimaConsulta": "2026-05-25",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-007",
+    "nome": "Márcia Moraes",
+    "cns": "314750212260542",
+    "dataNascimento": "1986-10-27",
+    "telefone": "51 959974449",
+    "endereco": {
+      "rua": "Rua Neves",
+      "numero": "750",
+      "lat": -30.074517281142352,
+      "lng": -51.225552981562466
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-02-11",
+      "dpp": "2026-11-18",
+      "dataUltimaConsulta": "2026-05-24",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-008",
+    "nome": "Srta. Alícia Braga",
+    "cns": "814692752504516",
+    "dataNascimento": "1992-07-01",
+    "telefone": "51 942844932",
+    "endereco": {
+      "rua": "Avenida Moab Caldas",
+      "numero": "1175",
+      "lat": -30.06932192146212,
+      "lng": -51.21670741773792
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-17",
+      "dpp": "2026-06-24",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 7,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-009",
+    "nome": "Srta. Valentina Franco",
+    "cns": "579722362107451",
+    "dataNascimento": "1990-05-20",
+    "telefone": "51 919104707",
+    "endereco": {
+      "rua": "Avenida Francisco Massena Vieira",
+      "numero": "181",
+      "lat": -30.073409517895136,
+      "lng": -51.21829691595728
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-17",
+      "dpp": "2026-06-24",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-010",
+    "nome": "Srta. Karla Moraes",
+    "cns": "627546443976393",
+    "dataNascimento": "2001-07-04",
+    "telefone": "51 986656132",
+    "endereco": {
+      "rua": "Rua Nossa Senhora do Brasil",
+      "numero": "790",
+      "lat": -30.07051571354109,
+      "lng": -51.222530439358984
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-05",
+      "dpp": "2026-08-12",
+      "dataUltimaConsulta": "2026-05-26",
+      "numeroConsultas": 8,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-011",
+    "nome": "Esther Franco",
+    "cns": "833207332715822",
+    "dataNascimento": "2007-08-27",
+    "telefone": "51 999298267",
+    "endereco": {
+      "rua": "Rua Cruzeiro do Sul",
+      "numero": "1047",
+      "lat": -30.07705952049531,
+      "lng": -51.223763882867694
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-24",
+      "dpp": "2026-07-01",
+      "dataUltimaConsulta": "2026-05-29",
+      "numeroConsultas": 6,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-012",
+    "nome": "Lívia Xavier",
+    "cns": "724259538240140",
+    "dataNascimento": "2006-08-16",
+    "telefone": "51 988326123",
+    "endereco": {
+      "rua": "Rua Caixa Econômica",
+      "numero": "1159",
+      "lat": -30.073925336270147,
+      "lng": -51.2227035956088
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-24",
+      "dpp": "2026-07-01",
+      "dataUltimaConsulta": "2026-05-26",
+      "numeroConsultas": 6,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-013",
+    "nome": "Sílvia Nogueira",
+    "cns": "790503719179175",
+    "dataNascimento": "2003-05-16",
+    "telefone": "51 937834677",
+    "endereco": {
+      "rua": "Rua Abelardo Marquês",
+      "numero": "159",
+      "lat": -30.070869673142077,
+      "lng": -51.216258874497896
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-02-25",
+      "dpp": "2026-12-02",
+      "dataUltimaConsulta": "2026-05-24",
+      "numeroConsultas": 4,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-014",
+    "nome": "Ana Luiza Albuquerque",
+    "cns": "789659321900585",
+    "dataNascimento": "2002-04-11",
+    "telefone": "51 975548447",
+    "endereco": {
+      "rua": "Rua Januário Scalzilli",
+      "numero": "885",
+      "lat": -30.071858357782368,
+      "lng": -51.21611038279615
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-10-22",
+      "dpp": "2026-07-29",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 8,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-015",
+    "nome": "Isis Saraiva",
+    "cns": "276852115440466",
+    "dataNascimento": "1994-08-19",
+    "telefone": "51 961696885",
+    "endereco": {
+      "rua": "Rua Álvaro Osimo Caetano",
+      "numero": "374",
+      "lat": -30.07824827199041,
+      "lng": -51.22253132600009
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-03-11",
+      "dpp": "2026-12-16",
+      "dataUltimaConsulta": "2026-05-30",
+      "numeroConsultas": 1,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Agendada",
+    "vacinaDTpa": "Não se aplica",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-016",
+    "nome": "Felícia Batista",
+    "cns": "280993464300377",
+    "dataNascimento": "2007-07-28",
+    "telefone": "51 993967370",
+    "endereco": {
+      "rua": "Rua Flores",
+      "numero": "437",
+      "lat": -30.07532490504743,
+      "lng": -51.22467621566273
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-02-04",
+      "dpp": "2026-11-11",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-017",
+    "nome": "Ana Laura Santos Jr.",
+    "cns": "938010231011271",
+    "dataNascimento": "2009-11-09",
+    "telefone": "51 931294310",
+    "endereco": {
+      "rua": "Rua Corrêa Lima",
+      "numero": "110",
+      "lat": -30.070102298172657,
+      "lng": -51.226621355873505
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-24",
+      "dpp": "2026-07-01",
+      "dataUltimaConsulta": "2026-05-25",
+      "numeroConsultas": 6,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 4
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-018",
+    "nome": "Núbia Reis",
+    "cns": "558788718200628",
+    "dataNascimento": "1990-05-04",
+    "telefone": "51 927635274",
+    "endereco": {
+      "rua": "Rua Banco Inglês",
+      "numero": "245",
+      "lat": -30.0722844,
+      "lng": -51.2209007
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-02-11",
+      "dpp": "2026-11-18",
+      "dataUltimaConsulta": "2026-05-12",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-019",
+    "nome": "Ana Júlia Batista",
+    "cns": "697179905455843",
+    "dataNascimento": "1991-11-12",
+    "telefone": "51 980124219",
+    "endereco": {
+      "rua": "Rua Júlio Lopes dos Santos Sobrinho",
+      "numero": "147",
+      "lat": -30.071894342435048,
+      "lng": -51.21764391585102
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-05",
+      "dpp": "2026-08-12",
+      "dataUltimaConsulta": "2026-05-08",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-020",
+    "nome": "Maria Alice Barros",
+    "cns": "677291395870015",
+    "dataNascimento": "2010-02-13",
+    "telefone": "51 936462777",
+    "endereco": {
+      "rua": "Rua Cruzeiro do Sul",
+      "numero": "890",
+      "lat": -30.0769872,
+      "lng": -51.223859
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-01-21",
+      "dpp": "2026-10-28",
+      "dataUltimaConsulta": "2026-04-29",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-021",
+    "nome": "Isabel Oliveira",
+    "cns": "827938699110650",
+    "dataNascimento": "1992-03-16",
+    "telefone": "51 927000542",
+    "endereco": {
+      "rua": "Rua Aracy de Azevedo José",
+      "numero": "724",
+      "lat": -30.077990211472613,
+      "lng": -51.22322990530107
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-05-03",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-022",
+    "nome": "Laura Pereira",
+    "cns": "724278247294747",
+    "dataNascimento": "2001-04-01",
+    "telefone": "51 956852947",
+    "endereco": {
+      "rua": "Rua Cruzeiro do Sul",
+      "numero": "890",
+      "lat": -30.0769872,
+      "lng": -51.223859
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-04-26",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-023",
+    "nome": "Maitê Moraes",
+    "cns": "600748045916991",
+    "dataNascimento": "1998-03-18",
+    "telefone": "51 991206075",
+    "endereco": {
+      "rua": "Rua Gilberto Laste",
+      "numero": "1207",
+      "lat": -30.06855358766597,
+      "lng": -51.22479038516035
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-04-11",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-024",
+    "nome": "Sra. Júlia Batista",
+    "cns": "832949123735348",
+    "dataNascimento": "2009-07-19",
+    "telefone": "51 944278943",
+    "endereco": {
+      "rua": "Rua Álvaro Osimo Caetano",
+      "numero": "1075",
+      "lat": -30.07812556364127,
+      "lng": -51.22271052765593
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-10-15",
+      "dpp": "2026-07-22",
+      "dataUltimaConsulta": "2026-04-02",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-025",
+    "nome": "Heloísa Souza",
+    "cns": "398949506822238",
+    "dataNascimento": "1985-08-18",
+    "telefone": "51 932303949",
+    "endereco": {
+      "rua": "Rua Bernardino Caetano Fraga",
+      "numero": "1182",
+      "lat": -30.07143471224291,
+      "lng": -51.2166150245686
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-26",
+      "dpp": "2026-09-02",
+      "dataUltimaConsulta": "2026-03-18",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-026",
+    "nome": "Dra. Joana Carvalho",
+    "cns": "964179724379362",
+    "dataNascimento": "2004-08-15",
+    "telefone": "51 993040028",
+    "endereco": {
+      "rua": "Rua Januário Scalzilli",
+      "numero": "850",
+      "lat": -30.07175844140935,
+      "lng": -51.21591026846019
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-05",
+      "dpp": "2026-08-12",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 4,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "hiv": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "confirmacaoLaboratorial": true,
+        "cargaViral": "< 50 cópias/mL",
+        "cd4": "< 200 células/mm3",
+        "tarvIniciado": true,
+        "dataTarv": "2026-03-27"
+      }
+    }
+  },
+  {
+    "id": "gest-027",
+    "nome": "Clara Santos",
+    "cns": "559299610966817",
+    "dataNascimento": "1992-07-18",
+    "telefone": "51 985139166",
+    "endereco": {
+      "rua": "Rua Madre Brígida Pastorino",
+      "numero": "292",
+      "lat": -30.07600216903607,
+      "lng": -51.22414921887318
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "hiv": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "confirmacaoLaboratorial": true,
+        "cargaViral": "< 50 cópias/mL",
+        "cd4": "> 500 células/mm3",
+        "tarvIniciado": true,
+        "dataTarv": "2026-04-27"
+      }
+    }
+  },
+  {
+    "id": "gest-028",
+    "nome": "Rebeca Braga",
+    "cns": "138867012686677",
+    "dataNascimento": "1992-02-28",
+    "telefone": "51 930052600",
+    "endereco": {
+      "rua": "Rua Bernardino Caetano Fraga",
+      "numero": "859",
+      "lat": -30.071449941132798,
+      "lng": -51.2167095194875
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-03-18",
+      "dpp": "2026-12-23",
+      "dataUltimaConsulta": "2026-05-29",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "sifilis": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-04-14",
+        "vdrlSolicitado": true,
+        "resultadoVDRL": "Reagente 1:16",
+        "tipoSifilis": "Latente",
+        "notificacao": true,
+        "dataPrimeiraDose": "2026-04-14",
+        "dataSegundaDose": "2026-05-12",
+        "dataTerceiraDose": "2026-05-21",
+        "vdrlControleRealizado": true
+      }
+    }
+  },
+  {
+    "id": "gest-029",
+    "nome": "Luiza Silva",
+    "cns": "141034734762676",
+    "dataNascimento": "1997-02-12",
+    "telefone": "51 938722899",
+    "endereco": {
+      "rua": "Travessa Valeriano Rodrigues",
+      "numero": "591",
+      "lat": -30.072339902308148,
+      "lng": -51.22412593862533
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-02-11",
+      "dpp": "2026-11-18",
+      "dataUltimaConsulta": "2026-05-20",
+      "numeroConsultas": 4,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "sifilis": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-04-04",
+        "vdrlSolicitado": true,
+        "resultadoVDRL": "Reagente 1:2",
+        "tipoSifilis": "Latente",
+        "notificacao": true,
+        "dataPrimeiraDose": "2026-04-15",
+        "dataSegundaDose": "2026-05-13",
+        "vdrlControleRealizado": false
+      }
+    }
+  },
+  {
+    "id": "gest-030",
+    "nome": "Antonella Martins",
+    "cns": "917476375671094",
+    "dataNascimento": "1998-04-20",
+    "telefone": "51 951063377",
+    "endereco": {
+      "rua": "Rua Doutor Leônidas Soares Machado",
+      "numero": "1042",
+      "lat": -30.07622527558897,
+      "lng": -51.218170714619106
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-03-25",
+      "dpp": "2026-12-30",
+      "dataUltimaConsulta": "2026-05-24",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "sifilis": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-03-08",
+        "vdrlSolicitado": true,
+        "resultadoVDRL": "Reagente 1:16",
+        "tipoSifilis": "Primária",
+        "notificacao": true,
+        "dataPrimeiraDose": "2026-04-07",
+        "vdrlControleRealizado": false
+      }
+    }
+  },
+  {
+    "id": "gest-031",
+    "nome": "Rafaela Moraes",
+    "cns": "723806179469475",
+    "dataNascimento": "1999-09-04",
+    "telefone": "51 985891167",
+    "endereco": {
+      "rua": "Rua Neves",
+      "numero": "477",
+      "lat": -30.074785614180147,
+      "lng": -51.225640631135434
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-03",
+      "dpp": "2026-09-09",
+      "dataUltimaConsulta": "2026-05-19",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "sifilis": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-03-16",
+        "vdrlSolicitado": true,
+        "resultadoVDRL": "Reagente 1:8",
+        "tipoSifilis": "Latente",
+        "notificacao": true,
+        "dataPrimeiraDose": "2026-04-05",
+        "vdrlControleRealizado": false
+      }
+    }
+  },
+  {
+    "id": "gest-032",
+    "nome": "Elisa Macedo",
+    "cns": "308449944879352",
+    "dataNascimento": "2003-05-05",
+    "telefone": "51 915508400",
+    "endereco": {
+      "rua": "Avenida Deputado Aramy Silva",
+      "numero": "625",
+      "lat": -30.073955794967514,
+      "lng": -51.21822404907199
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-17",
+      "dpp": "2026-09-23",
+      "dataUltimaConsulta": "2026-05-29",
+      "numeroConsultas": 5,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "hepatiteB": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-03-11",
+        "antiHBsSolicitado": true,
+        "resultadoAntiHBs": "Não Reagente",
+        "vacinacaoIniciada": true,
+        "dataPrimeiraDoseVacina": "2026-04-12",
+        "dataSegundaDoseVacina": "2026-04-23",
+        "dataTerceiraDoseVacina": "2026-05-20"
+      }
+    }
+  },
+  {
+    "id": "gest-033",
+    "nome": "Isabel Pereira",
+    "cns": "134027303250378",
+    "dataNascimento": "1998-02-11",
+    "telefone": "51 933229408",
+    "endereco": {
+      "rua": "Rua Flores",
+      "numero": "42",
+      "lat": -30.075308485540603,
+      "lng": -51.22463717393478
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-17",
+      "dpp": "2026-09-23",
+      "dataUltimaConsulta": "2026-05-29",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": true,
+    "exposicao": {
+      "hepatiteB": {
+        "trRealizado": true,
+        "resultado": "Reagente",
+        "dataTR": "2026-03-07",
+        "antiHBsSolicitado": true,
+        "resultadoAntiHBs": "Não Reagente",
+        "vacinacaoIniciada": true,
+        "dataPrimeiraDoseVacina": "2026-04-03",
+        "dataSegundaDoseVacina": "2026-04-23",
+        "dataTerceiraDoseVacina": "2026-06-02"
+      }
+    }
+  },
+  {
+    "id": "gest-034",
+    "nome": "Valentina Costa",
+    "cns": "538837807892040",
+    "dataNascimento": "1985-11-09",
+    "telefone": "51 971069957",
+    "endereco": {
+      "rua": "Rua Gabriel Fialho Camargo",
+      "numero": "587",
+      "lat": -30.069013878425665,
+      "lng": -51.21580945115699
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-24",
+      "dpp": "2026-09-30",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 5,
+      "pressaoArterial": "152/103",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 4
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-035",
+    "nome": "Helena Albuquerque",
+    "cns": "797393761395809",
+    "dataNascimento": "1999-11-26",
+    "telefone": "51 979421522",
+    "endereco": {
+      "rua": "Avenida Deputado Aramy Silva",
+      "numero": "16",
+      "lat": -30.07409504600756,
+      "lng": -51.21821838025369
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-05-26",
+      "numeroConsultas": 4,
+      "pressaoArterial": "165/91",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-036",
+    "nome": "Liz Costa",
+    "cns": "791256409995937",
+    "dataNascimento": "2005-12-17",
+    "telefone": "51 989989949",
+    "endereco": {
+      "rua": "Rua Gilberto Laste",
+      "numero": "1444",
+      "lat": -30.068598563805278,
+      "lng": -51.22499207582602
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-12",
+      "dpp": "2026-08-19",
+      "dataUltimaConsulta": "2026-05-24",
+      "numeroConsultas": 7,
+      "pressaoArterial": "158/92",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-037",
+    "nome": "Emanuelly Moraes",
+    "cns": "920671316871298",
+    "dataNascimento": "2010-01-27",
+    "telefone": "51 935420478",
+    "endereco": {
+      "rua": "Rua Aracy de Azevedo José",
+      "numero": "1182",
+      "lat": -30.07788150330179,
+      "lng": -51.2233193291199
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-10-08",
+      "dpp": "2026-07-15",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 5,
+      "pressaoArterial": "162/102",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 4
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-038",
+    "nome": "Emanuelly Reis",
+    "cns": "921141950265026",
+    "dataNascimento": "1996-11-20",
+    "telefone": "51 971117146",
+    "endereco": {
+      "rua": "Rua Caixa Econômica",
+      "numero": "1219",
+      "lat": -30.073745344427902,
+      "lng": -51.22282224073235
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-03",
+      "dpp": "2026-09-09",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 6,
+      "pressaoArterial": "157/100",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-039",
+    "nome": "Marina Oliveira",
+    "cns": "192080910523329",
+    "dataNascimento": "2003-12-18",
+    "telefone": "51 980533937",
+    "endereco": {
+      "rua": "Rua Abelardo Marquês",
+      "numero": "1239",
+      "lat": -30.0708912094843,
+      "lng": -51.2161579848217
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-03",
+      "dpp": "2026-06-10",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 7,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 5
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-040",
+    "nome": "Luiza Saraiva",
+    "cns": "939057808368605",
+    "dataNascimento": "1995-12-16",
+    "telefone": "51 989927645",
+    "endereco": {
+      "rua": "Rua Professor Manoel Lobato",
+      "numero": "951",
+      "lat": -30.071808138225315,
+      "lng": -51.21798283583552
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-03",
+      "dpp": "2026-06-10",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 8,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-041",
+    "nome": "Dalila Nogueira",
+    "cns": "633871481320534",
+    "dataNascimento": "1993-07-24",
+    "telefone": "51 980129847",
+    "endereco": {
+      "rua": "Rua Álvaro Osimo Caetano",
+      "numero": "488",
+      "lat": -30.078212163609194,
+      "lng": -51.22268732470415
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-10",
+      "dpp": "2026-06-17",
+      "dataUltimaConsulta": "2026-05-23",
+      "numeroConsultas": 9,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 3
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-042",
+    "nome": "Alice Carvalho",
+    "cns": "680521214112063",
+    "dataNascimento": "2008-05-05",
+    "telefone": "51 986318570",
+    "endereco": {
+      "rua": "Rua Neves",
+      "numero": "673",
+      "lat": -30.07466202216647,
+      "lng": -51.22550817030457
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-09-03",
+      "dpp": "2026-06-10",
+      "dataUltimaConsulta": "2026-05-26",
+      "numeroConsultas": 9,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 5
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-043",
+    "nome": "Célia Martins",
+    "cns": "649660888948621",
+    "dataNascimento": "2003-05-01",
+    "telefone": "51 942814882",
+    "endereco": {
+      "rua": "Rua Bernardino Caetano Fraga",
+      "numero": "681",
+      "lat": -30.071365065583244,
+      "lng": -51.216601978680416
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-07-30",
+      "dpp": "2026-05-06",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 6,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": true,
+    "isExposta": false,
+    "posNatal": {
+      "consultaPuerperio": true,
+      "visitaDomiciliarPosNatal": true,
+      "avaliacaoOdontoPosNatal": true
+    }
+  },
+  {
+    "id": "gest-044",
+    "nome": "Carla Batista",
+    "cns": "555911106136336",
+    "dataNascimento": "1989-03-07",
+    "telefone": "51 937498735",
+    "endereco": {
+      "rua": "Rua Gilberto Laste",
+      "numero": "242",
+      "lat": -30.06862551527185,
+      "lng": -51.22485380612537
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-08-06",
+      "dpp": "2026-05-13",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 7,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": true,
+    "isExposta": false,
+    "posNatal": {
+      "consultaPuerperio": true,
+      "visitaDomiciliarPosNatal": true,
+      "avaliacaoOdontoPosNatal": true
+    }
+  },
+  {
+    "id": "gest-045",
+    "nome": "Roberta Oliveira",
+    "cns": "860613863228616",
+    "dataNascimento": "2001-02-23",
+    "telefone": "51 942799009",
+    "endereco": {
+      "rua": "Avenida Francisco Massena Vieira",
+      "numero": "634",
+      "lat": -30.073676079714637,
+      "lng": -51.218387373285914
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-08-06",
+      "dpp": "2026-05-13",
+      "dataUltimaConsulta": "2026-05-15",
+      "numeroConsultas": 4,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": true,
+    "isExposta": false,
+    "posNatal": {
+      "consultaPuerperio": false,
+      "visitaDomiciliarPosNatal": false,
+      "avaliacaoOdontoPosNatal": false
+    }
+  },
+  {
+    "id": "gest-046",
+    "nome": "Srta. Lívia Costa",
+    "cns": "262350822948670",
+    "dataNascimento": "1985-01-12",
+    "telefone": "51 933657910",
+    "endereco": {
+      "rua": "Rua Cruzeiro do Sul",
+      "numero": "1116",
+      "lat": -30.076970409080676,
+      "lng": -51.223807565115635
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-07-30",
+      "dpp": "2026-05-06",
+      "dataUltimaConsulta": "2026-05-12",
+      "numeroConsultas": 7,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": true,
+    "isExposta": false,
+    "posNatal": {
+      "consultaPuerperio": false,
+      "visitaDomiciliarPosNatal": false,
+      "avaliacaoOdontoPosNatal": false
+    }
+  },
+  {
+    "id": "gest-047",
+    "nome": "Sara Macedo",
+    "cns": "437539193318513",
+    "dataNascimento": "1984-08-15",
+    "telefone": "51 954525609",
+    "endereco": {
+      "rua": "Rua Flores",
+      "numero": "74",
+      "lat": -30.075277084067647,
+      "lng": -51.22443387947616
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-08-06",
+      "dpp": "2026-05-13",
+      "dataUltimaConsulta": "2026-05-08",
+      "numeroConsultas": 7,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Feito",
+    "isPuerpera": true,
+    "isExposta": false,
+    "posNatal": {
+      "consultaPuerperio": false,
+      "visitaDomiciliarPosNatal": false,
+      "avaliacaoOdontoPosNatal": false
+    }
+  },
+  {
+    "id": "gest-048",
+    "nome": "Marina Silva",
+    "cns": "530637116070218",
+    "dataNascimento": "1986-09-03",
+    "telefone": "51 980606895",
+    "endereco": {
+      "rua": "Avenida Deputado Aramy Silva",
+      "numero": "769",
+      "lat": -30.07402843911011,
+      "lng": -51.21818486537003
+    },
+    "microarea": "MA2",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-01-21",
+      "dpp": "2026-10-28",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-049",
+    "nome": "Maria Clara Braga",
+    "cns": "497731288922157",
+    "dataNascimento": "1997-12-23",
+    "telefone": "51 915894204",
+    "endereco": {
+      "rua": "Rua Banco Inglês",
+      "numero": "1197",
+      "lat": -30.07217881624473,
+      "lng": -51.22082953832418
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-03",
+      "dpp": "2026-09-09",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-050",
+    "nome": "Maria Batista",
+    "cns": "353086376315946",
+    "dataNascimento": "1992-10-15",
+    "telefone": "51 934554781",
+    "endereco": {
+      "rua": "Rua Neves",
+      "numero": "177",
+      "lat": -30.074684828568984,
+      "lng": -51.22550021357596
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2026-01-14",
+      "dpp": "2026-10-21",
+      "dataUltimaConsulta": "2026-05-27",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-051",
+    "nome": "Alessandra Moreira",
+    "cns": "316575731904861",
+    "dataNascimento": "1993-09-18",
+    "telefone": "51 950875373",
+    "endereco": {
+      "rua": "Rua Bernardino Caetano Fraga",
+      "numero": "479",
+      "lat": -30.071409140393747,
+      "lng": -51.21668278613668
+    },
+    "microarea": "MA1",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-17",
+      "dpp": "2026-09-23",
+      "dataUltimaConsulta": "2026-05-22",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-052",
+    "nome": "Maria Clara Pereira",
+    "cns": "437620622081690",
+    "dataNascimento": "2002-10-26",
+    "telefone": "51 988137751",
+    "endereco": {
+      "rua": "Rua Gibran Khalil Gibran",
+      "numero": "433",
+      "lat": -30.077151524599792,
+      "lng": -51.22033701839393
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-12-03",
+      "dpp": "2026-09-09",
+      "dataUltimaConsulta": "2026-05-28",
+      "numeroConsultas": 3,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 2
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-053",
+    "nome": "Isabel Oliveira",
+    "cns": "344996353508309",
+    "dataNascimento": "1988-12-07",
+    "telefone": "51 911602421",
+    "endereco": {
+      "rua": "Rua Santa Cruz",
+      "numero": "701",
+      "lat": -30.06747090862666,
+      "lng": -51.22276374578382
+    },
+    "microarea": "MA3",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-19",
+      "dpp": "2026-08-26",
+      "dataUltimaConsulta": "2026-05-20",
+      "numeroConsultas": 1,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-054",
+    "nome": "Maria Eduarda Barros",
+    "cns": "825691926141054",
+    "dataNascimento": "1987-07-21",
+    "telefone": "51 945269472",
+    "endereco": {
+      "rua": "Rua Doutor Leônidas Soares Machado",
+      "numero": "1172",
+      "lat": -30.075989275110945,
+      "lng": -51.218276027900146
+    },
+    "microarea": "MA4",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-10-15",
+      "dpp": "2026-07-22",
+      "dataUltimaConsulta": "2026-05-18",
+      "numeroConsultas": 2,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 1
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  },
+  {
+    "id": "gest-055",
+    "nome": "Fabrícia Xavier",
+    "cns": "494675214371545",
+    "dataNascimento": "2005-10-06",
+    "telefone": "51 936940215",
+    "endereco": {
+      "rua": "Rua Neves",
+      "numero": "924",
+      "lat": -30.074757016664744,
+      "lng": -51.22544757030047
+    },
+    "microarea": "MA5",
+    "consultas": {
+      "igAbertura": "<12 sem",
+      "dum": "2025-11-05",
+      "dpp": "2026-08-12",
+      "dataUltimaConsulta": "2026-05-19",
+      "numeroConsultas": 1,
+      "pressaoArterial": "120/80",
+      "acompanhamentoPesoAltura": "Em dia",
+      "visitasDomiciliares": 0
+    },
+    "exames": {
+      "trPrimeiroTrimestre": "Feito",
+      "trSegundoTrimestre": "Não Feito",
+      "trTerceiroTrimestre": "Não Feito",
+      "resultadoTR": "Não Reagente"
+    },
+    "avaliacaoOdonto": "Não realizada",
+    "vacinaDTpa": "Não realizada",
+    "trSifilisHivPrimeiroTri": "Feito",
+    "trSifilisHivTerceiroTri": "Não Feito",
+    "isPuerpera": false,
+    "isExposta": false
+  }
+]

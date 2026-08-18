@@ -1,0 +1,36 @@
+id,lat,lng,condicao,microarea,ultimo_acompanhamento,proximo_acompanhamento,endereco,observacao
+P001,-30.0725,-51.2195,gestante,1,2026-05-10,2026-05-20,Rua São Manoel 145,2º trimestre
+P002,-30.0738,-51.2210,gestante,1,2026-04-28,2026-05-12,Av. Moab Caldas 220,3º trimestre - alto risco
+P003,-30.0751,-51.2185,gestante,2,2026-05-15,2026-06-01,Rua Silveiro 88,1º trimestre
+P004,-30.0710,-51.2230,gestante,3,2026-05-01,2026-05-22,Rua João Alfredo 310,2º trimestre
+P005,-30.0765,-51.2170,gestante,4,2026-04-20,2026-05-04,Trav. dos Venezianos 15,3º trimestre - pré-eclâmpsia
+P006,-30.0732,-51.2250,gestante,2,2026-05-18,2026-06-10,Rua da República 455,1º trimestre
+P007,-30.0720,-51.2200,tuberculose,1,2026-05-05,2026-05-19,Rua São Manoel 98,DOTS - 3º mês
+P008,-30.0745,-51.2225,tuberculose,3,2026-04-15,2026-04-29,Av. Moab Caldas 380,DOTS - abandonou tratamento
+P009,-30.0758,-51.2195,tuberculose,2,2026-05-12,2026-05-26,Rua Silveiro 201,DOTS - 5º mês
+P010,-30.0772,-51.2240,tuberculose,4,2026-05-01,2026-06-01,Rua Câncio Gomes 77,Início recente
+P011,-30.0715,-51.2180,tuberculose,1,2026-04-10,2026-04-24,Trav. do Carmo 33,Contato domiciliar
+P012,-30.0730,-51.2215,cronico,1,2026-04-20,2026-05-20,Rua São Manoel 200,DM2 + HAS - insulinodependente
+P013,-30.0742,-51.2190,cronico,2,2026-05-10,2026-08-10,Rua Silveiro 150,HAS controlada
+P014,-30.0755,-51.2220,cronico,3,2026-03-15,2026-04-15,Av. Moab Caldas 450,DM2 - hemoglobina glicada alta
+P015,-30.0768,-51.2205,cronico,4,2026-05-01,2026-07-01,Rua Câncio Gomes 120,HAS - ajuste medicação
+P016,-30.0722,-51.2240,cronico,1,2026-05-15,2026-08-15,Rua da República 100,DM2 - estável
+P017,-30.0735,-51.2175,cronico,2,2026-04-01,2026-05-01,Trav. dos Venezianos 45,HAS + DM2 - descompensado
+P018,-30.0748,-51.2260,cronico,3,2026-05-08,2026-07-08,Rua João Alfredo 280,HAS - boa adesão
+P019,-30.0760,-51.2185,cronico,4,2026-02-20,2026-04-20,Rua Silveiro 310,DM2 - perdeu seguimento
+P020,-30.0712,-51.2210,cronico,1,2026-05-20,2026-08-20,Av. Moab Caldas 150,HAS leve - dieta
+P021,-30.0775,-51.2200,cronico,4,2026-04-25,2026-06-25,Rua Câncio Gomes 200,DM2 - pé diabético
+P022,-30.0728,-51.2230,cronico,2,2026-05-05,2026-07-05,Rua da República 330,HAS + obesidade
+P023,-30.0718,-51.2195,acamado,1,2026-05-18,2026-05-25,Rua São Manoel 55,Pós-AVC - cuidador presente
+P024,-30.0740,-51.2205,acamado,2,2026-05-10,2026-05-24,Rua Silveiro 175,Fratura fêmur - idoso 82a
+P025,-30.0762,-51.2230,acamado,3,2026-04-28,2026-05-12,Av. Moab Caldas 500,Alzheimer avançado
+P026,-30.0750,-51.2175,acamado,4,2026-05-15,2026-05-29,Trav. dos Venezianos 60,Sequela neuro - sem cuidador
+P027,-30.0708,-51.2220,acamado,1,2026-04-05,2026-04-19,Rua João Alfredo 50,Terminal - cuidados paliativos
+P028,-30.0733,-51.2245,transmissivel,2,2026-05-12,2026-05-19,Rua da República 210,Dengue - notificado 12/05
+P029,-30.0756,-51.2210,transmissivel,3,2026-05-15,2026-05-22,Av. Moab Caldas 420,Dengue - monitoramento
+P030,-30.0770,-51.2195,transmissivel,4,2026-05-01,2026-05-08,Rua Câncio Gomes 55,Sífilis gestacional
+P031,-30.0724,-51.2185,transmissivel,1,2026-04-20,2026-05-04,Trav. do Carmo 80,HIV - adesão irregular
+P032,-30.0747,-51.2250,transmissivel,3,2026-05-18,2026-06-18,Rua João Alfredo 350,Hepatite B - acompanhamento
+P033,-30.0715,-51.2225,gestante,1,2026-05-20,2026-06-15,Rua da República 75,1º trimestre - baixo risco
+P034,-30.0763,-51.2215,cronico,3,2026-05-19,2026-07-19,Av. Moab Caldas 470,HAS - idoso 75a
+P035,-30.0739,-51.2200,acamado,2,2026-05-20,2026-06-03,Rua Silveiro 130,Pós-cirúrgico temporário
