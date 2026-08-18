@@ -1,97 +1,81 @@
 # saude-territorial
 
-Plataforma georreferenciada de monitoramento de saúde territorial para equipes de Atenção Primária à Saúde (APS) em Porto Alegre.
+Multi-layer georeferenced platform for primary-care health teams in Porto Alegre. Turns the team's patient records into an interactive map with per-condition layers, priority alerts, route planning, and in-app editing.
 
-Transforma o registro clínico da equipe em um mapa interativo com múltiplas camadas por condição, alertas de urgência, planejamento de rotas e edição direta no mapa.
-
-> **Nota arquitetural (agosto 2026):** este projeto passou por um pivot. A versão anterior lia/escrevia planilhas Google Sheets da equipe. Agora **Supabase é a fonte da verdade** e todos os dados são gerenciados via CRUD dentro da própria aplicação. Ver [`docs/adr/ADR-001-drop-sheets.md`](docs/adr/ADR-001-drop-sheets.md) e [`docs/adr/ADR-002-drizzle-orm.md`](docs/adr/ADR-002-drizzle-orm.md).
-
-## Sobre o Projeto
-
-Aplicativo do **GAT 4** (Grupo de Ação Territorial 4) no programa **PET-Saúde Digital** (UFRGS + SMS Porto Alegre). Piloto na **US Moab Caldas**.
+Built for **GAT 4** (Grupo de Ação Territorial 4) inside the **PET-Saúde Digital** program (UFRGS + SMS Porto Alegre). Pilot deployment at **US Moab Caldas**.
 
 ## Stack
 
-| Concern | Escolha |
-|---------|---------|
+| Concern | Choice |
+|---|---|
 | Framework | Next.js 16 (App Router, Turbopack, `proxy.ts`) |
 | UI | shadcn/ui + Tailwind CSS v4 (CSS-first `@theme`) |
 | Map | Leaflet (react-leaflet v5) |
 | State (server) | TanStack Query v5 |
 | State (client) | Zustand v5 |
-| Language | TypeScript (strict mode) |
-| Auth | Better Auth (Google OAuth — **identidade apenas**) |
-| Source of truth | **Supabase Postgres** |
-| Data access | **Drizzle ORM** |
+| Language | TypeScript (strict) |
+| Auth | Better Auth (Google OAuth — identity only) |
+| Data | Supabase Postgres, accessed via Drizzle ORM |
+| Auth session store | Better Auth (SQLite via `better-sqlite3`) |
 | Geocoding | Nominatim (OpenStreetMap) |
 | Routing | OSRM |
 | Package manager | pnpm |
 | Task runner | mise |
 | Deploy | Vercel + Supabase cloud |
 
-## Pré-requisitos
+## Prerequisites
 
-- Node.js 20+ (gerenciado via `mise`)
+- Node 25 (managed by `mise`)
 - pnpm 9+
-- Conta Google Cloud com OAuth 2.0 Client ID configurado (`openid email profile` scopes suficientes)
-- Projeto Supabase (para o Postgres backend)
+- A **dev** Supabase project (never point at production)
+- A Google Cloud OAuth 2.0 client ID with `openid email profile` scopes
 
 ## Setup
 
-```bash
-# 1. Clone e instale dependências
-git clone git@github.com:PedroKlein/saude-territorial.git
-cd saude-territorial
-pnpm install
+1. `mise install` — installs the pinned Node version.
+2. `pnpm install`.
+3. `cp .env.local.example .env.local` and fill:
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google Cloud OAuth client credentials
+   - `DATABASE_URL` — Supabase transaction pooler URL (port 6543)
+   - `BETTER_AUTH_SECRET` — `openssl rand -hex 32`
+   - `BETTER_AUTH_URL` — `http://localhost:3000` in dev
+4. `echo y | npx auth migrate` — creates the local `auth.db` SQLite session store.
+5. `pnpm db:push` — applies the Drizzle schema to your dev Supabase project. Blocked by `scripts/verify-non-prod-db.ts` if the URL looks like production.
+6. `SEED_SYNTHETIC=1 I_HAVE_VERIFIED_NON_PROD=1 pnpm db:seed` — loads synthetic patients from the sister repo fixtures.
+7. `pnpm dev` — start at http://localhost:3000 and sign in with Google.
 
-# 2. Configure variáveis de ambiente
-cp .env.local.example .env.local
-# Preencha: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_*, DATABASE_URL, BETTER_AUTH_SECRET
+## Commands
 
-# 3. Suba o servidor de desenvolvimento
-pnpm dev
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Dev server (Turbopack) |
+| `pnpm build` | Production build |
+| `pnpm test` | Vitest |
+| `pnpm lint` | ESLint |
+| `pnpm type-check` | `tsc --noEmit` |
+| `pnpm db:generate` | Create a Drizzle migration from schema changes |
+| `pnpm db:push` | Apply schema to Supabase (non-prod gated) |
+| `pnpm db:seed` | Seed synthetic data (non-prod + LGPD gated) |
+| `pnpm db:studio` | Drizzle Studio (browse your DB) |
 
-# 4. Acesse http://localhost:3000 e entre com Google
-```
+## Documentation
 
-O mapa carrega com 34 pacientes sintéticos (endpoint temporário `/api/patients`). Substituição por leitura real do Supabase acontece na execução do pivot.
+- [SPEC.md](./SPEC.md) — functional specification, data model, alert rules
+- [AGENTS.md](./AGENTS.md) — repo structure and conventions
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — dev workflow, branching, commits, review
+- [TESTING.md](./TESTING.md) — how to verify changes
+- [docs/roadmap.md](./docs/roadmap.md) — post-MVP work in progress
+- [docs/gotchas.md](./docs/gotchas.md) — non-obvious behavior across the stack
+- [docs/adr/](./docs/adr/) — architectural decisions
 
-## Comandos
+## Sister repo
 
-```bash
-pnpm dev          # servidor de desenvolvimento (Turbopack)
-pnpm build        # produção
-pnpm test         # Vitest (unit)
-pnpm lint         # ESLint
-pnpm type-check   # tsc --noEmit
-```
+[extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — domain documentation, meeting reports, glossary, static PoC prototypes, synthetic seed data.
 
-## Estrutura
+## Data handling
 
-Ver [`AGENTS.md`](AGENTS.md) para a estrutura completa do repositório e diretrizes de desenvolvimento.
+Synthetic data only. Seed scripts refuse to run without `SEED_SYNTHETIC=1` and `I_HAVE_VERIFIED_NON_PROD=1`. Never commit real patient records. Never log patient fields to stdout, analytics, or error trackers.
 
-## Documentação
-
-| Documento | Propósito |
-|-----------|-----------|
-| [`SPEC.md`](SPEC.md) | Especificação funcional, modelo de dados, milestones |
-| [`AGENTS.md`](AGENTS.md) | Instruções para agentes de IA e desenvolvedores humanos |
-| [`TESTING.md`](TESTING.md) | Guia de testes e verificação |
-| [`docs/adr/ADR-001-drop-sheets.md`](docs/adr/ADR-001-drop-sheets.md) | Decisão: descartar Sheets como fonte da verdade |
-| [`docs/adr/ADR-002-drizzle-orm.md`](docs/adr/ADR-002-drizzle-orm.md) | Decisão: Drizzle ORM para acesso a dados |
-| [`plans/pivot-cleanup.md`](plans/pivot-cleanup.md) | Plano de limpeza executado (agosto 2026) |
-
-## Repo irmão
-
-[`extensao-gat4`](https://github.com/PedroKlein/extensao-gat4) — documentação de domínio, relatórios de reunião, glossário, protótipos estáticos que precederam este app, e seed data sintético.
-
-## LGPD
-
-- **Nenhum dado real de paciente é commitado neste repositório.**
-- Todo seed é sintético (do repo irmão `extensao-gat4`).
-- Scripts de seed exigem `SEED_SYNTHETIC=1`.
-- Scripts que mutam DB alvo exigem verificação explícita de que o Supabase project não é produção.
-
-## Licença
+## License
 
 TBD.
