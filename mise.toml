@@ -10,7 +10,7 @@ run = "node scripts/dev-auth-state.mjs"
 
 [tasks.dev]
 description = "Start Next.js dev server with Turbopack"
-run = "next dev --turbopack"
+run = "pnpm dev"
 
 [tasks.build]
 description = "Build production bundle"
