@@ -3,7 +3,6 @@ import { useMapStore } from "./mapStore";
 
 describe("mapStore", () => {
   beforeEach(() => {
-    // Reset store between tests
     useMapStore.setState(useMapStore.getInitialState());
   });
 

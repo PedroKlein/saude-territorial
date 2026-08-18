@@ -70,6 +70,6 @@ export function usePatientData() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes — show cached instantly, refetch after
     gcTime: 30 * 60 * 1000, // 30 minutes — keep in cache for progressive UX
-    refetchOnWindowFocus: true, // Background refresh when user returns to tab
+    refetchOnWindowFocus: true,
   });
 }

@@ -2,12 +2,6 @@ import { useMemo } from "react";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import type { AlertRule, AlertResult } from "@/types/alerts";
 
-/**
- * Evaluates alert rules against a list of patients and returns
- * a map of CNS → AlertResult.
- *
- * Memoized to avoid re-evaluation on every render.
- */
 export function useAlerts(
   patients: Record<string, unknown>[],
   rules: AlertRule[],

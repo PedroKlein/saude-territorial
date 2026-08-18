@@ -507,10 +507,8 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
         }
         setCreatedPatientId(patientId);
       } else {
-        // edit
         const { patientId } = internalMode;
 
-        // 1. PATCH base + kept conditions.
         try {
           await updatePatient.mutateAsync({
             id: patientId,
@@ -524,7 +522,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           throw err;
         }
 
-        // 2. Attach newly added conditions (not in originalConditions).
         const newConditions = ctx.chosenConditions.filter(
           (c) => !ctx.originalConditions.includes(c),
         );
@@ -535,7 +532,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           });
         }
 
-        // 3. Delete removed conditions.
         for (const cond of ctx.toRemove) {
           await deleteCondition.mutateAsync({ id: patientId, condicao: cond });
         }

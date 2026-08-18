@@ -16,10 +16,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// ---------------------------------------------------------------------------
 // Top-level vi.mock() calls — Vitest hoists these before any imports.
 // Must live at module scope, never inside describe/beforeEach/it.
-// ---------------------------------------------------------------------------
 
 vi.mock("better-auth", () => ({
   betterAuth: vi.fn((config: Record<string, unknown>) => ({
@@ -46,10 +44,6 @@ type CapturedConfig = {
 function capturedConfig(auth: unknown): CapturedConfig {
   return (auth as { __capturedConfig: CapturedConfig }).__capturedConfig;
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("lib/auth — Better Auth server config", () => {
   beforeEach(() => {

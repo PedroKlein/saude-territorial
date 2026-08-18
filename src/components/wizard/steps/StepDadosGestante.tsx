@@ -59,7 +59,6 @@ const StepSchema = z.object({
   pressaoArterial: z.string().optional(),
   hasPreviaTag: z.string().optional(),
   diabetesPreviaTag: z.string().optional(),
-  // Advanced
   acompanhamentoPesoAltura: z.string().optional(),
   numeroVisitasDomiciliares: z.number().int().min(0).optional(),
   avaliacaoOdontoStatus: z.string().optional(),
@@ -93,7 +92,6 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
-/** Converts undefined or empty string to null; non-empty strings pass through. */
 function emptyToNull(v: string | undefined): string | null {
   if (v === undefined || v === "") return null;
   return v;
@@ -210,7 +208,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
-        {/* DUM */}
         <Field label="DUM (Última menstruação)" className="col-span-2">
           <Controller
             control={control}
@@ -226,7 +223,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Live DPP + IG */}
         {watchedDum && (
           <>
             <Field label="DPP (calculado)" hint="DUM + 280 dias">
@@ -238,7 +234,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           </>
         )}
 
-        {/* Risco */}
         <Field label="Risco" error={errors.risco?.message} className="col-span-2">
           <Controller
             control={control}
@@ -256,7 +251,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Alert pill for risco alto */}
         {watchedRisco === "alto" && (
           <div className="col-span-2 flex items-start gap-2 rounded-lg bg-alert-amber/10 px-3 py-2 text-xs text-amber-900">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-alert-amber" />
@@ -267,7 +261,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           </div>
         )}
 
-        {/* Data última consulta */}
         <Field label="Última consulta" error={errors.dataUltimaConsulta?.message}>
           <Controller
             control={control}
@@ -287,7 +280,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Data próxima consulta */}
         <Field label="Próxima consulta" error={errors.dataProximaConsulta?.message}>
           <Controller
             control={control}
@@ -303,7 +295,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Número de consultas */}
         <Field label="Nº consultas" error={errors.numeroConsultas?.message} className="col-span-1">
           <Input
             {...register("numeroConsultas", { valueAsNumber: true })}
@@ -313,7 +304,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* PA */}
         <Field label="PA (pressão arterial)" className="col-span-1" error={errors.pressaoArterial?.message}>
           <Controller
             control={control}
@@ -330,7 +320,6 @@ export function StepDadosGestante({ ctx, setCtx, goNext }: Props) {
         </Field>
       </div>
 
-      {/* Advanced fields toggle */}
       <Button
         type="button"
         variant="ghost"

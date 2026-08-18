@@ -4,8 +4,6 @@
  * `usePatient(id)` — TanStack Query hook for GET /api/patients/[id].
  *
  * Returns the unified patient shape (identity + all attached condition rows).
- * Enabled only when `id` is non-null. Cached for 30s staleTime.
- *
  * LGPD: id is an opaque UUID; no patient data is passed outside the hook.
  */
 

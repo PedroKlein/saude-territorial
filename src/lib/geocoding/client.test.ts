@@ -1,8 +1,5 @@
 /**
- * TDD Red Phase — Nominatim geocoding client contract
- *
- * These tests define the expected behaviour of lib/geocoding/client.ts.
- * They will FAIL until the implementation is written.
+ * Nominatim geocoding client contract tests.
  *
  * Contracts:
  *  - `geocode` sends a structured Nominatim query with street, city=Porto Alegre,

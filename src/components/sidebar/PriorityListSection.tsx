@@ -57,7 +57,7 @@ type PriorityListSectionProps = {
  *
  * Shows patients across active layers that have a vermelho or amarelo alert,
  * sorted by severity. Clicking a row selects the patient and opens the detail
- * panel. Microárea label and condition badge follow the proto/map sketch.
+ * panel.
  */
 export function PriorityListSection({ data }: PriorityListSectionProps) {
   const activeLayers = useMapStore((s) => s.activeLayers);
@@ -98,7 +98,6 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
       allEnriched = allEnriched.concat(enriched);
     }
 
-    // Apply search / microarea / alert filters from filterStore.
     const filtered = applyFilters(allEnriched);
 
     return filtered

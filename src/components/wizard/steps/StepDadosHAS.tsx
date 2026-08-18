@@ -39,7 +39,6 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
-/** Converts undefined or empty string to null; non-empty strings pass through. */
 function emptyToNull(v: string | undefined): string | null {
   if (v === undefined || v === "") return null;
   return v;
@@ -100,7 +99,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
-        {/* Data última consulta */}
         <Field
           label="Última consulta"
           error={errors.dataUltimaConsulta?.message}
@@ -119,7 +117,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Data próxima consulta */}
         <Field
           label="Próxima consulta"
           error={errors.dataProximaConsulta?.message}
@@ -137,7 +134,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Data última aferição PA */}
         <Field
           label="Aferição PA"
           error={errors.dataUltimaAfericaoPa?.message}
@@ -157,7 +153,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* PA */}
         <Field label="Pressão arterial" className="col-span-2">
           <Controller
             control={control}
@@ -172,7 +167,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Notas */}
         <Field label="Notas clínicas" className="col-span-2">
           <Textarea
             {...register("registroNotas")}
@@ -182,7 +176,6 @@ export function StepDadosHAS({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Encaminhamentos */}
         <Field label="Encaminhamentos" className="col-span-2">
           <Textarea
             {...register("encaminhamentos")}

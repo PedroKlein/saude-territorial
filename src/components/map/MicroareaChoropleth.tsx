@@ -12,7 +12,6 @@ type MicroareaChoroplethProps = {
   data: Partial<Record<LayerId, PatientRecord[]>>;
 }
 
-/** Linear fill style scaled by patient count within a microárea. */
 function countToStyle(count: number, max: number): PathOptions {
   if (count === 0) {
     return {

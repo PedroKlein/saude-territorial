@@ -67,7 +67,6 @@ export function useDeletePatient() {
         throw err;
       }
 
-      // 204 has no body; return void
       return undefined;
     },
 

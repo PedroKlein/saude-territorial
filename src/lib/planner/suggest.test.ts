@@ -1,8 +1,4 @@
-/**
- * Unit tests for src/lib/planner/suggest.ts
- *
- * LGPD: all patient data is synthetic / fictitious.
- */
+/** LGPD: all patient data in these tests is synthetic / fictitious. */
 
 import { describe, it, expect } from "vitest";
 import { suggestPlan, haversine } from "./suggest";

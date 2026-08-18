@@ -94,7 +94,6 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
 
   return (
     <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="grid grid-cols-2 gap-x-3 gap-y-4">
-      {/* CNS */}
       <Field
         label="CNS"
         required
@@ -119,7 +118,6 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
         />
       </Field>
 
-      {/* Nome */}
       <Field
         label="Nome completo"
         required
@@ -135,7 +133,6 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
         />
       </Field>
 
-      {/* Data de nascimento */}
       <Field
         label="Data de nascimento"
         error={errors.dataNascimento?.message}
@@ -155,7 +152,6 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
         />
       </Field>
 
-      {/* Telefone */}
       <Field
         label="Telefone"
         error={errors.telefone?.message}
@@ -174,7 +170,6 @@ export function StepIdentidade({ ctx, setCtx, goNext, lockCns = false }: Props) 
         />
       </Field>
 
-      {/* Vulnerabilidades */}
       <Field
         label="Vulnerabilidades"
         error={errors.vulnerabilidades?.message}

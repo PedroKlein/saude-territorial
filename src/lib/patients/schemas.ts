@@ -425,7 +425,6 @@ export const PatientCreateSchema = z
   .refine(
     (data) => {
       if (!data.condicao) {
-        // No condition: no extension data should be present.
         return (
           data.gestantes === undefined &&
           data.tuberculose === undefined &&

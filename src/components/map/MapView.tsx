@@ -163,7 +163,6 @@ export default function MapView() {
     return buildCoincidenceMap(all);
   }, [data]);
 
-  // Planner stop coordinates — resolved from patient data by stop.patientId.
   const plannerMarkerData = useMemo(() => {
     if (!plannerDrawerOpen || plannerStops.length === 0 || !data) return [];
     const out: { order: number; lat: number; lng: number }[] = [];

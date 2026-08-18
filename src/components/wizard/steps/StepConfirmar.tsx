@@ -49,10 +49,8 @@ export function StepConfirmar({ ctx }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Identity card */}
       <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
         <div className="flex items-start gap-3">
-          {/* Avatar */}
           <div
             className="flex size-10 shrink-0 items-center justify-center rounded-full font-semibold text-white"
             style={{ backgroundColor: "oklch(58% 0.10 195)" }}

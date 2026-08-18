@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { usePatientData } from "./usePatientData";
 
-// Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -27,7 +26,7 @@ describe("usePatientData", () => {
   });
 
   it("returns loading state initially", () => {
-    mockFetch.mockImplementation(() => new Promise(() => { /* intentionally never resolves */ })); // never resolves
+    mockFetch.mockImplementation(() => new Promise(() => { /* intentionally never resolves */ }));
     const { result } = renderHook(() => usePatientData(), {
       wrapper: createWrapper(),
     });

@@ -3,7 +3,6 @@
 import type { LucideIcon } from "lucide-react";
 
 type LayerToggleRowProps = {
-  /** Lucide icon for the layer. */
   icon: LucideIcon;
   /**
    * Tailwind color class applied as the icon square's background when active,
@@ -11,7 +10,6 @@ type LayerToggleRowProps = {
    */
   colorClass: string;
   label: string;
-  /** Patient count for this layer. */
   count: number;
   active: boolean;
   onToggle: () => void;
@@ -27,7 +25,7 @@ type LayerToggleRowProps = {
  *   [colored icon square] [label]      [count]
  *
  * Clicking anywhere on the row toggles the layer; there is no separate
- * checkbox control (matches the validated proto/map sketch).
+ * checkbox control.
  */
 export function LayerToggleRow({
   icon: Icon,

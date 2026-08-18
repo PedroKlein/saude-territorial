@@ -53,7 +53,6 @@ export function StepGerenciarCondicoes({ ctx, setCtx, goNext }: Props) {
                 checked={isChosen}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    // Add: append to chosen, remove from toRemove if present.
                     setCtx({
                       chosenConditions: [...ctx.chosenConditions, card.id],
                       toRemove: ctx.toRemove.filter((c) => c !== card.id),

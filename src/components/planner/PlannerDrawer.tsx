@@ -204,7 +204,6 @@ export function PlannerDrawer() {
     });
   }, [allPatients, filters, data]);
 
-  // Sync planner route → map store so ActiveRouteLayer renders it.
   useEffect(() => {
     if (drawerOpen && route) {
       setActiveRoute({ result: route, profile });
@@ -253,7 +252,6 @@ export function PlannerDrawer() {
     setOptimizeError(null);
     setIsOptimizing(true);
 
-    // Build the coord list in the current visit order and anchor it at US.
     const ordered = [...stops].sort((a, b) => a.order - b.order);
     const stopCoords: { lat: number; lng: number }[] = [];
     for (const s of ordered) {

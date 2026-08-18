@@ -12,7 +12,6 @@ import { LAYER_CONFIG } from "@/config/layers.config";
  * Alert-level icons intentionally use distinct SHAPES (circle for critical,
  * triangle for warning) to survive deuteranopia — see AlertShape.tsx.
  *
- * onClose: when provided, renders an X button at the top-right to dismiss.
  */
 
 type LegendProps = {

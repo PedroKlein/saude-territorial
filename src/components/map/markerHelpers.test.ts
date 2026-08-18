@@ -5,10 +5,6 @@ import {
   coincidenceKey,
 } from "./markerHelpers";
 
-// ---------------------------------------------------------------------------
-// coincidenceKey
-// ---------------------------------------------------------------------------
-
 describe("coincidenceKey", () => {
   it("rounds to 6 decimal places", () => {
     // -30.034567891 rounds to -30.034568 at 6dp
@@ -27,10 +23,6 @@ describe("coincidenceKey", () => {
     );
   });
 });
-
-// ---------------------------------------------------------------------------
-// buildCoincidenceMap
-// ---------------------------------------------------------------------------
 
 describe("buildCoincidenceMap", () => {
   it("empty list returns empty map", () => {
@@ -72,10 +64,6 @@ describe("buildCoincidenceMap", () => {
     expect(m.size).toBe(2);
   });
 });
-
-// ---------------------------------------------------------------------------
-// worstAlertLevel
-// ---------------------------------------------------------------------------
 
 describe("worstAlertLevel", () => {
   it("returns verde for empty array", () => {

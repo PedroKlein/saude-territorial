@@ -54,7 +54,6 @@ export function ConfirmDialog({
     };
   }, []);
 
-  // Keyboard: ESC → cancel, Enter → confirm.
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

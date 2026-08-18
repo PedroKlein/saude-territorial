@@ -4,16 +4,7 @@
  * Body: { rua: string; numero?: string; bairro?: string }
  * Returns geocoded coordinates from Nominatim.
  *
- * Flow:
- *  1. Authenticate session (Better Auth)
- *  2. Validate body with Zod
- *  3. Normalize address
- *  4. Call Nominatim client → return
- *
- * Post-pivot note: coordinate cache used to live here backed by a Supabase
- * `coordinates_cache` table. Both are gone (see ADR-001). A cache will be
- * reintroduced later via Drizzle — likely as a `geocode_cache` table joined
- * to the patient's `geocode_status`.
+ * The route hits Nominatim directly; there is no server-side coordinate cache.
  *
  * LGPD: only "geocoded N addresses" is safe to log. Never log street names,
  * coordinates, or any patient-identifying information.

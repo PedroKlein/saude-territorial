@@ -144,7 +144,6 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
 
-  // Debounce geocode lookup on address change.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const rua = useWatch({ control, name: "rua" });
   const numero = useWatch({ control, name: "numero" });
@@ -224,7 +223,6 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
 
   return (
     <form id="wizard-step-form" onSubmit={(e) => { void onSubmit(e); }} className="space-y-4">
-      {/* CEP row with autofill */}
       <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-3">
         <div className="flex items-end gap-2">
           <Field label="CEP" error={cepError ?? errors.cep?.message} className="flex-1">
@@ -336,7 +334,6 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         </div>
       )}
 
-      {/* Manual / hydrated picker */}
       {(manualMode || geoResult.status === "manual") && (
         <div data-testid="geocode-manual-picker" className="space-y-2">
           <div className="flex items-center justify-between gap-1.5">
@@ -382,7 +379,6 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
         </div>
       )}
 
-      {/* Not-found banner: shown only when not in manual mode */}
       {geoResult.status === "not_found" && !manualMode && (
         <div className="rounded-lg border border-alert-amber/40 bg-alert-amber/10 p-3 text-xs text-amber-900">
           <p className="font-medium">Não foi possível encontrar este endereço.</p>

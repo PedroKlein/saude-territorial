@@ -34,9 +34,6 @@ type FieldProps = {
   className?: string;
 }
 
-/**
- * A single form field. Keeps label/control/description in one grid cell.
- */
 export function Field({
   label,
   hint,

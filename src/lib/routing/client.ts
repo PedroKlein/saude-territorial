@@ -54,13 +54,6 @@ export type Coord = {
   lng: number;
 }
 
-/**
- * Calculate a route through an ordered list of waypoints using OSRM.
- *
- * @param waypoints - Ordered coordinates (min 2). Route follows the sequence.
- * @param profile - Travel mode: 'foot' or 'car'
- * @returns Route result with distance (m), duration (s), and geometry
- */
 export async function getRoute(
   waypoints: Coord[],
   profile: RouteProfile,

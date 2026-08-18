@@ -128,7 +128,6 @@ export function Wizard<Ctx>({
   // (chosenConditions) and immediately advances, the pre-patch ctx would
   // skip the newly-chosen data pages. Callers now hand the same patch to
   // goNext, which merges it with `ctx` before evaluating shouldSkip.
-  // -------------------------------------------------------------------------
 
   const nextIdx = useCallback(
     (from: number, hintCtx: Ctx) => {
@@ -243,7 +242,6 @@ export function Wizard<Ctx>({
               </button>
             </div>
 
-            {/* Colored progress bar */}
             {progressSteps.length > 1 && (
               <div className="mt-3 flex items-end gap-1.5">
                 {progressSteps.map((s, i) => {

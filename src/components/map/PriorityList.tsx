@@ -74,7 +74,6 @@ export function PriorityList({ data }: PriorityListProps) {
 
     const filtered = applyFilters(allEnriched);
 
-    // Sort by severity (vermelho first), then by triggered rule count desc
     return filtered
       .sort((a, b) => {
         const levelDiff = URGENCY_SORT_ORDER[a.alertLevel] - URGENCY_SORT_ORDER[b.alertLevel];
@@ -99,7 +98,6 @@ export function PriorityList({ data }: PriorityListProps) {
 
   return (
     <div className="absolute top-4 right-4 z-[900] hidden w-72 flex-col overflow-hidden rounded-lg bg-white shadow-lg md:flex">
-      {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div>
           <h3 className="text-sm font-bold text-gray-800">📋 Prioridades</h3>
@@ -113,7 +111,6 @@ export function PriorityList({ data }: PriorityListProps) {
         </button>
       </div>
 
-      {/* List items */}
       {!isCollapsed && (
         <div className="max-h-[50vh] overflow-y-auto">
           {items.map((item) => (

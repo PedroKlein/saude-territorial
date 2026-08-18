@@ -129,7 +129,6 @@ function greedyReorder(
 export function suggestPlan(input: SuggestInput): Stop[] {
   const { patients, layerFor, today, cap = 8 } = input;
 
-  // Only patients with valid coordinates can be visited.
   const geocoded = patients.filter(
     (p) => typeof p.lat === "number" && typeof p.lng === "number",
   );
@@ -143,7 +142,6 @@ export function suggestPlan(input: SuggestInput): Stop[] {
 
   const top = scored.slice(0, cap).map((s) => s.p);
 
-  // Greedy nearest-neighbour from the US.
   const ordered = greedyReorder(top, US_MOAB_CALDAS);
 
   return ordered.map((p, i) => ({ patientId: p.id, order: i + 1 }));

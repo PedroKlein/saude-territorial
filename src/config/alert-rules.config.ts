@@ -1,10 +1,3 @@
-/**
- * Default alert rules for the health monitoring system.
- *
- * Rules are evaluated against patient data at render time.
- * Format: [Layer, Column, Operator, Value, Alert Level]
- */
-
 import type { AlertRule } from "@/types/alerts";
 
 /**

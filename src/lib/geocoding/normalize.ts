@@ -47,7 +47,6 @@ function cleanNumber(numero: string): string | null {
   if (trimmed === "") return null;
   if (/^s\/n$/i.test(trimmed)) return null;
 
-  // Keep only the leading numeric portion
   const match = /^(\d+)/.exec(trimmed);
   if (!match) return null;
   return match[1];

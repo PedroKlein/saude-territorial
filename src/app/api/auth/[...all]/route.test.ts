@@ -1,10 +1,5 @@
 /**
- * TDD Red Phase — auth route handler contract
- *
- * These tests define the expected shape of app/api/auth/[...all]/route.ts.
- * They will FAIL until the implementation is written.
- *
- * Contracts:
+ * app/api/auth/[...all]/route — named export contract:
  *  - Module exports both `GET` and `POST` named exports
  *  - `GET` and `POST` are functions (Next.js route handlers)
  *  - The handlers are produced by `toNextJsHandler(auth)` from better-auth/next-js

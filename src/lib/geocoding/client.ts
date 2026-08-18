@@ -67,7 +67,6 @@ export async function geocode(
 
   const result = _queue.then(async (): Promise<GeoResult | null> => {
     try {
-      // Apply rate limit delay only when a previous request has been made
       if (_lastRequestTime !== 0) {
         const now = Date.now();
         const elapsed = now - _lastRequestTime;
@@ -75,7 +74,6 @@ export async function geocode(
         await _delay(wait);
       }
 
-      // Build structured Nominatim query
       const streetParam =
         addr.number != null && addr.number !== ""
           ? `${addr.street}, ${addr.number}`

@@ -35,26 +35,17 @@ const LEVEL_PRIORITY: Record<AlertLevel, number> = {
   verde: 1,
 };
 
-/**
- * Returns the higher of two alert levels.
- */
 export function getHighestAlert(a: AlertLevel, b: AlertLevel): AlertLevel {
   return LEVEL_PRIORITY[a] >= LEVEL_PRIORITY[b] ? a : b;
 }
 
-/**
- * Evaluates a single rule against patient data.
- * Returns true if the rule triggers (condition is met).
- *
- * Gracefully handles missing fields — returns false (rule doesn't trigger).
- */
+/** Missing field: rule doesn't trigger. */
 export function evaluateRule(
   rule: AlertRule,
   patientData: Record<string, unknown>
 ): boolean {
   const fieldValue = patientData[rule.column];
 
-  // is_empty checks for null/undefined/empty string
   if (rule.operator === "is_empty") {
     return (
       fieldValue === null ||
@@ -63,10 +54,8 @@ export function evaluateRule(
     );
   }
 
-  // For all other operators, missing field means rule doesn't trigger
   if (fieldValue === null || fieldValue === undefined) return false;
 
-  // older_than_days — compare date field to threshold
   if (rule.operator === "older_than_days") {
     // Date fields from patient data are strings (dd/MM/yyyy format); other types cannot be parsed.
     if (typeof fieldValue !== "string") return false;
@@ -79,7 +68,6 @@ export function evaluateRule(
     return diffDays > Number(rule.value);
   }
 
-  // Numeric/string comparison operators
   const numericField = Number(fieldValue);
   const numericValue = Number(rule.value);
   const isNumericComparison = !isNaN(numericField) && !isNaN(numericValue);
@@ -105,12 +93,6 @@ export function evaluateRule(
   }
 }
 
-/**
- * Evaluates all applicable rules against a patient record.
- * Only rules matching the patient's layer are evaluated.
- *
- * Returns an AlertResult with the highest triggered level and all triggered rules.
- */
 export function evaluatePatient(
   rules: AlertRule[],
   patient: Record<string, unknown>,
@@ -121,7 +103,6 @@ export function evaluatePatient(
   let highestLevel: AlertLevel = "verde";
 
   for (const rule of rules) {
-    // Only evaluate rules for this patient's layer
     if (rule.layer !== layerId) continue;
 
     if (evaluateRule(rule, patient)) {

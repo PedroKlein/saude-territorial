@@ -1,4 +1,3 @@
-/** Settings placeholder — user preferences and saved filters land here later. */
 export default function SettingsPage() {
   return (
     <div className="space-y-6">

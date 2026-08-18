@@ -44,9 +44,7 @@ type PlannerActions = {
   setRoute: (r: RouteResult | null) => void;
   loadPlan: (plan: { id: string; stops: Stop[]; profile: "foot" | "car" }) => void;
   clear: () => void;
-  /** Toggle map-select mode on/off. */
   setMapSelectMode: (v: boolean) => void;
-  /** Toggle the over-limit alert banner. */
   setLimitBannerVisible: (v: boolean) => void;
   /**
    * Bulk-add up to `PLAN_LIMIT - stops.length` new ids (deduped).

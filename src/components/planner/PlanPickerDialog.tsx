@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * PlanPickerDialog — lists saved plans and lets the user reload one.
- */
-
 import { useEffect, useState } from "react";
 import { CalendarDays, Footprints, Car, Loader2, Trash2 } from "lucide-react";
 import {

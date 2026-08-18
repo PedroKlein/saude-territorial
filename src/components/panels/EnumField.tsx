@@ -44,8 +44,6 @@ export function EnumField(props: EnumFieldProps) {
   return <SelectEnumField {...props} />;
 }
 
-// ---------------------------------------------------------------------------
-
 function SegmentedEnumField({
   values,
   labels,
@@ -91,8 +89,6 @@ function SegmentedEnumField({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
 
 function SelectEnumField({
   values,

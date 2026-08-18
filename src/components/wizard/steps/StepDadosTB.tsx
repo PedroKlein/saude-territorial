@@ -65,7 +65,6 @@ const StepSchema = z.object({
   tdoStatus: z.string().optional(),
   encerramentoMotivo: z.string().optional(),
   encerramentoData: z.date().nullable().optional(),
-  // Advanced
   ppdMm: z.number().int().min(0).max(30).optional(),
   histopatologia: z.string().optional(),
   rxTorax: z.string().optional(),
@@ -86,7 +85,6 @@ function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
 
-/** Converts undefined or empty string to null; non-empty strings pass through. */
 function emptyToNull(v: string | undefined): string | null {
   if (v === undefined || v === "") return null;
   return v;
@@ -182,7 +180,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       )}
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
 
-        {/* Tipo */}
         <Field label="Tipo" error={errors.tipo?.message} className="col-span-2">
           <Controller
             control={control}
@@ -201,12 +198,10 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* GAL registro */}
         <Field label="Registro GAL" className="col-span-2">
           <Input {...register("galRegistro")} aria-label="Registro GAL" />
         </Field>
 
-        {/* Baciloscopia range */}
         <Field label="Baciloscopia 1ª/2ª datas" className="col-span-2">
           <Controller
             control={control}
@@ -221,7 +216,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Baciloscopia resultado */}
         <Field
           label="Resultado baciloscopia"
           className="col-span-2"
@@ -242,7 +236,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* TRM resultado */}
         <Field label="Resultado TRM" className="col-span-2" error={errors.trmResultado?.message}>
           <Controller
             control={control}
@@ -259,7 +252,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* TRM range */}
         <Field label="TRM 1ª/2ª datas" className="col-span-2">
           <Controller
             control={control}
@@ -274,7 +266,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Cultura */}
         <Field
           label="Cultura M. tuberculosis"
           className="col-span-2"
@@ -295,12 +286,10 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Forma clínica */}
         <Field label="Forma clínica" className="col-span-1">
           <Input {...register("formaClinica")} aria-label="Forma clínica" />
         </Field>
 
-        {/* Tipo de entrada */}
         <Field
           label="Tipo de entrada"
           className="col-span-1"
@@ -321,12 +310,10 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Esquema */}
         <Field label="Esquema" className="col-span-2">
           <Input {...register("esquema")} aria-label="Esquema de tratamento" />
         </Field>
 
-        {/* Data início */}
         <Field label="Data início tratamento">
           <Controller
             control={control}
@@ -341,7 +328,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* TDO */}
         <Field label="TDO" error={errors.tdoStatus?.message}>
           <Controller
             control={control}
@@ -358,7 +344,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Encerramento motivo */}
         <Field
           label="Encerramento — motivo"
           className="col-span-1"
@@ -379,7 +364,6 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
           />
         </Field>
 
-        {/* Encerramento data */}
         <Field label="Encerramento — data" className="col-span-1">
           <Controller
             control={control}

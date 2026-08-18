@@ -62,7 +62,7 @@ type LayerSidebarProps = {
 }
 
 /**
- * Left sidebar — rebuilt per the validated proto/map sketch.
+ * Left sidebar.
  *
  * Sections (top → bottom):
  *   1. Search input row
