@@ -6,8 +6,6 @@ A multi-layer georeferenced health monitoring platform for Primary Health Care t
 
 The app renders patient records (managed in-app) as interactive map layers with alerts, routes, and full CRUD editing. **Supabase Postgres is the source of truth**; Drizzle ORM owns all data access.
 
-> **Post-pivot** (August 2026): the original architecture read/wrote Google Sheets on behalf of the user. That was removed. See `docs/adr/ADR-001-drop-sheets.md` and `docs/adr/ADR-002-drizzle-orm.md`.
-
 **Sister repo:** [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — project documentation, domain context, meeting reports, glossary, static PoC prototypes, and synthetic seed data.
 
 Read `SPEC.md` for the full functional specification, architecture decisions, and data model.
@@ -29,7 +27,7 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 | State (client) | Zustand v5 |
 | Language | TypeScript (strict mode) |
 | Auth | Better Auth (Google OAuth — **identity only**, no `spreadsheets` scope) |
-| **Source of truth** | **Supabase Postgres** (was Google Sheets pre-pivot — see ADR-001) |
+| **Source of truth** | **Supabase Postgres** |
 | **Data access** | **Drizzle ORM** |
 | Auth session store | Better Auth (SQLite via `better-sqlite3`) |
 | Geocoding | Nominatim (OpenStreetMap) |
@@ -43,66 +41,53 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 AGENTS.md                          # ← You are here
 SPEC.md                            # Functional specification
 README.md                          # Project overview and setup
-PLAN.md                            # Pointer to plans/ (post-pivot)
+CONTRIBUTING.md                    # Dev workflow, branching, commits
 package.json                       # pnpm project
-pnpm-lock.yaml
 tsconfig.json
 next.config.ts
+drizzle.config.ts
+mise.toml
 .env.local.example
 docs/
 ├── adr/                           # Architecture Decision Records
 │   ├── ADR-001-drop-sheets.md
 │   └── ADR-002-drizzle-orm.md
-plans/                             # Structured execution plans
-├── pivot-cleanup.md               # The plan that produced this state
-└── pivot-execution.md             # (Added in the next planning session)
+├── roadmap.md                     # Post-MVP roadmap (sheet parity, importer, new layers)
+├── gotchas.md                     # Non-obvious behavior across the stack
+└── reference/sheet-audit/         # PET workbook column reference (synthetic)
+scripts/                           # Seed + dev tooling (seed-patients, verify-non-prod-db)
 src/
 ├── app/                           # Next.js App Router (pages, layouts, API routes)
-│   ├── (auth)/                    # Auth-related pages (login, callback)
-│   ├── (dashboard)/               # Authenticated app pages
+│   ├── (auth)/                    # Login
+│   ├── (dashboard)/               # Authenticated pages
 │   │   ├── map/                   # Main map view
-│   │   ├── settings/              # Placeholder post-pivot; reintroduced later
-│   │   └── layout.tsx             # Dashboard layout (sidebar + map)
-│   ├── api/                       # Route Handlers
-│   │   ├── auth/                  # Better Auth routes (+ dev-session for local testing)
-│   │   ├── patients/              # TEMPORARY mock endpoint; becomes CRUD in pivot execution
-│   │   ├── geocode/               # Nominatim proxy + cache
-│   │   ├── pins/                  # Manual pin persistence
-│   │   └── routes/                # OSRM proxy
-│   ├── layout.tsx                 # Root layout
-│   └── page.tsx                   # Landing/redirect
-├── components/                    # React components
-│   ├── map/                       # Leaflet map, markers, layers, heatmap, clusters
-│   ├── panels/                    # Detail panel (edit affordance stubbed pending Drizzle CRUD)
-│   ├── sidebar/                   # Layer toggles, filters, priority list, sync badge
-│   ├── auth/                      # Sign-in button, user menu
-│   └── ui/                        # shadcn/ui components
-├── lib/                           # Core logic (non-React)
-│   ├── auth.ts                    # Better Auth server config (identity-only)
-│   ├── auth-client.ts             # Better Auth client
-│   ├── demo-data.ts               # TEMPORARY synthetic patients (replaced by DB seed in pivot execution)
-│   ├── geocoding/                 # Nominatim client, address normalization, cache
-│   ├── alerts/                    # Rule engine
-│   ├── routing/                   # OSRM client
-│   ├── supabase/                  # (post-pivot: auth-boundary only; data queries live in src/db/)
-│   └── db/                        # (TO BE ADDED in pivot execution) Drizzle client + schema
+│   │   ├── pacientes/             # Patient list + data-quality view
+│   │   └── settings/              # Settings placeholder
+│   └── api/                       # Route Handlers
+│       ├── auth/                  # Better Auth routes (+ dev-session for local testing)
+│       ├── patients/              # Patient CRUD + conditions
+│       ├── plans/                 # Day-plan persistence
+│       ├── geocode/               # Nominatim proxy
+│       └── routes/                # OSRM proxy
+├── components/                    # React components (map, panels, sidebar, wizard, planner, auth, ui)
+├── db/                            # Drizzle client + schema
+├── lib/                           # Core logic (auth, alerts, geocoding, routing, patients, planner)
 ├── stores/                        # Zustand stores (UI state)
-├── types/                         # Shared TypeScript types
 ├── config/                        # Layer visual config, alert rules, constants
 │   ├── layers.config.ts           # Icon, color, visible columns per layer
-│   ├── alert-rules.config.ts      # Static alert rules (post-pivot: 4 locked rules planned)
+│   ├── alert-rules.config.ts      # Static alert rules (locked 4)
 │   ├── geo.constants.ts           # US Moab Caldas coordinates
 │   └── microareas.data.ts         # Microarea metadata
-└── hooks/                         # Custom React hooks (usePatientData, ...)
-territories/                       # GeoJSON files for microáreas, bairros
-public/                            # Static assets (icons, logos)
+├── hooks/                         # Custom React hooks (usePatientData, ...)
+└── types/                         # Shared TypeScript types
+territories/                       # GeoJSON files for microáreas
 supabase/
-└── migrations/                    # SQL migrations — REGENERATED via Drizzle during pivot execution
+└── migrations/                    # Drizzle-generated SQL migrations
 ```
 
 ## Architecture
 
-### Data Flow (post-pivot)
+### Data Flow
 
 ```
 Supabase Postgres (source of truth)
@@ -165,7 +150,7 @@ Dynamic/user-configurable rules are **pos-MVP**.
 
 ### Health conditions modeled
 
-Each condition maps to a `_data` extension table joined to `patients` by `patient_id`. Column details are designed in pivot execution.
+Each condition maps to a `_data` extension table joined to `patients` by `patient_id`. Column details live in `docs/roadmap.md`.
 
 | Condition | Extension table | Key fields |
 |-----------|-----------------|-----------|
@@ -177,8 +162,6 @@ Each condition maps to a `_data` extension table joined to `patients` by `patien
 | Puericultura/Binômio | *(deferred)* | Crianças <2 anos |
 | PSE (Saúde na Escola) | *(deferred, location-based not patient-based)* | Escola, INEP, Ações |
 | ILPI | *(deferred, location-based not patient-based)* | Nome local, Atividades |
-
-**Historical note:** these were originally Google Sheets tabs pre-pivot. Their shape informed the extension-table design but the data now lives in Postgres.
 
 ### People
 
@@ -205,13 +188,12 @@ Each condition maps to a `_data` extension table joined to `patients` by `patien
 
 This is a synthetic-only project: an academic monitoring platform for
 PET-Saúde Digital that never touches real patient records. All seed and
-reference data (sheet exports, JSON fixtures, CSVs under `plans/`,
-`prototypes/`, `extensao-gat4/`) is fictitious even when the shape mimics
-a production tab.
+reference data (JSON fixtures, CSVs under `docs/reference/`, `extensao-gat4/`)
+is fictitious even when the shape mimics a production tab.
 
-- Everything in `plans/`, tests, seeds, and audit CSVs is committable.
-- `NEVER log patient fields to console, analytics, or error trackers` still applies — it's a habit worth keeping so the code stays deployable elsewhere later, and it keeps stack traces useful.
-- Seed sources: `extensao-gat4` sister repo (`gestantes.json`, `pacientes.csv`), the PET reference workbook (see `plans/sheet-audit/README.md`).
+- Everything under `docs/reference/`, tests, seeds, and audit CSVs is committable.
+- `NEVER log patient fields to console, analytics, or error trackers` still applies — it keeps the code deployable elsewhere later, and it keeps stack traces useful.
+- Seed sources: `extensao-gat4` sister repo (`gestantes.json`, `pacientes.csv`), the PET reference workbook (see `docs/reference/sheet-audit/README.md`).
 - Seed scripts still gate on `SEED_SYNTHETIC=1` — cheap defence against a future refactor accidentally targeting a real DB.
 
 ### Naming Conventions
@@ -243,8 +225,10 @@ a production tab.
 | ADR-001 (drop Sheets) | `docs/adr/ADR-001-drop-sheets.md` |
 | ADR-002 (Drizzle ORM) | `docs/adr/ADR-002-drizzle-orm.md` |
 | **Testing & verification guide** | **`TESTING.md`** |
-| Cleanup plan (executed August 2026) | `plans/pivot-cleanup.md` |
-| Sister repo (docs + PoCs + seed data) | [extensao-gat4](https://github.com/PedroKlein/github.com/PedroKlein/extensao-gat4) |
+| Contributing guide | `CONTRIBUTING.md` |
+| Roadmap | `docs/roadmap.md` |
+| Gotchas | `docs/gotchas.md` |
+| Sister repo (docs + PoCs + seed data) | [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) |
 | Domain glossary | extensao-gat4 `docs/glossary.md` |
 | Meeting reports | extensao-gat4 `docs/reports.md` |
 | Synthetic Gestantes seed | extensao-gat4 `prototypes/mapa-gestantes/src/data/gestantes.json` |
