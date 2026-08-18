@@ -4,7 +4,7 @@
 
 A multi-layer georeferenced health monitoring platform for Primary Health Care teams in Porto Alegre, Brazil. Part of **GAT 4** (Grupo de Ação Territorial 4) within the **PET-Saúde Digital** program (UFRGS + SMS Porto Alegre).
 
-The app renders patient records (managed in-app) as interactive map layers with alerts, routes, and full CRUD editing. **Supabase Postgres is the source of truth**; Drizzle ORM owns all data access.
+The app renders patient records (managed in-app) as interactive map layers with alerts, routes, and full CRUD editing. **Postgres is the source of truth** (local via Docker for dev; Supabase used only for the MVP demo); Drizzle ORM owns all data access.
 
 **Sister repo:** [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — project documentation, domain context, meeting reports, glossary, static PoC prototypes, and synthetic seed data.
 
@@ -26,14 +26,14 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 | State (server) | TanStack Query v5 |
 | State (client) | Zustand v5 |
 | Language | TypeScript (strict mode) |
-| Auth | Better Auth (Google OAuth — **identity only**, no `spreadsheets` scope) |
-| **Source of truth** | **Supabase Postgres** |
+| Auth | Better Auth (email/password; Google OAuth optional, identity-only) |
+| **Source of truth** | **Postgres** (local via Docker Compose; any Postgres in prod) |
 | **Data access** | **Drizzle ORM** |
 | Auth session store | Better Auth (SQLite via `better-sqlite3`) |
 | Geocoding | Nominatim (OpenStreetMap) |
 | Routing | OSRM |
 | Package manager | pnpm |
-| Deploy | Vercel + Supabase cloud |
+| Deploy | Any Node host + Postgres (Vercel + Supabase used for the MVP demo) |
 
 ## Repo Structure
 
@@ -81,8 +81,9 @@ src/
 ├── hooks/                         # Custom React hooks (usePatientData, ...)
 └── types/                         # Shared TypeScript types
 territories/                       # GeoJSON files for microáreas
-supabase/
-└── migrations/                    # Drizzle-generated SQL migrations
+drizzle/                           # Drizzle-generated SQL migrations
+docker-compose.yml                 # Local Postgres (docker compose) for dev
+seed/                              # Vendored synthetic seed data
 ```
 
 ## Architecture
@@ -90,30 +91,30 @@ supabase/
 ### Data Flow
 
 ```
-Supabase Postgres (source of truth)
+Postgres (source of truth)
     ↕ Drizzle ORM
 Next.js API Routes
     ↕
 React Client (map + panels + editing)
 
-Auth: Google OAuth (identity only) → Better Auth → SQLite (`auth.db`) session cookie
+Auth: email/password (or optional Google OAuth) → Better Auth → SQLite (`auth.db`) session cookie
 ```
 
 ### Key Principles
 
-1. **Supabase = source of truth.** All patient data lives in Postgres. There is no external mirror to keep in sync. See ADR-001.
-2. **Drizzle owns data access.** Every read/write goes through `src/db/`. No Supabase client SDK is used in this repo; Postgres is reached exclusively via Drizzle. See ADR-002.
+1. **Postgres = source of truth.** All patient data lives in Postgres. There is no external mirror to keep in sync. See ADR-001.
+2. **Drizzle owns data access.** Every read/write goes through `src/db/`. No Supabase client SDK is used in this repo; Postgres is reached exclusively via the shared client in `src/db/client.ts`. See ADR-002.
 3. **CRUD in-app.** Patients are added/edited/removed via the UI, not via an external tool. Edits go through `PATCH /api/patients/[id]`.
 4. **Layers are code-defined.** `src/config/layers.config.ts` lists all layers with icon, color, visible columns. Adding a layer is a code change, not a data change.
 5. **CNS is unique.** UNIQUE constraint on `patients.cns`. Creating a patient with an existing CNS surfaces "add condition to existing patient" flow.
 6. **Base + extension model.** One `patients` row per person; one row per condition in `gestantes_data` / `tuberculose_data` / `has_data` / (future).
-7. **No RLS in MVP.** Compensating gates: session check in every route, service-role DB access restricted to admin scripts.
+7. **No RLS policies in MVP.** Compensating gate: a session check in every route. Destructive DB scripts are non-prod-gated (`scripts/verify-non-prod-db.ts`). The `drizzle/0002` migration enables RLS with no policies as defense-in-depth; the app's DB role owns the tables and bypasses it.
 8. **Geocode on save with manual fallback + drag-to-fix.** Nominatim first; user drops/drags a pin when it fails or is misplaced.
 
 ### Auth Flow
 
 1. User visits app → `proxy.ts` redirects unauthenticated users to `/login`.
-2. Sign in with Google → Better Auth requests `openid email profile` (no additional scopes).
+2. Sign in with email/password, or with Google when configured (Better Auth requests only `openid email profile`).
 3. Session cookie signed and set → redirect to `/map`.
 4. Route handlers read session via `auth.api.getSession({ headers })` and gate access.
 
@@ -182,7 +183,7 @@ Each condition maps to a `_data` extension table joined to `patients` by `patien
 - Strict ESLint config
 - Prefer Server Components by default; use `'use client'` only for interactive components (map, forms, filters)
 - Leaflet components MUST use `dynamic(() => import(...), { ssr: false })` — Leaflet requires `window`
-- Use Drizzle for all DB access (`src/db/`); never call `.from(...)` on the Supabase client
+- Use Drizzle for all DB access (`src/db/`); never open another Postgres connection outside `src/db/client.ts`
 
 ### Data Handling
 

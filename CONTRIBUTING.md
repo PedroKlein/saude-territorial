@@ -39,7 +39,7 @@ For UI changes, manually verify the affected surface at http://localhost:3000. S
 - TypeScript strict mode. No `any`, no implicit returns, no unused variables.
 - Prefer Server Components; use `"use client"` only when a component needs state, effects, or event handlers.
 - Leaflet components must load via `dynamic(() => import(...), { ssr: false })` — Leaflet needs `window`.
-- All database access goes through Drizzle in `src/db/`. Never call `.from(...)` on a Supabase client. See [ADR-002](./docs/adr/ADR-002-drizzle-orm.md).
+- All database access goes through Drizzle in `src/db/`. Postgres is reached only via the shared client in `src/db/client.ts`. See [ADR-002](./docs/adr/ADR-002-drizzle-orm.md).
 
 ## Comments
 
@@ -56,7 +56,7 @@ For UI changes, manually verify the affected surface at http://localhost:3000. S
 
 ## Data safety
 
-- Seed scripts require `SEED_SYNTHETIC=1` and `I_HAVE_VERIFIED_NON_PROD=1`.
+- Seed scripts require `SEED_SYNTHETIC=1` (set automatically by the `db:seed` scripts). The non-prod gate passes automatically for `localhost`; a non-local host additionally requires `I_HAVE_VERIFIED_NON_PROD=1`.
 - `pnpm db:push`, `db:migrate`, and `db:seed` are gated by `scripts/verify-non-prod-db.ts`. Do not disable this gate.
 - LGPD: never commit real patient data. Never log patient fields anywhere the code could be deployed to production.
 
