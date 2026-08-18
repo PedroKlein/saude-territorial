@@ -13,7 +13,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-03-18",
       "dpp": "2026-12-23",
       "dataUltimaConsulta": "2026-05-31",
@@ -28,7 +28,7 @@
       "trTerceiroTrimestre": "Não Feito",
       "resultadoTR": "Não Reagente"
     },
-    "avaliacaoOdonto": "Agendada",
+    "avaliacaoOdonto": "A realizar",
     "vacinaDTpa": "Não se aplica",
     "trSifilisHivPrimeiroTri": "Feito",
     "trSifilisHivTerceiroTri": "Não Feito",
@@ -49,7 +49,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-03-11",
       "dpp": "2026-12-16",
       "dataUltimaConsulta": "2026-05-27",
@@ -64,7 +64,7 @@
       "trTerceiroTrimestre": "Não Feito",
       "resultadoTR": "Não Reagente"
     },
-    "avaliacaoOdonto": "Agendada",
+    "avaliacaoOdonto": "A realizar",
     "vacinaDTpa": "Não se aplica",
     "trSifilisHivPrimeiroTri": "Feito",
     "trSifilisHivTerceiroTri": "Não Feito",
@@ -85,7 +85,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-10",
       "dpp": "2026-09-16",
       "dataUltimaConsulta": "2026-05-23",
@@ -121,7 +121,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-03",
       "dpp": "2026-09-09",
       "dataUltimaConsulta": "2026-05-28",
@@ -157,7 +157,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-01-28",
       "dpp": "2026-11-04",
       "dataUltimaConsulta": "2026-05-27",
@@ -193,7 +193,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-31",
       "dpp": "2026-10-07",
       "dataUltimaConsulta": "2026-05-25",
@@ -229,7 +229,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-02-11",
       "dpp": "2026-11-18",
       "dataUltimaConsulta": "2026-05-24",
@@ -265,7 +265,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-17",
       "dpp": "2026-06-24",
       "dataUltimaConsulta": "2026-05-28",
@@ -301,7 +301,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-17",
       "dpp": "2026-06-24",
       "dataUltimaConsulta": "2026-05-28",
@@ -337,7 +337,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-05",
       "dpp": "2026-08-12",
       "dataUltimaConsulta": "2026-05-26",
@@ -373,7 +373,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-24",
       "dpp": "2026-07-01",
       "dataUltimaConsulta": "2026-05-29",
@@ -409,7 +409,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-24",
       "dpp": "2026-07-01",
       "dataUltimaConsulta": "2026-05-26",
@@ -445,7 +445,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-02-25",
       "dpp": "2026-12-02",
       "dataUltimaConsulta": "2026-05-24",
@@ -481,7 +481,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-10-22",
       "dpp": "2026-07-29",
       "dataUltimaConsulta": "2026-05-22",
@@ -517,7 +517,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-03-11",
       "dpp": "2026-12-16",
       "dataUltimaConsulta": "2026-05-30",
@@ -532,7 +532,7 @@
       "trTerceiroTrimestre": "Não Feito",
       "resultadoTR": "Não Reagente"
     },
-    "avaliacaoOdonto": "Agendada",
+    "avaliacaoOdonto": "A realizar",
     "vacinaDTpa": "Não se aplica",
     "trSifilisHivPrimeiroTri": "Feito",
     "trSifilisHivTerceiroTri": "Não Feito",
@@ -553,7 +553,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-02-04",
       "dpp": "2026-11-11",
       "dataUltimaConsulta": "2026-05-22",
@@ -589,7 +589,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-24",
       "dpp": "2026-07-01",
       "dataUltimaConsulta": "2026-05-25",
@@ -625,7 +625,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-02-11",
       "dpp": "2026-11-18",
       "dataUltimaConsulta": "2026-05-12",
@@ -661,7 +661,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-05",
       "dpp": "2026-08-12",
       "dataUltimaConsulta": "2026-05-08",
@@ -697,7 +697,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-01-21",
       "dpp": "2026-10-28",
       "dataUltimaConsulta": "2026-04-29",
@@ -733,7 +733,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-05-03",
@@ -769,7 +769,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-04-26",
@@ -805,7 +805,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-04-11",
@@ -841,7 +841,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-10-15",
       "dpp": "2026-07-22",
       "dataUltimaConsulta": "2026-04-02",
@@ -877,7 +877,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-26",
       "dpp": "2026-09-02",
       "dataUltimaConsulta": "2026-03-18",
@@ -913,7 +913,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-05",
       "dpp": "2026-08-12",
       "dataUltimaConsulta": "2026-05-28",
@@ -926,7 +926,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Realizada",
     "vacinaDTpa": "Realizada",
@@ -960,7 +960,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-05-22",
@@ -973,7 +973,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Realizada",
     "vacinaDTpa": "Realizada",
@@ -1007,7 +1007,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-03-18",
       "dpp": "2026-12-23",
       "dataUltimaConsulta": "2026-05-29",
@@ -1020,7 +1020,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1058,7 +1058,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-02-11",
       "dpp": "2026-11-18",
       "dataUltimaConsulta": "2026-05-20",
@@ -1071,7 +1071,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1108,7 +1108,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-03-25",
       "dpp": "2026-12-30",
       "dataUltimaConsulta": "2026-05-24",
@@ -1121,7 +1121,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1157,7 +1157,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-03",
       "dpp": "2026-09-09",
       "dataUltimaConsulta": "2026-05-19",
@@ -1170,7 +1170,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1206,7 +1206,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-17",
       "dpp": "2026-09-23",
       "dataUltimaConsulta": "2026-05-29",
@@ -1219,7 +1219,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1255,7 +1255,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-17",
       "dpp": "2026-09-23",
       "dataUltimaConsulta": "2026-05-29",
@@ -1268,7 +1268,7 @@
       "trPrimeiroTrimestre": "Feito",
       "trSegundoTrimestre": "Não Feito",
       "trTerceiroTrimestre": "Não Feito",
-      "resultadoTR": "Reagente"
+      "resultadoTR": "REAGENTE"
     },
     "avaliacaoOdonto": "Não realizada",
     "vacinaDTpa": "Não realizada",
@@ -1304,7 +1304,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-24",
       "dpp": "2026-09-30",
       "dataUltimaConsulta": "2026-05-27",
@@ -1340,7 +1340,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-05-26",
@@ -1376,7 +1376,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-12",
       "dpp": "2026-08-19",
       "dataUltimaConsulta": "2026-05-24",
@@ -1412,7 +1412,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-10-08",
       "dpp": "2026-07-15",
       "dataUltimaConsulta": "2026-05-27",
@@ -1448,7 +1448,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-03",
       "dpp": "2026-09-09",
       "dataUltimaConsulta": "2026-05-27",
@@ -1484,7 +1484,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-03",
       "dpp": "2026-06-10",
       "dataUltimaConsulta": "2026-05-28",
@@ -1520,7 +1520,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-03",
       "dpp": "2026-06-10",
       "dataUltimaConsulta": "2026-05-22",
@@ -1556,7 +1556,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-10",
       "dpp": "2026-06-17",
       "dataUltimaConsulta": "2026-05-23",
@@ -1592,7 +1592,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-09-03",
       "dpp": "2026-06-10",
       "dataUltimaConsulta": "2026-05-26",
@@ -1628,7 +1628,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-07-30",
       "dpp": "2026-05-06",
       "dataUltimaConsulta": "2026-05-27",
@@ -1669,7 +1669,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-08-06",
       "dpp": "2026-05-13",
       "dataUltimaConsulta": "2026-05-27",
@@ -1710,7 +1710,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-08-06",
       "dpp": "2026-05-13",
       "dataUltimaConsulta": "2026-05-15",
@@ -1751,7 +1751,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-07-30",
       "dpp": "2026-05-06",
       "dataUltimaConsulta": "2026-05-12",
@@ -1792,7 +1792,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-08-06",
       "dpp": "2026-05-13",
       "dataUltimaConsulta": "2026-05-08",
@@ -1833,7 +1833,7 @@
     },
     "microarea": "MA2",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-01-21",
       "dpp": "2026-10-28",
       "dataUltimaConsulta": "2026-05-22",
@@ -1869,7 +1869,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-03",
       "dpp": "2026-09-09",
       "dataUltimaConsulta": "2026-05-28",
@@ -1905,7 +1905,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2026-01-14",
       "dpp": "2026-10-21",
       "dataUltimaConsulta": "2026-05-27",
@@ -1941,7 +1941,7 @@
     },
     "microarea": "MA1",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-17",
       "dpp": "2026-09-23",
       "dataUltimaConsulta": "2026-05-22",
@@ -1977,7 +1977,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-12-03",
       "dpp": "2026-09-09",
       "dataUltimaConsulta": "2026-05-28",
@@ -2013,7 +2013,7 @@
     },
     "microarea": "MA3",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-19",
       "dpp": "2026-08-26",
       "dataUltimaConsulta": "2026-05-20",
@@ -2049,7 +2049,7 @@
     },
     "microarea": "MA4",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-10-15",
       "dpp": "2026-07-22",
       "dataUltimaConsulta": "2026-05-18",
@@ -2085,7 +2085,7 @@
     },
     "microarea": "MA5",
     "consultas": {
-      "igAbertura": "<12 sem",
+      "igAbertura": "< 12 sem",
       "dum": "2025-11-05",
       "dpp": "2026-08-12",
       "dataUltimaConsulta": "2026-05-19",
