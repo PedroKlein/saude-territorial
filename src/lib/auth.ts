@@ -3,36 +3,41 @@ import { nextCookies } from "better-auth/next-js";
 import Database from "better-sqlite3";
 
 /**
- * Better Auth configuration — identity only (openid email profile scope).
+ * Better Auth configuration.
  *
- * OAuth scope is limited to identity — no Google Sheets or Drive access.
- * See docs/adr/ADR-001-drop-sheets.md for the rationale.
+ * Local-first: email/password is always enabled so the app runs with no
+ * external identity provider — see `mise run setup`, which seeds a dev user.
  *
- * If we ever add a "sign in with Google" that needs additional scopes,
- * reintroduce them via Better Auth's incremental-scope pattern rather than
- * requesting them upfront.
+ * Google OAuth is OPTIONAL and identity-only (openid email profile — no Sheets
+ * or Drive scopes; see docs/adr/ADR-001-drop-sheets.md). It is wired only when
+ * both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are present, so missing creds
+ * degrade to email/password rather than crashing the app at import.
  */
-const clientId = process.env.GOOGLE_CLIENT_ID;
-const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-if (!clientId || !clientSecret) {
-  // Fail fast at import time: identity-only Better Auth is useless without
-  // Google creds, and silent misconfiguration produces cryptic OAuth loops.
-  throw new Error(
-    "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in the environment.",
-  );
-}
+/** Whether the Google social provider is configured. Consumed by the login UI. */
+export const googleEnabled = Boolean(googleClientId && googleClientSecret);
+
+// Narrow both to string in one place so the config below needs no assertions.
+const socialProviders =
+  googleClientId && googleClientSecret
+    ? {
+        google: {
+          clientId: googleClientId,
+          clientSecret: googleClientSecret,
+          scope: ["openid", "email", "profile"],
+        },
+      }
+    : undefined;
 
 export const auth = betterAuth({
   database: new Database("./auth.db"),
   plugins: [nextCookies()],
-  socialProviders: {
-    google: {
-      clientId,
-      clientSecret,
-      scope: ["openid", "email", "profile"],
-    },
+  emailAndPassword: {
+    enabled: true,
   },
+  ...(socialProviders ? { socialProviders } : {}),
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,

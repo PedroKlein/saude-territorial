@@ -1,17 +1,14 @@
 /**
- * DEV-ONLY: Create an authenticated session for automated testing (agent_browser).
+ * DEV-ONLY: mint an authenticated session cookie for automated testing
+ * (agent_browser / Playwright) without going through the login UI.
  *
- * Uses Better Auth's internal context to properly sign the session cookie.
+ * Provider-agnostic: picks the first user in the local auth DB (seeded by
+ * `mise run setup` as dev@local, or any user you registered) and signs a
+ * session cookie for it. If that user has no live session, one is created.
  *
- * ONLY available when NODE_ENV === 'development'.
- * NEVER deploy this to production.
+ * ONLY available when NODE_ENV === 'development'. NEVER deployed to production.
  *
- * Usage: Navigate to http://localhost:3000/api/auth/dev-session in the browser.
- * The response sets a signed session cookie. Subsequent requests will be authenticated.
- *
- * Note: as of the pivot (see docs/adr/ADR-001-drop-sheets.md), this route no longer
- * refreshes Google access tokens — the app does not call Google APIs on behalf
- * of users anymore. Only the Better Auth session cookie is signed and returned.
+ * Usage: navigate to http://localhost:3000/api/auth/dev-session[?redirect=/path].
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -23,78 +20,67 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
       { error: "This endpoint is only available in development" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
-  const dbPath = path.join(process.cwd(), "auth.db");
-  const db = new Database(dbPath, { readonly: false });
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { error: "BETTER_AUTH_SECRET is not set" },
+      { status: 500 },
+    );
+  }
+
+  const db = new Database(path.join(process.cwd(), "auth.db"), { readonly: false });
 
   try {
-    // Get user info (any Google-linked user will do for dev)
-    const account = db
+    const user = db
+      .prepare(`SELECT id, email FROM user ORDER BY createdAt ASC LIMIT 1`)
+      .get() as { id: string; email: string } | undefined;
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error:
+            "No users in auth.db. Run `mise run db:seed:user` (or register at /login) first.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const now = Date.now();
+    const existing = db
       .prepare(
-        `SELECT a.id as accountId, a.userId, u.email, u.name
-         FROM account a
-         JOIN user u ON u.id = a.userId
-         WHERE a.providerId = 'google'
-         LIMIT 1`
+        `SELECT token, expiresAt FROM session WHERE userId = ? ORDER BY expiresAt DESC LIMIT 1`,
       )
-      .get() as {
-      accountId: string;
-      userId: string;
-      email: string;
-      name: string;
-    } | undefined;
+      .get(user.id) as { token: string; expiresAt: string } | undefined;
 
-    if (!account) {
-      return NextResponse.json(
-        { error: "No Google account found in auth.db. Log in manually first." },
-        { status: 404 }
-      );
+    let token: string;
+    if (existing && new Date(existing.expiresAt).getTime() > now) {
+      token = existing.token;
+    } else {
+      token = crypto.randomBytes(32).toString("hex");
+      const nowIso = new Date(now).toISOString();
+      const expiresIso = new Date(now + 1000 * 60 * 60 * 24 * 7).toISOString();
+      db.prepare(
+        `INSERT INTO session (id, token, userId, expiresAt, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      ).run(crypto.randomUUID(), token, user.id, expiresIso, nowIso, nowIso);
     }
 
-    const session = db
-      .prepare(
-        `SELECT id, token, expiresAt FROM session
-         WHERE userId = ? AND expiresAt > datetime('now')
-         ORDER BY expiresAt DESC LIMIT 1`
-      )
-      .get(account.userId) as { id: string; token: string; expiresAt: string } | undefined;
+    // Sign the session token (same scheme as better-call's signCookieValue).
+    const signature = crypto.createHmac("sha256", secret).update(token).digest("base64");
+    const signedToken = `${token}.${signature}`;
 
-    if (!session) {
-      return NextResponse.json(
-        { error: "No valid session. Log in manually first via /login." },
-        { status: 404 }
-      );
-    }
-
-    // Sign the session token using HMAC-SHA256 (same as better-call's signCookieValue)
-    const secret = process.env.BETTER_AUTH_SECRET;
-    if (!secret) {
-      return NextResponse.json(
-        { error: "Server misconfigured: BETTER_AUTH_SECRET is unset." },
-        { status: 500 },
-      );
-    }
-    const key = crypto.createHmac("sha256", secret);
-    key.update(session.token);
-    const signature = key.digest("base64");
-    const signedToken = `${session.token}.${signature}`;
-
-    // Redirect to the target page — the browser processes Set-Cookie on redirects
     const redirectTo = new URL(request.url).searchParams.get("redirect") || "/map";
-
     const response = NextResponse.redirect(new URL(redirectTo, request.url));
-
     response.cookies.set("better-auth.session_token", signedToken, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      expires: new Date(session.expiresAt),
-      secure: false,
+      maxAge: 60 * 60 * 24 * 7,
     });
-
     return response;
   } finally {
     db.close();
