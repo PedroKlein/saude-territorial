@@ -1,8 +1,3 @@
-# pi / agent tooling (pre-existing entries preserved)
-/.pi
-/.pi-subagents/artifacts
-/.a5c/processes
-
 # Next.js
 .next/
 out/
@@ -20,6 +15,7 @@ next-env.d.ts
 
 # Testing / coverage
 coverage/
+test-results/
 
 # Misc
 .DS_Store
@@ -31,5 +27,11 @@ auth.db
 # Dev auth state (contains session cookie)
 .auth-state.json
 screenshots/
-PROGRESS.md
-plans/pivot-execution-continue-handoff.md
+
+# Local scratch (agent harness, editor caches, review artifacts)
+/.pi
+/.pi-subagents
+/.a5c
+/.omp
+/.gitnexus
+/.review-screens
