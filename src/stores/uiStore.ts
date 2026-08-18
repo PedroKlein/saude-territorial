@@ -1,10 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface UiState {
   showSidebar: boolean;
   showPanel: boolean;
@@ -22,10 +18,6 @@ interface UiActions {
 }
 
 type UiStore = UiState & UiActions;
-
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
 
 export const useUiStore = create<UiStore>()(
   persist(

@@ -72,7 +72,6 @@ export function StepGerenciarCondicoes({ ctx, setCtx, goNext }: Props) {
                   }
                 }}
               />
-              {/* Custom checkbox indicator */}
               <div
                 className={[
                   "flex size-5 shrink-0 items-center justify-center rounded border transition",
@@ -96,7 +95,6 @@ export function StepGerenciarCondicoes({ ctx, setCtx, goNext }: Props) {
                 )}
               </div>
 
-              {/* Condition icon */}
               <div
                 className="flex size-8 shrink-0 items-center justify-center rounded-full"
                 style={{ backgroundColor: card.color + "22" }}
@@ -104,7 +102,6 @@ export function StepGerenciarCondicoes({ ctx, setCtx, goNext }: Props) {
                 <card.Icon className="size-4" style={{ color: card.color }} />
               </div>
 
-              {/* Labels */}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">{card.label}</p>
                 <p className="text-xs text-muted-foreground">

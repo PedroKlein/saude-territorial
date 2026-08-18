@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/stores/uiStore";
 
 /**
- * Floating pip-toggle buttons on the map edges (UP-4.3).
+ * Floating pip-toggle buttons on the map edges.
  *
  * Each button appears only when its corresponding rail is HIDDEN, pinned to
  * the edge where the rail would be. When all three are hidden (focus mode), a
@@ -21,7 +21,6 @@ export function RailToggles() {
 
   return (
     <>
-      {/* Focus-mode exit pill — top-center, shown only when all three hidden */}
       {focusMode && (
         <button
           onClick={() => setFocusMode(false)}
@@ -32,7 +31,6 @@ export function RailToggles() {
         </button>
       )}
 
-      {/* Sidebar toggle — left edge, shown when sidebar is hidden */}
       {!showSidebar && (
         <div className="absolute top-1/2 left-2 z-[1001] -translate-y-1/2">
           <Button
@@ -47,7 +45,6 @@ export function RailToggles() {
         </div>
       )}
 
-      {/* Panel toggle — right edge, shown when panel is hidden */}
       {!showPanel && (
         <div className="absolute top-1/2 right-2 z-[1001] -translate-y-1/2">
           <Button
@@ -62,7 +59,6 @@ export function RailToggles() {
         </div>
       )}
 
-      {/* Legend toggle — bottom-left, shown when legend is hidden */}
       {!showLegend && (
         <div className="absolute bottom-16 left-4 z-[1001]">
           <Button

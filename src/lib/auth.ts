@@ -3,16 +3,14 @@ import { nextCookies } from "better-auth/next-js";
 import Database from "better-sqlite3";
 
 /**
- * Better Auth configuration — identity only.
+ * Better Auth configuration — identity only (openid email profile scope).
  *
- * As of the pivot (see docs/adr/ADR-001-drop-sheets.md), this app no longer
- * calls Google Sheets on behalf of the user. The OAuth scope is reduced to
- * `openid email profile`, and there is no Google access token to refresh
- * or expose for API calls.
+ * OAuth scope is limited to identity — no Google Sheets or Drive access.
+ * See docs/adr/ADR-001-drop-sheets.md for the rationale.
  *
- * If we ever add a "sign in with Google" that needs additional scopes
- * (Sheets import, Drive, etc.), reintroduce them via Better Auth's
- * incremental-scope pattern rather than requesting them upfront.
+ * If we ever add a "sign in with Google" that needs additional scopes,
+ * reintroduce them via Better Auth's incremental-scope pattern rather than
+ * requesting them upfront.
  */
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;

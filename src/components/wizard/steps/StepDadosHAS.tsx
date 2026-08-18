@@ -24,10 +24,6 @@ import { HasPatchSchema } from "@/lib/patients/schemas";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
-
 const StepSchema = z.object({
   dataUltimaConsulta: z.date().nullable().optional(),
   dataProximaConsulta: z.date().nullable().optional(),
@@ -39,17 +35,9 @@ const StepSchema = z.object({
 
 type StepValues = z.infer<typeof StepSchema>;
 
-// ---------------------------------------------------------------------------
-// Helper
-// ---------------------------------------------------------------------------
-
 function fmtDate(d: Date | null | undefined): string {
   return d ? format(d, "dd/MM/yyyy") : "";
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 

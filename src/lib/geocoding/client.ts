@@ -27,10 +27,6 @@ const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 const USER_AGENT = "saude-territorial/1.0 (health-monitoring-poa)";
 const RATE_LIMIT_MS = 1000;
 
-// ---------------------------------------------------------------------------
-// Rate-limit state
-// ---------------------------------------------------------------------------
-
 let _lastRequestTime = 0;
 
 // _pendingCount tracks the number of geocode calls currently queued.

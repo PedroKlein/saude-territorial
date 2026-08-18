@@ -44,9 +44,7 @@ import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 import type { WizardStepRenderProps } from "@/components/wizard/Wizard";
 import { lookupCep } from "@/lib/geocoding/viacep";
 
-// ---------------------------------------------------------------------------
-// Lazy-load the map preview (react-leaflet requires browser)
-// ---------------------------------------------------------------------------
+// Lazy-load: react-leaflet requires browser globals, so GeocodeMapPreview must not SSR.
 
 const GeocodeMapPreview = dynamic(() => import("./GeocodeMapPreview"), {
   ssr: false,
@@ -55,10 +53,6 @@ const GeocodeMapPreview = dynamic(() => import("./GeocodeMapPreview"), {
   ),
 });
 
-// ---------------------------------------------------------------------------
-// Microarea options derived from GeoJSON config
-// ---------------------------------------------------------------------------
-
 const MICROAREA_OPTIONS = (
   MICROAREAS_GEOJSON.features as Array<{
     properties: { id: string; nome: string } | null;
@@ -66,10 +60,6 @@ const MICROAREA_OPTIONS = (
 ).flatMap((f) =>
   f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
 );
-
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
 
 const EnderecoSchema = z.object({
   cep: z.string().optional(),
@@ -82,10 +72,6 @@ const EnderecoSchema = z.object({
 });
 
 type EnderecoValues = z.infer<typeof EnderecoSchema>;
-
-// ---------------------------------------------------------------------------
-// Geocode result
-// ---------------------------------------------------------------------------
 
 type GeoResult =
   | { status: "found"; lat: number; lng: number; display: string }
@@ -115,19 +101,11 @@ async function fetchGeocode(
   }
 }
 
-// ---------------------------------------------------------------------------
-// CEP formatter — masks input to NNNNN-NNN as the user types.
-// ---------------------------------------------------------------------------
-
 function formatCep(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 8);
   if (d.length <= 5) return d;
   return `${d.slice(0, 5)}-${d.slice(5)}`;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 type Props = WizardStepRenderProps<PatientWizardCtx>;
 

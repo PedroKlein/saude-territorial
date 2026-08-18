@@ -3,10 +3,6 @@ import { Users, Stethoscope } from "lucide-react";
 import { Providers } from "./providers";
 import { AddPatientButton } from "@/components/panels/AddPatientButton";
 
-/**
- * Layout do painel principal (dashboard).
- * Envolve todas as páginas autenticadas com cabeçalho e área de conteúdo.
- */
 export default function DashboardLayout({
   children,
 }: {

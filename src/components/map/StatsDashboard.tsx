@@ -14,10 +14,6 @@ interface StatsDashboardProps {
   data: LayeredPatientData | undefined;
 }
 
-/**
- * Bottom stats bar showing patient counts by urgency category.
- * Updates live when filters or active layers change.
- */
 export function StatsDashboard({ data }: StatsDashboardProps) {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const microareas = useFilterStore((s) => s.microareas);

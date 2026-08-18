@@ -2,10 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import type { LayerId } from "@/config/layers.config";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface PatientRecord {
   /** Internal DB UUID (source of truth for mutations). */
   id: string;
@@ -19,10 +15,6 @@ export interface PatientRecord {
 }
 
 export type LayeredPatientData = Partial<Record<LayerId, PatientRecord[]>>;
-
-// ---------------------------------------------------------------------------
-// Sync metadata store (tracks last successful fetch time)
-// ---------------------------------------------------------------------------
 
 interface SyncState {
   lastSyncTime: number | null;
@@ -38,17 +30,9 @@ export const useSyncStore = create<SyncState>()((set) => ({
   setIsSyncing: (syncing) => set({ isSyncing: syncing }),
 }));
 
-// ---------------------------------------------------------------------------
-// Query Key Factory
-// ---------------------------------------------------------------------------
-
 export const patientKeys = {
   all: ["patients"] as const,
 };
-
-// ---------------------------------------------------------------------------
-// Fetcher
-// ---------------------------------------------------------------------------
 
 async function fetchPatientData(): Promise<LayeredPatientData> {
   const res = await fetch("/api/patients");
@@ -58,10 +42,6 @@ async function fetchPatientData(): Promise<LayeredPatientData> {
   const json = await res.json();
   return json.layers as LayeredPatientData;
 }
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
 
 /**
  * Progressive-load patient data:

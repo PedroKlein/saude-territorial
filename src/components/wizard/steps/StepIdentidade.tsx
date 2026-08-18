@@ -23,10 +23,6 @@ import { Field } from "@/components/panels/Field";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
-
 const IdentidadeSchema = z.object({
   cns: z
     .string()
@@ -58,10 +54,6 @@ const IdentidadeEditSchema = z.object({
 });
 
 type IdentidadeValues = z.infer<typeof IdentidadeSchema>;
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0] & {
   /** When true, CNS field is read-only (edit mode — CNS is immutable). */

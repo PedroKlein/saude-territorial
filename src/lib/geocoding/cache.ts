@@ -10,8 +10,7 @@
  * the whole app). Cache hits do NOT pay that cost — they short-circuit
  * before the rate-limited call.
  *
- * See `.agents/skills/geospatial/SKILL.md` for the policy and
- * `plans/pivot-execution.md#pe-5` for T5.2.
+ * See `.agents/skills/geospatial/SKILL.md` for the geocoding policy.
  *
  * LGPD: this module only handles addresses transiently to compute a hash
  * and issue an HTTP call. It never logs address strings alongside a patient

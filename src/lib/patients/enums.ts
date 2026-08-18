@@ -18,17 +18,13 @@
  * canonical value), but kept as a separate map so the schema and the UI
  * don't couple at the string level.
  *
- * See `plans/sheet-parity.md § Enum discipline` for the source-of-truth
+ * See `docs/roadmap.md § Enum discipline` for the source-of-truth
  * value sets; adding an enum here MUST land alongside a migration under
  * `supabase/migrations/` that creates the matching `pg_enum` type and
  * converts any existing text column.
  */
 
 import { z } from "zod";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 /**
  * Build a Zod schema that accepts one of `values` (case-insensitive, trimmed)
@@ -57,10 +53,6 @@ function makeEnumSchema<T extends readonly [string, ...string[]]>(
       return z.NEVER;
     });
 }
-
-// ---------------------------------------------------------------------------
-// Gestantes
-// ---------------------------------------------------------------------------
 
 /**
  * Risco gestacional. Grandfathered lowercase for alert-rule literal match.
@@ -166,10 +158,6 @@ export const IgAberturaSchema = makeEnumSchema(
   IG_ABERTURA_VALUES,
   "IG na abertura",
 );
-
-// ---------------------------------------------------------------------------
-// Tuberculose
-// ---------------------------------------------------------------------------
 
 /** Baciloscopia resultado consolidado (mantido pelo alert rule LOCKED). */
 export const BACILOSCOPIA_RESULTADO_VALUES = ["Positiva", "Negativa"] as const;

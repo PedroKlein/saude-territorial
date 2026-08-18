@@ -1,8 +1,8 @@
 /**
- * Patient CRUD Zod schemas — shared across API and (post-PE-5) client forms.
+ * Patient CRUD Zod schemas — shared across API and client forms.
  *
  * The schemas define the request body shape for `PATCH /api/patients/[id]`
- * and (in PE-6) `POST /api/patients`. Every field is optional at the top
+ * and `POST /api/patients`. Every field is optional at the top
  * level so a PATCH may target any subset; the API rejects the empty body
  * separately.
  *
@@ -23,8 +23,6 @@
  * `risco` is lowercased at the boundary — seed data may say "Alto", the
  * API always persists lowercase to keep the alert rule literal-match
  * (`risco = "alto"`) trivial.
- *
- * See `plans/pivot-execution.md#pe-5` for T5.1.
  */
 
 import { z } from "zod";
@@ -51,10 +49,6 @@ import {
   TelefoneSchema,
   todayIso,
 } from "./validation";
-
-// ---------------------------------------------------------------------------
-// Common helpers
-// ---------------------------------------------------------------------------
 
 /** ISO `yyyy-MM-dd` matcher used for storage-side date columns. */
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -142,10 +136,6 @@ function addDaysToIso(iso: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
-// ---------------------------------------------------------------------------
-// Base (patients)
-// ---------------------------------------------------------------------------
-
 export const BasePatchSchema = z
   .object({
     nomeCompleto: requiredText.optional(),
@@ -169,10 +159,6 @@ export const BasePatchSchema = z
   .strict();
 
 export type BasePatch = z.infer<typeof BasePatchSchema>;
-
-// ---------------------------------------------------------------------------
-// Gestantes extension
-// ---------------------------------------------------------------------------
 
 export const GestantesPatchSchema = z
   .object({
@@ -245,11 +231,7 @@ export const GestantesPatchSchema = z
 
 export type GestantesPatch = z.infer<typeof GestantesPatchSchema>;
 
-// ---------------------------------------------------------------------------
-// Tuberculose extension (data only — consultas edited via a separate route
-// once PE-5 lands. For MVP the edit form does not touch `tuberculose_consultas`.)
-// ---------------------------------------------------------------------------
-
+// TuberculosePatchSchema covers `tuberculose_data` only — the edit form does not touch `tuberculose_consultas`.
 export const TuberculosePatchSchema = z
   .object({
     tipo: textOrNull.optional(),
@@ -334,10 +316,6 @@ export const TuberculosePatchSchema = z
 
 export type TuberculosePatch = z.infer<typeof TuberculosePatchSchema>;
 
-// ---------------------------------------------------------------------------
-// Hipertensão extension
-// ---------------------------------------------------------------------------
-
 export const HasPatchSchema = z
   .object({
     dataUltimaConsulta: dateFlex.optional(),
@@ -380,10 +358,6 @@ export const HasPatchSchema = z
 
 export type HasPatch = z.infer<typeof HasPatchSchema>;
 
-// ---------------------------------------------------------------------------
-// Envelope
-// ---------------------------------------------------------------------------
-
 export const PatientPatchSchema = z
   .object({
     base: BasePatchSchema.optional(),
@@ -410,11 +384,6 @@ export type AddressField = (typeof ADDRESS_FIELDS)[number];
 /** Extension layers with a 1:1 extension table under `patients`. */
 export const EXTENSION_LAYERS = ["gestantes", "tuberculose", "hipertensao"] as const;
 export type ExtensionLayer = (typeof EXTENSION_LAYERS)[number];
-
-
-// ---------------------------------------------------------------------------
-// Create (POST /api/patients)
-// ---------------------------------------------------------------------------
 
 /**
  * Body accepted by POST /api/patients.
@@ -472,10 +441,6 @@ export const PatientCreateSchema = z
   );
 
 export type PatientCreate = z.infer<typeof PatientCreateSchema>;
-
-// ---------------------------------------------------------------------------
-// Condition attach (POST /api/patients/[id]/conditions)
-// ---------------------------------------------------------------------------
 
 /**
  * Body accepted by POST /api/patients/[id]/conditions.

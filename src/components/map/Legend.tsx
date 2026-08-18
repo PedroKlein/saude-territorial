@@ -38,7 +38,6 @@ export function Legend({ onClose }: LegendProps) {
         </button>
       )}
 
-      {/* Alertas section */}
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Alertas
@@ -59,7 +58,6 @@ export function Legend({ onClose }: LegendProps) {
         </div>
       </div>
 
-      {/* Condições section */}
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Condições
@@ -81,7 +79,6 @@ export function Legend({ onClose }: LegendProps) {
         </div>
       </div>
 
-      {/* Locais section */}
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Locais

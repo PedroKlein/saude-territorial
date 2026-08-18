@@ -31,7 +31,6 @@ export function MapController({ data }: MapControllerProps) {
       return;
     }
 
-    // Only fly when the selection actually changes.
     if (selectedPatient === prevSelected.current) return;
     prevSelected.current = selectedPatient;
 

@@ -27,18 +27,10 @@ import type { Stop } from "@/stores/plannerStore";
 import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface StopListProps {
   /** Full patient records keyed by patient id — caller builds from usePatientData. */
   patientMap: Map<string, { record: PatientRecord; layerId: LayerId }>;
 }
-
-// ---------------------------------------------------------------------------
-// Condition colours (matches DS-11 palette)
-// ---------------------------------------------------------------------------
 
 const CONDITION_STYLE: Record<string, { color: string; Icon: React.ComponentType<{ className?: string }> }> = {
   gestantes:   { color: "oklch(72% 0.11 15)",  Icon: Baby },
@@ -47,10 +39,6 @@ const CONDITION_STYLE: Record<string, { color: string; Icon: React.ComponentType
 };
 
 const FALLBACK_COLOR = "oklch(58% 0.10 195)";
-
-// ---------------------------------------------------------------------------
-// SortableStopRow
-// ---------------------------------------------------------------------------
 
 function SortableStopRow({
   stop,
@@ -89,7 +77,6 @@ function SortableStopRow({
       style={containerStyle}
       className="group flex items-start gap-2 rounded-md border border-transparent px-2 py-2 hover:border-neutral-200 hover:bg-neutral-50"
     >
-      {/* Drag handle */}
       <button
         {...attributes}
         {...listeners}
@@ -100,7 +87,6 @@ function SortableStopRow({
         <GripVertical className="h-4 w-4" />
       </button>
 
-      {/* Numbered avatar */}
       <div
         className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
         style={{
@@ -111,7 +97,6 @@ function SortableStopRow({
         {stop.order}
       </div>
 
-      {/* Name + meta */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium text-neutral-900">{name}</span>
@@ -128,7 +113,6 @@ function SortableStopRow({
         )}
       </div>
 
-      {/* Remove */}
       <button
         onClick={() => removeStop(stop.patientId)}
         className="mt-1 rounded p-0.5 text-neutral-300 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700"
@@ -139,10 +123,6 @@ function SortableStopRow({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// StopList
-// ---------------------------------------------------------------------------
 
 export function StopList({ patientMap }: StopListProps) {
   const stops = usePlannerStore((s) => s.stops);

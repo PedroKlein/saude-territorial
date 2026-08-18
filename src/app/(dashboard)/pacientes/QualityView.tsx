@@ -5,10 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { UnifiedPatient } from "./page";
 
-// ---------------------------------------------------------------------------
-// Quality issue definitions
-// ---------------------------------------------------------------------------
-
 interface IssueDef {
   id: string;
   title: string;
@@ -71,10 +67,6 @@ const ISSUE_DEFS: IssueDef[] = [
 
 const COLLAPSE_AT = 5;
 
-// ---------------------------------------------------------------------------
-// Skeleton
-// ---------------------------------------------------------------------------
-
 function SkeletonCards() {
   return (
     <div className="space-y-4">
@@ -87,10 +79,6 @@ function SkeletonCards() {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Quality group card
-// ---------------------------------------------------------------------------
 
 function QualityCard({
   group,
@@ -112,7 +100,6 @@ function QualityCard({
         group.muted ? " opacity-60" : ""
       }`}
     >
-      {/* Card header: title + count badge + denominator */}
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <h3 className="text-sm font-semibold text-foreground">{group.title}</h3>
         <Badge variant="secondary" className="text-xs">
@@ -123,7 +110,6 @@ function QualityCard({
         </span>
       </div>
 
-      {/* Patient rows */}
       <ul className="divide-y divide-border">
         {visible.map((p) => (
           <li key={p.id}>
@@ -152,7 +138,6 @@ function QualityCard({
         ))}
       </ul>
 
-      {/* Expand trigger */}
       {!showAll && hiddenCount > 0 && (
         <div className="border-t border-border px-4 py-2">
           <button
@@ -166,10 +151,6 @@ function QualityCard({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Main export
-// ---------------------------------------------------------------------------
 
 export function QualityView({
   patients,

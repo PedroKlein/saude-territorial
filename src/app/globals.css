@@ -9,8 +9,8 @@
  *     by generated primitives and referenced through `@theme inline` so that
  *     `.dark` overrides propagate.
  *  2. Product tokens — brand teal, condition accents (rose/terracotta/indigo),
- *     alert states, layer accents. Palette follows the OKLCH values locked in
- *     the design session (plans/ui-polish.md DS-11).
+ *     alert states, layer accents. Palette is the locked app design system;
+ *     changes need a design pass.
  *
  * `@source inline(...)` keeps dynamically-assembled `bg-*` / `text-*` classes
  * alive under Tailwind v4 tree-shaking.

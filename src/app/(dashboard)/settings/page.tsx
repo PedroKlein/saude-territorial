@@ -1,21 +1,11 @@
-/**
- * Página de configurações — placeholder pós-pivot.
- *
- * A configuração de planilha (Google Sheets) foi removida durante o pivot
- * arquitetural que promoveu o Supabase a fonte da verdade. Ver:
- *   - docs/adr/ADR-001-drop-sheets.md
- *   - docs/adr/ADR-002-drizzle-orm.md
- *
- * Configurações reais (preferências do usuário, filtros salvos, etc.) serão
- * reintroduzidas na execução do pivot quando a camada Drizzle+CRUD estiver pronta.
- */
+/** Settings placeholder — user preferences and saved filters land here later. */
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Configurações</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configurações em breve — a interface está sendo reconstruída após o pivot arquitetural.
+          Configurações em breve.
         </p>
       </div>
 

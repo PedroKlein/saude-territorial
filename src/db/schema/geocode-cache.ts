@@ -3,11 +3,9 @@ import { doublePrecision, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 /**
  * `geocode_cache` — Nominatim result cache.
  *
- * Reintroduces the pre-pivot coordinates cache the `geospatial` skill flagged
- * as missing after cleanup. Every address the app geocodes lands here keyed
- * on a deterministic normalized form of `city|street|number` (see
- * `src/lib/geocoding/normalize.ts` and `src/lib/geocoding/cache.ts` — the
- * latter is added in PE-5 T5.2).
+ * Every address the app geocodes lands here keyed on a deterministic
+ * normalized form of `city|street|number` (see `src/lib/geocoding/normalize.ts`
+ * and `src/lib/geocoding/cache.ts`).
  *
  * `confidence` is Nominatim's `importance` field (0..1). See the geospatial
  * skill for the threshold policy (< 0.4 = "endereço aproximado" fallback).

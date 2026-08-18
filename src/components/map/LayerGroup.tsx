@@ -26,7 +26,6 @@ export function LayerGroup({
   const isActive = useMapStore((s) => s.activeLayers[layerId]);
   const alertsOnly = useMapStore((s) => s.alertsOnly);
 
-  // Subscribe to filter state so the component re-renders on changes.
   const microareas = useFilterStore((s) => s.microareas);
   const alertLevels = useFilterStore((s) => s.alertLevels);
   const searchText = useFilterStore((s) => s.searchText);

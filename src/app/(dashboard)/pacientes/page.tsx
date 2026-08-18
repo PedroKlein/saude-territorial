@@ -11,18 +11,10 @@ import {
 import { PatientTable } from "./PatientTable";
 import { QualityView } from "./QualityView";
 
-// ---------------------------------------------------------------------------
-// Unified patient: one row per unique id, conditions = all layers it appears in.
-// ---------------------------------------------------------------------------
-
 export interface UnifiedPatient extends PatientRecord {
   conditions: LayerId[];
   dataUltimaAtualizacao: string | null;
 }
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 export default function PacientesPage() {
   const { data, isLoading, isError } = usePatientData();

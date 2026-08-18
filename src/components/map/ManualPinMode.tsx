@@ -26,11 +26,6 @@ import type { PinningTarget } from "@/stores/mapStore";
  * `PATCH /api/patients/[id]` with `{ base: { lat, lng, geocodeReference } }`
  * sets `geocode_status='manual'` server-side.
  */
-
-// ---------------------------------------------------------------------------
-// PinClickCatcher — inside MapContainer
-// ---------------------------------------------------------------------------
-
 interface PinClickCatcherProps {
   active: boolean;
   onPick: (coords: { lat: number; lng: number }) => void;
@@ -46,10 +41,6 @@ export function PinClickCatcher({ active, onPick }: PinClickCatcherProps) {
   });
   return null;
 }
-
-// ---------------------------------------------------------------------------
-// ManualPinOverlay — outside MapContainer
-// ---------------------------------------------------------------------------
 
 interface ManualPinOverlayProps {
   target: PinningTarget | null;

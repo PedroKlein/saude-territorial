@@ -17,10 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 type SortKey = "nome" | "microarea" | "updatedAt" | "alerta";
 type SortDir = "asc" | "desc";
 
@@ -42,10 +38,6 @@ const ALERT_LABEL: Record<AlertLevel, string> = {
   verde: "Verde",
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 /** Parse BR date dd/MM/yyyy for comparison as YYYYMMDD string. */
 function parseBrForSort(s: string | null): string {
   if (!s) return "";
@@ -62,10 +54,6 @@ function getPatientAlertLevel(p: UnifiedPatient): AlertLevel {
   }
   return highest;
 }
-
-// ---------------------------------------------------------------------------
-// Skeleton row
-// ---------------------------------------------------------------------------
 
 function SkeletonRows() {
   return (
@@ -85,10 +73,6 @@ function SkeletonRows() {
     </>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Sort header button
-// ---------------------------------------------------------------------------
 
 function SortButton({
   label,
@@ -118,10 +102,6 @@ function SortButton({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
-
 export function PatientTable({
   patients,
   isLoading,
@@ -140,7 +120,6 @@ export function PatientTable({
   const [conditionFilter, setConditionFilter] = useState<Set<LayerId>>(new Set());
   const [nameSearch, setNameSearch] = useState("");
 
-  // ---- distinct microareas from data ----
   const microareaOptions = useMemo(() => {
     const seen = new Set<string>();
     for (const p of patients) {
@@ -150,7 +129,6 @@ export function PatientTable({
     return Array.from(seen).sort();
   }, [patients]);
 
-  // ---- active layers in data ----
   const activeLayerIds = useMemo<LayerId[]>(() => {
     const seen = new Set<LayerId>();
     for (const p of patients) {
@@ -171,7 +149,6 @@ export function PatientTable({
     });
   }
 
-  // ---- filter + sort ----
   const rows = useMemo(() => {
     let filtered = patients;
 
@@ -228,7 +205,6 @@ export function PatientTable({
 
   return (
     <div className="rounded-lg border border-border bg-white shadow-sm">
-      {/* Filter row */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
         <Input
           placeholder="Buscar por nome..."
@@ -280,7 +256,6 @@ export function PatientTable({
         )}
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

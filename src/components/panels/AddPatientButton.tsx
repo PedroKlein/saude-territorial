@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * `AddPatientButton` — dashboard-header CTA that opens `PatientWizard`
- * in `new` mode. The old standalone `PatientCreateForm` was retired in
- * UP-3.4; the wizard now owns the create-patient flow end-to-end.
- */
-
 import { useState } from "react";
 
 import { PatientWizard } from "@/components/wizard/PatientWizard";

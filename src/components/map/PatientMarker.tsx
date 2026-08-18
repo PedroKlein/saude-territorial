@@ -14,10 +14,6 @@ import type { AlertLevel } from "@/types/alerts";
 import type { LayerId } from "@/config/layers.config";
 import { AlertShape } from "@/components/ui/AlertShape";
 
-// ---------------------------------------------------------------------------
-// Layer → icon/color tables (static literals → Record per project rule)
-// ---------------------------------------------------------------------------
-
 type IconComponent = ComponentType<{ size?: number; color?: string }>;
 
 const LAYER_ICON: Partial<Record<LayerId, IconComponent>> = {
@@ -43,10 +39,6 @@ const ALERT_ON_CHIP: Record<AlertLevel, boolean> = {
 /** Brand teal ring for selected state (DS-11). */
 const SELECTED_RING = "oklch(58% 0.10 195)";
 
-// ---------------------------------------------------------------------------
-// Chip HTML — pure component, no hooks: safe for renderToStaticMarkup
-// ---------------------------------------------------------------------------
-
 interface ChipProps {
   layerId: LayerId;
   alertLevel: AlertLevel;
@@ -57,6 +49,7 @@ interface ChipProps {
   isPlanStop: boolean;
 }
 
+/** Chip HTML — pure component, no hooks: safe for renderToStaticMarkup */
 function ChipHtml({
   layerId,
   alertLevel,
@@ -84,7 +77,6 @@ function ChipHtml({
         justifyContent: "center",
       }}
     >
-      {/* Main pill */}
       <div
         style={{
           width: 28,
@@ -122,7 +114,6 @@ function ChipHtml({
         </div>
       )}
 
-      {/* Coincidence badge — bottom-right corner */}
       {coincidenceCount > 1 && (
         <div
           style={{
@@ -148,7 +139,6 @@ function ChipHtml({
           {coincidenceCount}
         </div>
       )}
-      {/* Plan-stop check badge — bottom-left corner (map-select mode). */}
       {isPlanStop && (
         <div
           style={{
@@ -175,9 +165,7 @@ function ChipHtml({
   );
 }
 
-// ---------------------------------------------------------------------------
-// divIcon builder — called at render time, not module init
-// ---------------------------------------------------------------------------
+/** divIcon builder — called at render time, not module init */
 
 function buildChipIcon(
   layerId: LayerId,
@@ -204,10 +192,6 @@ function buildChipIcon(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 export interface PatientMarkerProps {
   /** DB UUID — required for mutations and selection. */
   id: string;
@@ -222,10 +206,6 @@ export interface PatientMarkerProps {
   /** Geocoding confidence 0-1. Below 0.5 means uncertain placement. */
   confidence?: number;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function PatientMarker({
   id,
@@ -251,7 +231,6 @@ export function PatientMarker({
   const isSelected = selectedPatient === id;
   // Drag unlocks ONLY in explicit reposition mode from the detail panel.
   const isRepositioning = pinningPatient?.id === id;
-  // Show the plan-stop check badge only while map-select mode is active.
   const isPlanStop = mapSelectMode && isInPlan;
 
   const icon = useMemo(

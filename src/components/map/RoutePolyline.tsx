@@ -9,11 +9,6 @@ interface RoutePolylineProps {
   profile: RouteProfile;
 }
 
-/**
- * Renders a route polyline on the map.
- * - Blue dashed for foot (walking)
- * - Blue solid for car (driving)
- */
 export function RoutePolyline({ geometry, profile }: RoutePolylineProps) {
   // Convert GeoJSON [lng, lat] to Leaflet [lat, lng]
   const positions: LatLngExpression[] = geometry.coordinates.map(

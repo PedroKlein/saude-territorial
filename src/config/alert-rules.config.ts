@@ -8,11 +8,10 @@
 import type { AlertRule } from "@/types/alerts";
 
 /**
- * MVP alert rules (LOCKED per plans/pivot-execution.md).
+ * MVP alert rules — locked; changes need an ADR.
  *
  * These four rules were locked by the health team as the only alerts to
- * evaluate for the MVP. Any change to this list needs an ADR-style note in
- * the plan; the SPEC calls the set out explicitly (see §Sistema de Alertas).
+ * evaluate for the MVP. SPEC.md § Alert system lists the set explicitly.
  */
 export const ALERT_RULES: AlertRule[] = [
   // Gestantes — IG > 40 semanas (pós-termo)

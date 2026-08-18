@@ -12,10 +12,6 @@ import type { PatientRecord } from "@/hooks/usePatientData";
 import type { LayerId } from "@/config/layers.config";
 import type { Stop } from "@/stores/plannerStore";
 
-// ---------------------------------------------------------------------------
-// Public input type
-// ---------------------------------------------------------------------------
-
 export interface SuggestInput {
   patients: PatientRecord[];
   /** Maps each patient to the layer it lives in, used for rule evaluation. */
@@ -24,10 +20,6 @@ export interface SuggestInput {
   /** Maximum number of stops to return (default 8). */
   cap?: number;
 }
-
-// ---------------------------------------------------------------------------
-// Scoring
-// ---------------------------------------------------------------------------
 
 const ALERT_WEIGHT: Record<string, number> = {
   vermelho: 100,
@@ -75,10 +67,6 @@ function alertScore(p: PatientRecord, layerId: LayerId): number {
   return ALERT_WEIGHT[result.level] ?? 0;
 }
 
-// ---------------------------------------------------------------------------
-// Haversine distance (metres)
-// ---------------------------------------------------------------------------
-
 const R = 6_371_000; // Earth radius in metres
 
 function toRad(deg: number): number {
@@ -99,10 +87,6 @@ export function haversine(
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
-
-// ---------------------------------------------------------------------------
-// Greedy nearest-neighbour reorder
-// ---------------------------------------------------------------------------
 
 /**
  * Reorders `patients` using a greedy nearest-neighbour heuristic, starting
@@ -135,10 +119,6 @@ function greedyReorder(
   return ordered;
 }
 
-// ---------------------------------------------------------------------------
-// Main entry point
-// ---------------------------------------------------------------------------
-
 /**
  * Suggests a daily visit plan:
  * 1. Score each patient by alert severity + recency.
@@ -154,7 +134,6 @@ export function suggestPlan(input: SuggestInput): Stop[] {
     (p) => typeof p.lat === "number" && typeof p.lng === "number",
   );
 
-  // Score + sort descending.
   const scored = geocoded
     .map((p) => ({
       p,
@@ -162,7 +141,6 @@ export function suggestPlan(input: SuggestInput): Stop[] {
     }))
     .sort((a, b) => b.score - a.score);
 
-  // Cap.
   const top = scored.slice(0, cap).map((s) => s.p);
 
   // Greedy nearest-neighbour from the US.

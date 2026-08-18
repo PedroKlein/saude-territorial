@@ -33,10 +33,6 @@ import { FilterPanel } from "./FilterPanel";
 import { PlanejarVisitaButton } from "./PlanejarVisitaButton";
 import type { LucideIcon } from "lucide-react";
 
-// ---------------------------------------------------------------------------
-// Layer icon / color mapping
-// ---------------------------------------------------------------------------
-
 const PRIMARY_LAYER_IDS: LayerId[] = ["gestantes", "tuberculose", "hipertensao", "sem-condicao"];
 const DEFERRED_LAYER_IDS: LayerId[] = ["diabetes", "acamados", "pse", "ilpi"];
 
@@ -62,20 +58,12 @@ const LAYER_COLOR_CLASS: Record<LayerId, string> = {
   "sem-condicao": "bg-muted-foreground",
 };
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 interface LayerSidebarProps {
   data?: LayeredPatientData;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 /**
- * Left sidebar — rebuilt per the validated proto/map sketch (UP-5).
+ * Left sidebar — rebuilt per the validated proto/map sketch.
  *
  * Sections (top → bottom):
  *   1. Search input row
@@ -97,7 +85,6 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
-  // Total alert count across all active layers.
   const alertCount = useMemo(() => {
     if (!data) return 0;
     let count = 0;
@@ -116,8 +103,6 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
 
   return (
     <aside className="flex h-full flex-col overflow-hidden border-r border-neutral-200 bg-white">
-      {/* ------------------------------------------------------------------ */}
-      {/* 1. Search                                                           */}
       <div className="flex items-center gap-1 border-b border-neutral-200 p-3">
         <div className="flex-1">
           <SearchInput />
@@ -133,9 +118,6 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         </button>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 2. Alertas meta-filter                                              */}
-      {/* ------------------------------------------------------------------ */}
       <div className="border-b border-neutral-200 px-3 py-2">
         <button
           type="button"
@@ -166,16 +148,12 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         </button>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 3. Filtros                                                          */}
-      {/* ------------------------------------------------------------------ */}
       <div className="border-b border-neutral-200 p-3">
         <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
           <Layers className="h-3 w-3" />
           Filtros
         </div>
 
-        {/* Primary layers */}
         <div className="space-y-0.5">
           {PRIMARY_LAYER_IDS.map((id) => (
             <LayerToggleRow
@@ -213,14 +191,8 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         </details>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 4. Priority list — flex-1, scrolls internally                      */}
-      {/* ------------------------------------------------------------------ */}
       <PriorityListSection data={data} />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 5. Visualização                                                     */}
-      {/* ------------------------------------------------------------------ */}
       <div className="border-t border-neutral-200 p-3">
         <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
           Visualização
@@ -251,16 +223,10 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 6. Filtros avançados                                                */}
-      {/* ------------------------------------------------------------------ */}
       <div className="border-t border-neutral-200 px-3 py-2">
         <FilterPanel />
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 6. Footer — Planejar visita CTA                                     */}
-      {/* ------------------------------------------------------------------ */}
       <div className="border-t border-neutral-200 bg-neutral-50 p-3">
         <PlanejarVisitaButton />
       </div>

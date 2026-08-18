@@ -15,7 +15,7 @@ import { isUuid } from "@/lib/db/errors";
  *
  * Removes one extension row (gestantes_data / tuberculose_data / has_data)
  * without deleting the base `patients` row. The patient may be left with
- * zero conditions — the plan explicitly permits this (T7.2).
+ * zero conditions; this is permitted.
  *
  * Bumps `patients.updated_at` + `updated_by` inside the same transaction.
  *
@@ -24,8 +24,6 @@ import { isUuid } from "@/lib/db/errors";
  * Returns 404 when the patient or extension row does not exist.
  *
  * LGPD: logs error codes only; never the patient id or CNS.
- *
- * See `plans/pivot-execution.md#pe-7` (T7.2).
  */
 export async function DELETE(
   request: NextRequest,

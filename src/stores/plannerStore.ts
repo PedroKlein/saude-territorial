@@ -7,10 +7,6 @@ import type { RouteResult } from "@/types/routing";
 // Max stops per plan — cognitive-load ceiling for ACS home visits + OSRM request-size safety
 export const PLAN_LIMIT = 12;
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 /** A single ordered stop in the daily plan. */
 export interface Stop {
   patientId: string;
@@ -66,24 +62,15 @@ interface PlannerActions {
 
 type PlannerStore = PlannerState & PlannerActions;
 
-// ---------------------------------------------------------------------------
-// Defaults
-// ---------------------------------------------------------------------------
-
 const DEFAULT_FILTERS: PlannerFilters = {
   microarea: [],
   conditions: [],
   alertLevels: [],
 };
 
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
-
 export const usePlannerStore = create<PlannerStore>()(
   persist(
     (set) => ({
-      // state
       drawerOpen: false,
       stops: [],
       profile: "foot",
@@ -93,7 +80,6 @@ export const usePlannerStore = create<PlannerStore>()(
       mapSelectMode: false,
       limitBannerVisible: false,
 
-      // actions
       setDrawerOpen: (open) => set({ drawerOpen: open }),
 
       addStop: (patientId) =>

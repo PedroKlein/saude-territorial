@@ -10,13 +10,12 @@
  *
  * Never logs the password portion of DATABASE_URL — only the host+port.
  *
- * See `docs/adr/ADR-002-drizzle-orm.md` and
- * `plans/pivot-execution.md#mandatory-pre-db-mutation-gate`.
+ * See `docs/adr/ADR-002-drizzle-orm.md`.
  */
 
 /** Known non-prod project refs. Add refs as new dev/staging projects appear. */
 export const KNOWN_NON_PROD_REFS = [
-  "gplnvzxtqpqyznqiysza", // saude-territorial PoC (the only Supabase project as of PE-0)
+  "gplnvzxtqpqyznqiysza", // saude-territorial dev project
 ] as const;
 
 /** Host patterns that unambiguously indicate a non-prod environment. */

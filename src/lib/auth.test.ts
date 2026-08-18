@@ -1,9 +1,7 @@
 /**
- * lib/auth.ts contract tests — post-pivot (identity-only Google OAuth)
+ * lib/auth.ts contract tests — identity-only Google OAuth.
  *
- * As of the pivot (see docs/adr/ADR-001-drop-sheets.md), this app no longer
- * calls Google Sheets on behalf of the user. Auth is reduced to identity
- * (Google login for the "who is this?" question), nothing more.
+ * Auth is reduced to identity (Google login for "who is this?"), nothing more.
  *
  * Contracts:
  *  - `auth` is exported and is a Better Auth instance

@@ -1,6 +1,6 @@
 /**
  * `useCreatePatient` / `useAttachCondition` — mutation hooks for the patient
- * create flow (PE-6).
+ * create flow.
  *
  * Conventions mirror `useUpdatePatient`:
  *  - Error shape `{ status, body }` so callers branch on status codes.
@@ -18,10 +18,6 @@ import { patientKeys } from "@/hooks/usePatientData";
 import { patientDetailKeys } from "@/hooks/usePatient";
 import type { PatientCreate, ConditionAttach } from "@/lib/patients/schemas";
 
-// ---------------------------------------------------------------------------
-// Shared error shape
-// ---------------------------------------------------------------------------
-
 /** Matches the `UpdatePatientError` convention from `useUpdatePatient`. */
 export interface CreatePatientError extends Error {
   status: number;
@@ -38,10 +34,6 @@ function isCreatePatientError(e: unknown): e is CreatePatientError {
 }
 
 export { isCreatePatientError };
-
-// ---------------------------------------------------------------------------
-// Internal fetch helper
-// ---------------------------------------------------------------------------
 
 async function postJson<TBody>(
   url: string,
@@ -72,10 +64,6 @@ async function postJson<TBody>(
 
   return { status: res.status, data };
 }
-
-// ---------------------------------------------------------------------------
-// useCreatePatient
-// ---------------------------------------------------------------------------
 
 /**
  * POST /api/patients — creates a new patient with one extension row.
@@ -109,10 +97,6 @@ export function useCreatePatient() {
     },
   });
 }
-
-// ---------------------------------------------------------------------------
-// useAttachCondition
-// ---------------------------------------------------------------------------
 
 /**
  * POST /api/patients/[id]/conditions — attaches a new condition row to an

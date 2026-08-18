@@ -36,10 +36,6 @@ function isPgError(err: unknown, code: string): boolean {
   return false;
 }
 
-// ---------------------------------------------------------------------------
-// Param validation
-// ---------------------------------------------------------------------------
-
 // RFC 4122 UUID (any version). Cheap regex check so we can return a proper
 // 404/400 for malformed route params instead of blowing up in Postgres and
 // producing a generic 500. Adopted from the postgres-js source (identical

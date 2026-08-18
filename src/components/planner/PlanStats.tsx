@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * PlanStats — distance / duration / stop-count summary strip for the planner.
- */
-
 import type { RouteResult } from "@/types/routing";
 
 interface PlanStatsProps {

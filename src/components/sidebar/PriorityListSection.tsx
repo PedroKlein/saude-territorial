@@ -12,10 +12,6 @@ import type { AlertLevel } from "@/types/alerts";
 import { AlertShape } from "@/components/ui/AlertShape";
 import type { LucideIcon } from "lucide-react";
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const LAYER_ICON: Partial<Record<LayerId, LucideIcon>> = {
   gestantes: Baby,
   tuberculose: Wind,
@@ -43,10 +39,6 @@ const URGENCY_ORDER: Record<AlertLevel, number> = {
   verde: 2,
 };
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface PriorityItem {
   id: string;
   name: string | null;
@@ -59,10 +51,6 @@ interface PriorityItem {
 interface PriorityListSectionProps {
   data: LayeredPatientData | undefined;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 /**
  * Sidebar priority list: "Precisam atenção"
@@ -136,7 +124,6 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Section header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-2">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
           <span className="h-1.5 w-1.5 rounded-full bg-alert-red" aria-hidden />
@@ -145,7 +132,6 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
         <span className="text-[11px] text-neutral-400">{items.length}</span>
       </div>
 
-      {/* Scrollable list */}
       <ul className="flex-1 overflow-y-auto px-2 pb-2">
         {items.map((item) => {
           const Icon = LAYER_ICON[item.layerId];
@@ -159,7 +145,6 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
                 className="group flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left hover:bg-neutral-50"
                 onClick={() => setSelectedPatient(item.id)}
               >
-                {/* Condition icon circle */}
                 <span
                   className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${colorClass}`}
                 >
@@ -170,7 +155,6 @@ export function PriorityListSection({ data }: PriorityListSectionProps) {
                   )}
                 </span>
 
-                {/* Text block */}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="shrink-0 leading-none">

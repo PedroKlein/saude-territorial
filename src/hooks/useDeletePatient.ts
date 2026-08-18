@@ -22,10 +22,6 @@ import { useMapStore } from "@/stores/mapStore";
  * Retry policy: no retry on 4xx; one retry on 5xx / network.
  */
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface DeletePatientInput {
   /** Patient UUID. */
   id: string;
@@ -47,10 +43,6 @@ interface MutationContext {
   /** Snapshot of `patientKeys.all` before the optimistic write. */
   previous: LayeredPatientData | undefined;
 }
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
 
 export function useDeletePatient() {
   const queryClient = useQueryClient();
@@ -170,10 +162,6 @@ export function useDeleteCondition() {
     },
   });
 }
-
-// ---------------------------------------------------------------------------
-// Optimistic helpers
-// ---------------------------------------------------------------------------
 
 function removePatientFromAllLayers(
   data: LayeredPatientData,

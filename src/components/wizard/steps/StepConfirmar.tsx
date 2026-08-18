@@ -14,10 +14,6 @@ import { Baby, Wind, HeartPulse, MapPin, Phone, User } from "lucide-react";
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
-// ---------------------------------------------------------------------------
-// Condition accent config
-// ---------------------------------------------------------------------------
-
 const CONDITION_CONFIG = {
   gestantes: {
     label: "Gestante",
@@ -35,10 +31,6 @@ const CONDITION_CONFIG = {
     Icon: HeartPulse,
   },
 } as const;
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 type Props = Parameters<WizardStep<PatientWizardCtx>["render"]>[0];
 

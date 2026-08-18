@@ -4,10 +4,6 @@ import type { LayerId } from "@/config/layers.config";
 import { LAYER_CONFIG } from "@/config/layers.config";
 import type { RouteResult, RouteProfile } from "@/types/routing";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface ActiveRoute {
   result: RouteResult;
   profile: RouteProfile;
@@ -52,10 +48,6 @@ interface MapActions {
 
 type MapStore = MapState & MapActions;
 
-// ---------------------------------------------------------------------------
-// Initial State
-// ---------------------------------------------------------------------------
-
 const PORTO_ALEGRE: [number, number] = [-30.0346, -51.2177];
 
 function buildInitialLayers(): Record<LayerId, boolean> {
@@ -65,10 +57,6 @@ function buildInitialLayers(): Record<LayerId, boolean> {
   }
   return layers;
 }
-
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
 
 export const useMapStore = create<MapStore>()(persist(
   (set) => ({

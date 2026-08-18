@@ -10,11 +10,8 @@
 
 import type { NormalizedAddress } from "@/lib/geocoding/types";
 
-// ---------------------------------------------------------------------------
 // Abbreviation table — order matters: longer prefixes must come before shorter
 // ones so "Trav." is matched before a hypothetical single-letter prefix.
-// ---------------------------------------------------------------------------
-
 const ABBREVIATIONS: Array<[RegExp, string]> = [
   [/^trav\.\s*/i, "Travessa "],
   [/^est\.\s*/i, "Estrada "],
@@ -55,10 +52,6 @@ function cleanNumber(numero: string): string | null {
   if (!match) return null;
   return match[1];
 }
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
 
 /**
  * Normalizes separate street and number fields.

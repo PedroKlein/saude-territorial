@@ -50,7 +50,6 @@ export function FilterPanel() {
 
   return (
     <div>
-      {/* Collapsible header */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -70,7 +69,6 @@ export function FilterPanel() {
 
       {isOpen && (
         <div className="mt-2 space-y-3">
-          {/* Microárea chips */}
           <div>
             <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-neutral-400">
               Microárea
@@ -93,7 +91,6 @@ export function FilterPanel() {
             </div>
           </div>
 
-          {/* Alert level chips */}
           <div>
             <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-neutral-400">
               Nível de Alerta
@@ -117,7 +114,6 @@ export function FilterPanel() {
             </div>
           </div>
 
-          {/* Geocoding confidence */}
           <label className="flex cursor-pointer items-center gap-2 text-xs text-neutral-600">
             <input
               type="checkbox"
@@ -129,7 +125,6 @@ export function FilterPanel() {
             <span className="text-neutral-400">(confiança &lt; 50%)</span>
           </label>
 
-          {/* Clear */}
           {activeCount > 0 && (
             <button
               type="button"

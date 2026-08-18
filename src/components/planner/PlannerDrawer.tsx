@@ -40,10 +40,6 @@ import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function todayDisplay(): string {
   return new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -80,10 +76,6 @@ function layerForPatient(
   }
   return "gestantes";
 }
-
-// ---------------------------------------------------------------------------
-// Route fetching (debounced 400 ms)
-// ---------------------------------------------------------------------------
 
 const ROUTE_DEBOUNCE_MS = 400;
 
@@ -144,10 +136,6 @@ function useOsrmRoute(
     };
   }, [fetchRoute]);
 }
-
-// ---------------------------------------------------------------------------
-// PlannerDrawer
-// ---------------------------------------------------------------------------
 
 export function PlannerDrawer() {
   const {
@@ -223,10 +211,6 @@ export function PlannerDrawer() {
   }, [drawerOpen, route, profile, setActiveRoute]);
 
   useOsrmRoute(stops, patientMap, profile);
-
-  // ---------------------------------------------------------------------------
-  // Handlers
-  // ---------------------------------------------------------------------------
 
   function handleSuggest() {
     if (!data) return;
@@ -313,10 +297,6 @@ export function PlannerDrawer() {
     }
   }, [stops, patientMap, profile, setStops]);
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
-
   return (
     <>
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen} modal={false}>
@@ -333,7 +313,6 @@ export function PlannerDrawer() {
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
-          {/* Header */}
           <SheetHeader className="border-b border-neutral-200 p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -371,9 +350,7 @@ export function PlannerDrawer() {
             </div>
           </SheetHeader>
 
-          {/* Scrollable body */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            {/* Over-limit alert banner */}
             {limitBannerVisible && (
               <div
                 role="alert"
@@ -391,7 +368,6 @@ export function PlannerDrawer() {
                 </button>
               </div>
             )}
-            {/* Auto-suggest */}
             <div className="border-b border-neutral-200 p-3">
               <button
                 onClick={handleSuggest}
@@ -405,7 +381,6 @@ export function PlannerDrawer() {
               </button>
             </div>
 
-            {/* Manual add */}
             <div className="border-b border-neutral-200 p-3">
               <PatientPickerCombobox patients={allPatients} />
             </div>
@@ -426,7 +401,6 @@ export function PlannerDrawer() {
               </button>
             </div>
 
-            {/* Filter chips (collapsible) */}
             <div className="border-b border-neutral-200">
               <button
                 onClick={() => setFiltersOpen((v) => !v)}
@@ -452,7 +426,6 @@ export function PlannerDrawer() {
               )}
             </div>
 
-            {/* Stop list */}
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex items-center justify-between gap-2 px-3 pb-1 pt-3">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
@@ -497,9 +470,7 @@ export function PlannerDrawer() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="border-t border-neutral-200 bg-neutral-50 p-3">
-            {/* Profile toggle */}
             <div className="mb-2 flex items-center gap-1 rounded-md border border-neutral-200 bg-white p-0.5">
               {(["foot", "car"] as const).map((p) => (
                 <button

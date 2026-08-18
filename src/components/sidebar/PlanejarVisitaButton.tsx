@@ -3,10 +3,6 @@
 import { Route } from "lucide-react";
 import { usePlannerStore } from "@/stores/plannerStore";
 
-/**
- * Footer CTA button — opens the route planner drawer.
- * Brand-teal, full-width, always sticky at the bottom of the sidebar.
- */
 export function PlanejarVisitaButton() {
   const setDrawerOpen = usePlannerStore((s) => s.setDrawerOpen);
 

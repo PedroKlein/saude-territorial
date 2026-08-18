@@ -11,7 +11,6 @@ import type { RouteProfile, RouteResult } from "@/types/routing";
 const OSRM_BASE_URL =
   process.env.OSRM_BASE_URL ?? "https://router.project-osrm.org";
 
-/** Map our profile names to OSRM profile names */
 const OSRM_PROFILE_MAP: Record<RouteProfile, string> = {
   foot: "foot",
   car: "driving",
@@ -73,10 +72,6 @@ export async function getRoute(
     geometry: route.geometry,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Trip (TSP) optimization
-// ---------------------------------------------------------------------------
 
 /**
  * Result of an OSRM /trip call: the input-order indices in the OPTIMIZED

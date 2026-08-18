@@ -13,7 +13,7 @@
  *  - Forwards a ref to the DOM `<input>` element so `react-hook-form`'s
  *    controller can focus / scroll the field on error.
  *
- * Masks (from DS-15 + the pivot execution schema):
+ * Masks:
  *  - CNS: `000 0000 0000 0000` — 15 digits, four groups per SUS spec.
  *  - Phone (celular): `(00) 00000-0000` — 11 digits (DDD + 9-digit mobile).
  *  - Pressão Arterial: `000/000` — sistólica/diastólica, 2–3 digits each.

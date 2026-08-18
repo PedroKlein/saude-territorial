@@ -86,13 +86,11 @@ export type PatientWizardMode =
 // ---------------------------------------------------------------------------
 
 export type PatientWizardCtx = {
-  // --- Identidade ---
   cns: string;
   nomeCompleto: string;
   dataNascimento: string; // "dd/MM/yyyy" or ""
   telefone: string;
   vulnerabilidades: string;
-  // --- Endereço ---
   cep: string;
   rua: string;
   numero: string;
@@ -102,7 +100,6 @@ export type PatientWizardCtx = {
   geocodedCoords: { lat: number; lng: number } | null;
   /** Free-form landmark note; persisted as patients.geocodeReference. */
   referencia: string;
-  // --- Condições ---
   chosenConditions: Array<"gestantes" | "tuberculose" | "hipertensao">;
   /**
    * Conditions present at wizard open time (edit mode only).
@@ -114,14 +111,13 @@ export type PatientWizardCtx = {
    * Populated by StepGerenciarCondicoes; committed on Finalizar.
    */
   toRemove: Array<"gestantes" | "tuberculose" | "hipertensao">;
-  // --- Extension data (dates as "dd/MM/yyyy" strings) ---
   gestantes: Record<string, unknown>;
   tuberculose: Record<string, unknown>;
   hipertensao: Record<string, unknown>;
 };
 
 // ---------------------------------------------------------------------------
-// Validation error formatting (#7)
+// Validation error formatting
 // ---------------------------------------------------------------------------
 
 /**
@@ -439,10 +435,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
   const updatePatient = useUpdatePatient();
   const deleteCondition = useDeleteCondition();
 
-  // -------------------------------------------------------------------------
-  // onFinish — called by the wizard when the user clicks "Finalizar"
-  // -------------------------------------------------------------------------
-
   const onFinish = useCallback(
     async (ctx: PatientWizardCtx) => {
       if (internalMode.kind === "new") {
@@ -458,7 +450,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           const d = result.data as { patient?: { id?: string } } | undefined;
           newId = d?.patient?.id ?? "";
         } catch (err) {
-          // Surface specific field errors from 400 responses (#7).
           if (isCreatePatientError(err) && err.status === 400) {
             const issues = err.body?.issues;
             throw new Error(formatIssues(issues));
@@ -494,7 +485,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
           throw err;
         }
 
-        // Attach additional conditions sequentially.
         for (const cond of restConds) {
           await attachCondition.mutateAsync({
             patientId: newId,
@@ -551,10 +541,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
     [internalMode, createPatient, attachCondition, updatePatient, deleteCondition],
   );
 
-  // -------------------------------------------------------------------------
-  // "Add another condition" callback for StepSucesso CTA
-  // -------------------------------------------------------------------------
-
   const handleAddAnotherCondition = useCallback(() => {
     if (!createdPatientId) return;
     setInternalMode({
@@ -564,10 +550,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
     });
     setWizardKey((k) => k + 1);
   }, [createdPatientId]);
-
-  // -------------------------------------------------------------------------
-  // Step list (static; data pages use shouldSkip to skip unchosen/removed conditions)
-  // -------------------------------------------------------------------------
 
   const alreadyAttached =
     internalMode.kind === "add-condition" ? internalMode.alreadyAttached : [];
@@ -684,10 +666,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
     [internalMode, createdPatientId, onClose, handleAddAnotherCondition],
   );
 
-  // -------------------------------------------------------------------------
-  // Initial ctx (stashed context takes priority on mode switch)
-  // -------------------------------------------------------------------------
-
   const initialCtx = stashedCtx ?? buildInitialCtx(mode);
 
   const headline =
@@ -699,7 +677,6 @@ export function PatientWizard({ open, mode, onClose }: PatientWizardProps) {
 
   return (
     <>
-      {/* 409 collision banner — shown above the modal */}
       {collisionBanner && (
         <div
           role="alert"

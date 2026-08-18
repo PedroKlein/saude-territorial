@@ -18,10 +18,6 @@ import { useMapStore } from "@/stores/mapStore";
 import type { PatientWizardMode } from "@/components/wizard/PatientWizard";
 import successAnimation from "@/lottie-success.json";
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 type Props = {
   /** Mode active when sucesso was reached (for title + CTA logic). */
   resolvedMode: PatientWizardMode;
@@ -34,10 +30,6 @@ type Props = {
    */
   onAddAnotherCondition?: () => void;
 };
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function StepSucesso({
   resolvedMode,

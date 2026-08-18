@@ -53,12 +53,6 @@ const US_ICON = L.divIcon({
   iconAnchor: [22, 22],
 });
 
-
-
-// ---------------------------------------------------------------------------
-// Map-event child components (must render inside <MapContainer>)
-// ---------------------------------------------------------------------------
-
 /**
  * Suppresses the browser context menu and fires onRightClick with the
  * clicked map coord. No-ops when pinningPatient is active or the planner
@@ -87,7 +81,6 @@ function RightClickCatcher({
 
 export default function MapView() {
   const mapRef = useRef<LeafletMap>(null);
-  // Guard: fire the URL-param selection exactly once per mount.
   const urlSelectionFired = useRef(false);
   const { data } = usePatientData();
   const activeRoute = useMapStore((s) => s.activeRoute);
@@ -107,7 +100,6 @@ export default function MapView() {
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
   const searchParams = useSearchParams();
 
-  // Read ?patient=<uuid> once on mount and open the panel for that patient.
   useEffect(() => {
     if (urlSelectionFired.current) return;
     const id = searchParams.get("patient");
@@ -120,7 +112,6 @@ export default function MapView() {
 
   const handleMicroareaClick = useCallback(
     (id: string) => {
-      // Toggle: if already filtered to this MA, clear; otherwise set filter
       if (currentMicroareas.length === 1 && currentMicroareas[0] === id) {
         setMicroareaFilter([]);
       } else {

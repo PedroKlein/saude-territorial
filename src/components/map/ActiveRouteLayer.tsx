@@ -17,7 +17,6 @@ export function ActiveRouteLayer({ route, mapRef }: ActiveRouteLayerProps) {
   const polylineRef = useRef<L.Polyline | null>(null);
 
   useEffect(() => {
-    // Always clear previous polyline first
     if (polylineRef.current) {
       polylineRef.current.remove();
       polylineRef.current = null;
@@ -39,7 +38,6 @@ export function ActiveRouteLayer({ route, mapRef }: ActiveRouteLayerProps) {
       dashArray: isDashed ? "10 6" : undefined,
     }).addTo(map);
 
-    // Distance/duration tooltip
     const distKm = (route.result.distance / 1000).toFixed(1);
     const timeMin = Math.ceil(route.result.duration / 60);
     const profileIcon = route.profile === "foot" ? "🚶" : "🚗";

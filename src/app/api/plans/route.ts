@@ -13,10 +13,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { dailyPlans, dailyPlanStops } from "@/db/schema/plans";
 
-// ---------------------------------------------------------------------------
-// Zod schema (POST body)
-// ---------------------------------------------------------------------------
-
 const CreatePlanSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD"),
   acsName: z.string().nullable().optional(),
@@ -31,10 +27,6 @@ const CreatePlanSchema = z.object({
     )
     .min(1, "at least one stop is required"),
 });
-
-// ---------------------------------------------------------------------------
-// POST /api/plans
-// ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -88,10 +80,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// GET /api/plans
-// ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: request.headers });

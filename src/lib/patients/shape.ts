@@ -15,10 +15,6 @@ import type { GestanteData } from "@/db/schema/gestantes";
 import type { TuberculoseData } from "@/db/schema/tuberculose";
 import type { HasData } from "@/db/schema/has";
 
-// ---------------------------------------------------------------------------
-// Date helpers
-// ---------------------------------------------------------------------------
-
 /** ISO `YYYY-MM-DD` → Brazilian `dd/MM/yyyy`. Returns null for null/malformed input. */
 export function toBRDate(iso: string | Date | null | undefined): string | null {
   if (!iso) return null;
@@ -48,10 +44,6 @@ export function computeIg(dumIso: string | null | undefined): number | null {
   return Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
 }
 
-// ---------------------------------------------------------------------------
-// Loaded type — a Patient row with its extension joins populated
-// ---------------------------------------------------------------------------
-
 /**
  * A patient row with all three extension relations eagerly loaded.
  * Matches the shape returned by:
@@ -62,10 +54,6 @@ export interface Loaded extends Patient {
   tuberculose: TuberculoseData | null;
   has: HasData | null;
 }
-
-// ---------------------------------------------------------------------------
-// shape — produces the flat GET-style envelope
-// ---------------------------------------------------------------------------
 
 /** Response shape returned by mutation routes (POST, PATCH). */
 export interface PatientShape {

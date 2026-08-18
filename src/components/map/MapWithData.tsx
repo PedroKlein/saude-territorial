@@ -15,12 +15,6 @@ import { useUiStore } from "@/stores/uiStore";
 import { usePlannerStore, PLAN_LIMIT } from "@/stores/plannerStore";
 import { PlannerDrawer } from "@/components/planner/PlannerDrawer";
 
-/**
- * Client component that wires patient data into the map, sidebar, and panels.
- *
- * Sidebar rebuilt for UP-5 (proto/map sketch): Search → Alertas → Camadas →
- * Priority list → Filtros → Planejar visita.
- */
 export function MapWithData() {
   const { data, isLoading } = usePatientData();
   const { showSidebar, showPanel, showLegend, toggleLegend } = useUiStore();
@@ -31,7 +25,6 @@ export function MapWithData() {
   const setDrawerOpen = usePlannerStore((s) => s.setDrawerOpen);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Respect OS-level reduced-motion preference.
   const prefersReduced = useReducedMotion();
   const slideVariants = prefersReduced
     ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
@@ -45,7 +38,6 @@ export function MapWithData() {
 
   return (
     <div className="flex h-full w-full">
-      {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="fixed bottom-4 left-4 z-[1100] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg md:hidden"
@@ -54,9 +46,6 @@ export function MapWithData() {
         ☰
       </button>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Left sidebar — collapses via uiStore.showSidebar                    */}
-      {/* ------------------------------------------------------------------ */}
       <AnimatePresence initial={false}>
         {showSidebar && (
           <motion.div
@@ -71,7 +60,6 @@ export function MapWithData() {
               sidebarOpen ? "translate-y-0" : "translate-y-full md:translate-y-0"
             }`}
           >
-            {/* Mobile drawer handle */}
             <div className="flex justify-center py-2 md:hidden">
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -80,14 +68,11 @@ export function MapWithData() {
               />
             </div>
 
-            {/* Refreshed sidebar — handles Search, Alertas, Camadas,
-                PriorityList, Filtros, and Planejar visita CTA internally */}
             <LayerSidebar data={data} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-[1040] bg-black/30 md:hidden"
@@ -95,9 +80,6 @@ export function MapWithData() {
         />
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Map area                                                            */}
-      {/* ------------------------------------------------------------------ */}
       <div className="relative h-full flex-1">
         {/* Sidebar toggle when hidden is handled by RailToggles (left-edge pip).
             Sidebar close-when-shown is handled inside LayerSidebar itself. */}
@@ -107,7 +89,6 @@ export function MapWithData() {
             Carregando dados...
           </div>
         )}
-        {/* Map-select mode banner — floats above the map while user picks stops */}
         {mapSelectMode && (
           <div className="absolute top-4 left-1/2 z-[500] -translate-x-1/2 flex items-center gap-3 rounded-lg bg-brand/95 px-4 py-2 text-white shadow-lg">
             <span className="text-sm font-medium">
@@ -130,7 +111,6 @@ export function MapWithData() {
         <DynamicMap />
         <EmptyMapOverlay data={data} />
 
-        {/* Legend chip (minimized) or full expanded legend */}
         <AnimatePresence initial={false} mode="wait">
           {showLegend ? (
             <motion.div
@@ -176,13 +156,8 @@ export function MapWithData() {
 
         <StatsDashboard data={data} />
 
-        {/* ---------------------------------------------------------------- */}
-        {/* PlannerDrawer — right-side sheet; mounted here so the Sheet      */}
-        {/* portal lands outside the map container correctly.               */}
-        {/* ---------------------------------------------------------------- */}
         <PlannerDrawer />
 
-        {/* Right panel — hidden when the planner drawer is open            */}
         <AnimatePresence initial={false}>
           {showPanel && !drawerOpen && (
             <motion.div
@@ -200,7 +175,6 @@ export function MapWithData() {
           )}
         </AnimatePresence>
 
-        {/* Pip toggles — appear when a rail is hidden */}
         <RailToggles />
       </div>
     </div>

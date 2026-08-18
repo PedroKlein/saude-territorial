@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * PatientPickerCombobox — searchable patient picker for "+ Adicionar paciente".
- * Uses shadcn Command + Popover.
- */
-
 import { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";

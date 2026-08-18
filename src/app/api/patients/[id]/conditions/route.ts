@@ -7,8 +7,6 @@
  * patient.
  *
  * LGPD: never logs patient identity (id, CNS, name) — error codes only.
- *
- * See `plans/pivot-execution.md#pe-6` (T6.2).
  */
 
 import { eq } from "drizzle-orm";
@@ -59,7 +57,6 @@ export async function POST(
   }
   const body = parsed.data;
 
-  // Verify patient exists.
   const current = await db.query.patients.findFirst({
     where: eq(patients.id, id),
     with: { gestantes: true, tuberculose: true, has: true },
@@ -71,7 +68,6 @@ export async function POST(
     );
   }
 
-  // Check for duplicate extension.
   if (body.condicao === "gestantes" && current.gestantes) {
     return NextResponse.json(
       { error: "condition_exists" },
@@ -91,7 +87,6 @@ export async function POST(
     );
   }
 
-  // Insert extension + bump patient's updatedAt/updatedBy in a transaction.
   try {
     await db.transaction(async (tx) => {
       await tx
@@ -128,7 +123,6 @@ export async function POST(
     );
   }
 
-  // Re-read and return the updated shape.
   const updated = await db.query.patients.findFirst({
     where: eq(patients.id, id),
     with: { gestantes: true, tuberculose: true, has: true },

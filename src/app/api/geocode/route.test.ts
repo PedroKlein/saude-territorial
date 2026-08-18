@@ -1,9 +1,8 @@
 /**
- * POST /api/geocode — route handler contract (post-pivot).
+ * POST /api/geocode — route handler contract.
  *
- * Post-pivot (see docs/adr/ADR-001-drop-sheets.md), the Supabase-backed
- * coordinate cache is gone. The route hits Nominatim directly on every call.
- * Caching will be reintroduced during pivot execution via Drizzle.
+ * The route hits Nominatim directly on every call; this endpoint keeps no
+ * server-side coordinate cache.
  *
  * Contracts under test:
  *  - POST with a valid address body returns 200 with { lat, lng, confidence }

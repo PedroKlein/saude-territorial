@@ -9,10 +9,6 @@
 
 import { z } from "zod";
 
-// ---------------------------------------------------------------------------
-// Telefone
-// ---------------------------------------------------------------------------
-
 /**
  * BR phone: DDD (2 digits) + 8 or 9 subscriber digits. Accepts common
  * formatted inputs (parens, hyphens, spaces), emits digits-only canonical
@@ -36,10 +32,6 @@ export const TelefoneSchema = z
     }
     return digits;
   });
-
-// ---------------------------------------------------------------------------
-// Pressão arterial
-// ---------------------------------------------------------------------------
 
 /**
  * Blood-pressure reading `NNN/NN` (systolic/diastolic in mmHg). Ranges
@@ -89,10 +81,6 @@ export const PressaoArterialSchema = z
     return `${sys}/${dia}`;
   });
 
-// ---------------------------------------------------------------------------
-// PPD (mm)
-// ---------------------------------------------------------------------------
-
 /**
  * PPD skin-test induration in millimeters. Clinical ceiling ~30mm; anything
  * larger is almost surely a data-entry slip (someone typed 300 or reported
@@ -103,10 +91,6 @@ export const PpdMmSchema = z
   .int()
   .min(0, "PPD não pode ser negativo.")
   .max(30, "PPD acima de 30mm é implausível — verifique a leitura.");
-
-// ---------------------------------------------------------------------------
-// Cross-field date helpers
-// ---------------------------------------------------------------------------
 
 /** Today's date in ISO `yyyy-MM-dd` (wall clock). */
 export function todayIso(): string {

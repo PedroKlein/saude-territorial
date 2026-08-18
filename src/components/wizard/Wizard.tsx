@@ -123,9 +123,6 @@ export function Wizard<Ctx>({
     setCtxState((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  // -------------------------------------------------------------------------
-  // Navigation helpers
-  //
   // shouldSkip decisions used to read `ctxRef.current`, which is a render
   // after setCtx enqueues its update. On a step that both applies a patch
   // (chosenConditions) and immediately advances, the pre-patch ctx would
@@ -192,10 +189,6 @@ export function Wizard<Ctx>({
       setIsPending(false);
     }
   }, [onFinish, advance]);
-
-  // -------------------------------------------------------------------------
-  // Derived display state
-  // -------------------------------------------------------------------------
 
   const step = steps[currentIdx] ?? steps[0];
   const isNoFooter = Boolean(step.noFooter);

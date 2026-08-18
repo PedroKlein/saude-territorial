@@ -87,7 +87,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const hasAnyCondition = p.gestantes || p.tuberculose || p.has;
       if (!hasCoords && hasAnyCondition) continue;
 
-      // Fields shared across every layer this patient appears in.
       const baseRecord = {
         id: p.id,
         cns: p.cns,
@@ -182,7 +181,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
       }
 
-      // Patients with no condition extension → sem-condicao layer.
       if (!p.gestantes && !p.tuberculose && !p.has) {
         semCondicao.push({
           ...baseRecord,
@@ -205,10 +203,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/patients — create a new patient with one extension row
-// ---------------------------------------------------------------------------
-
 /**
  * POST /api/patients — create a patient + one condition extension in a single
  * transaction.
@@ -222,8 +216,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * can offer "adicionar condição ao paciente existente".
  *
  * LGPD: never logs CNS, name, address, or coords — error code only.
- *
- * See `plans/pivot-execution.md#pe-6` (T6.1).
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -276,7 +268,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Geocode decision.
   let lat: number | null = null;
   let lng: number | null = null;
   let geocodeStatus: "geocoded" | "manual" | "unresolved" = "unresolved";
@@ -309,7 +300,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     geocodeStatus = "geocoded";
   }
 
-  // Insert base + extension in a single transaction.
   let newId = "";
   try {
     await db.transaction(async (tx) => {
@@ -337,7 +327,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         })
         .returning({ id: patients.id });
       newId = inserted.id;
-      // Insert condition extension only when one was chosen.
       if (data.condicao === "gestantes") {
         await tx.insert(gestantesData).values({
           patientId: newId,

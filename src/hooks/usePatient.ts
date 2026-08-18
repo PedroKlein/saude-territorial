@@ -12,17 +12,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UnifiedPatient } from "@/app/api/patients/[id]/route";
 
-// ---------------------------------------------------------------------------
-// Query key factory
-// ---------------------------------------------------------------------------
-
 export const patientDetailKeys = {
   detail: (id: string) => ["patient", id] as const,
 };
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
 
 export function usePatient(id: string | null) {
   return useQuery<UnifiedPatient>({

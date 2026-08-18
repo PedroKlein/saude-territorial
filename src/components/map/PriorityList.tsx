@@ -41,10 +41,6 @@ interface PriorityItem {
   lng: number;
 }
 
-/**
- * Collapsible priority list showing patients ranked by urgency.
- * Click an item → fly to marker + open detail panel.
- */
 export function PriorityList({ data }: PriorityListProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const activeLayers = useMapStore((s) => s.activeLayers);

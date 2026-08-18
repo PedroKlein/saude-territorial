@@ -47,7 +47,6 @@ function countToStyle(count: number, max: number): PathOptions {
  * LGPD: only aggregate counts per polygon are derived; no individual fields rendered.
  */
 export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
-  // Count distinct patient ids per microárea.
   const countsByMicroarea = useMemo(() => {
     const seenIds = new Map<string, Set<string>>();
     for (const patients of Object.values(data)) {

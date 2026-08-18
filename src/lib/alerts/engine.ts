@@ -6,10 +6,6 @@
 
 import type { AlertLevel, AlertResult, AlertRule } from "@/types/alerts";
 
-// ---------------------------------------------------------------------------
-// Date Parsing
-// ---------------------------------------------------------------------------
-
 /**
  * Parses a Brazilian date string (dd/MM/yyyy) into a Date object.
  * Returns null for invalid or empty input.
@@ -33,10 +29,6 @@ export function parseBrazilianDate(dateStr: string): Date | null {
   return new Date(year, month, day);
 }
 
-// ---------------------------------------------------------------------------
-// Alert Level Priority
-// ---------------------------------------------------------------------------
-
 const LEVEL_PRIORITY: Record<AlertLevel, number> = {
   vermelho: 3,
   amarelo: 2,
@@ -49,10 +41,6 @@ const LEVEL_PRIORITY: Record<AlertLevel, number> = {
 export function getHighestAlert(a: AlertLevel, b: AlertLevel): AlertLevel {
   return LEVEL_PRIORITY[a] >= LEVEL_PRIORITY[b] ? a : b;
 }
-
-// ---------------------------------------------------------------------------
-// Rule Evaluation
-// ---------------------------------------------------------------------------
 
 /**
  * Evaluates a single rule against patient data.
@@ -112,10 +100,6 @@ export function evaluateRule(
       return false;
   }
 }
-
-// ---------------------------------------------------------------------------
-// Patient Evaluation
-// ---------------------------------------------------------------------------
 
 /**
  * Evaluates all applicable rules against a patient record.

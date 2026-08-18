@@ -29,10 +29,6 @@ import type { PatientPatch } from "@/lib/patients/schemas";
  * is worth surfacing once, not retrying blindly on a stale UI state.
  */
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface UpdatePatientInput {
   /** Patient UUID (from `PatientRecord.id`). */
   id: string;
@@ -63,10 +59,6 @@ interface MutationContext {
   /** Snapshot of `patientKeys.all` before the optimistic write. */
   previous: LayeredPatientData | undefined;
 }
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
 
 export function useUpdatePatient() {
   const queryClient = useQueryClient();
@@ -135,11 +127,6 @@ export function useUpdatePatient() {
     retry: false,
   });
 }
-
-// ---------------------------------------------------------------------------
-// Optimistic apply — shallow-merge patch into every layer where the patient
-// currently lives (a patient with two conditions lives in two arrays).
-// ---------------------------------------------------------------------------
 
 function applyOptimisticPatch(
   data: LayeredPatientData,

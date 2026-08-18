@@ -62,6 +62,5 @@ export function HeatmapLayer({
     };
   }, [map, points, radius, blur, maxZoom]);
 
-  // This component only produces side effects on the map
   return null;
 }

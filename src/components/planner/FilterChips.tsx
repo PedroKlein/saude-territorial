@@ -11,18 +11,10 @@ import type { LayerId } from "@/config/layers.config";
 import type { AlertLevel } from "@/types/alerts";
 import type { PatientRecord } from "@/hooks/usePatientData";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface FilterChipsProps {
   /** All candidate patients to count and bulk-add. */
   candidates: PatientRecord[];
 }
-
-// ---------------------------------------------------------------------------
-// Static config
-// ---------------------------------------------------------------------------
 
 const MICROAREAS = ["MA 01", "MA 02", "MA 03", "MA 04", "MA 05", "MA 06", "MA 07", "MA 08", "MA 09", "MA 10", "MA 11"];
 
@@ -36,10 +28,6 @@ const ALERT_LEVELS: { id: AlertLevel; label: string; colorClass: string }[] = [
   { id: "vermelho", label: "Crítico", colorClass: "border-[oklch(85%_0.10_25)] bg-[oklch(97%_0.03_25)] text-[oklch(38%_0.15_25)]" },
   { id: "amarelo", label: "Atenção", colorClass: "border-[oklch(85%_0.12_75)] bg-[oklch(97%_0.04_75)] text-[oklch(40%_0.14_75)]" },
 ];
-
-// ---------------------------------------------------------------------------
-// Chip helpers
-// ---------------------------------------------------------------------------
 
 function Chip({
   active,
@@ -78,10 +66,6 @@ function Chip({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export function FilterChips({ candidates }: FilterChipsProps) {
   const { filters, setFilters, stops, addStopsUpTo, setLimitBannerVisible } = usePlannerStore();
 
@@ -106,15 +90,12 @@ export function FilterChips({ candidates }: FilterChipsProps) {
     setFilters({ alertLevels: next });
   }
 
-  // Candidates not already in the plan.
   const alreadyInPlan = new Set(stops.map((s) => s.patientId));
   const addable = candidates.filter((p) => !alreadyInPlan.has(p.id));
-  // How many can actually be added (clamped to remaining capacity).
   const canAdd = Math.max(0, Math.min(addable.length, PLAN_LIMIT - stops.length));
 
   return (
     <div className="space-y-2">
-      {/* Microárea chips */}
       <div>
         <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-neutral-500">
           Microárea
@@ -133,7 +114,6 @@ export function FilterChips({ candidates }: FilterChipsProps) {
         </div>
       </div>
 
-      {/* Condition chips */}
       <div>
         <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-neutral-500">
           Condição
@@ -153,7 +133,6 @@ export function FilterChips({ candidates }: FilterChipsProps) {
         </div>
       </div>
 
-      {/* Alert-level chips */}
       <div>
         <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-neutral-500">
           Nível de alerta
@@ -178,7 +157,6 @@ export function FilterChips({ candidates }: FilterChipsProps) {
         </div>
       </div>
 
-      {/* Bulk-add */}
       {canAdd > 0 && (
         <button
           onClick={() => {

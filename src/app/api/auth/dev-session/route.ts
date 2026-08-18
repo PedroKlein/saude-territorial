@@ -54,7 +54,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Get existing session
     const session = db
       .prepare(
         `SELECT id, token, expiresAt FROM session

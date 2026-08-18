@@ -1,10 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface FilterablePatient {
   cns?: string;
   microarea?: string;
@@ -35,10 +31,6 @@ interface FilterActions {
 
 type FilterStore = FilterState & FilterActions;
 
-// ---------------------------------------------------------------------------
-// Initial State
-// ---------------------------------------------------------------------------
-
 const INITIAL_STATE: FilterState = {
   microareas: [],
   alertLevels: [],
@@ -46,10 +38,6 @@ const INITIAL_STATE: FilterState = {
   searchText: "",
   hideUncertain: false,
 };
-
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
 
 export const useFilterStore = create<FilterStore>()(persist(
   (set, get) => ({
@@ -66,28 +54,24 @@ export const useFilterStore = create<FilterStore>()(persist(
     const { microareas, alertLevels, dateRange, searchText, hideUncertain } = get();
     let filtered = patients;
 
-    // Filter by geocoding confidence
     if (hideUncertain) {
       filtered = filtered.filter(
         (p) => p.confidence === undefined || p.confidence >= 0.5
       );
     }
 
-    // Filter by microárea
     if (microareas.length > 0) {
       filtered = filtered.filter(
         (p) => p.microarea && microareas.includes(p.microarea)
       );
     }
 
-    // Filter by alert level
     if (alertLevels.length > 0) {
       filtered = filtered.filter(
         (p) => p.alertLevel && alertLevels.includes(p.alertLevel)
       );
     }
 
-    // Filter by date range (dataUltimaAtualizacao)
     if (dateRange) {
       const from = new Date(dateRange.from).getTime();
       const to = new Date(dateRange.to).getTime();
@@ -98,7 +82,6 @@ export const useFilterStore = create<FilterStore>()(persist(
       });
     }
 
-    // Filter by search text (name, case-insensitive)
     if (searchText.trim()) {
       const needle = searchText.toLowerCase().trim();
       filtered = filtered.filter((p) => {

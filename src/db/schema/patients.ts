@@ -12,7 +12,7 @@ import {
 /**
  * Base `patients` — shared fields for every person tracked by the app.
  * Extension tables (gestantes_data, tuberculose_data, has_data) join on
- * `patient_id`. See `plans/pivot-execution.md#pe-2` for the design rationale.
+ * `patient_id`. See SPEC.md § Data model for the base + extension rationale.
  *
  * Column naming: `id`/`cns`/timestamps/`lat/lng` in English (technical);
  * domain fields (`nomeCompleto`, `dataNascimento`, `microarea`) in Portuguese

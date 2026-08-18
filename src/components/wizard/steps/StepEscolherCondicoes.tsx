@@ -23,10 +23,6 @@ import {
 import type { WizardStep } from "@/components/wizard/Wizard";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
-
 const CondicoesSchema = z.object({
   chosen: z
     .array(z.enum(["gestantes", "tuberculose", "hipertensao"]))
@@ -34,10 +30,6 @@ const CondicoesSchema = z.object({
 });
 
 type CondicoesValues = z.infer<typeof CondicoesSchema>;
-
-// ---------------------------------------------------------------------------
-// Card config
-// ---------------------------------------------------------------------------
 
 export const CARDS = [
   {
@@ -69,17 +61,9 @@ export const CARDS = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 type CondicoesStepProps = Parameters<WizardStep<PatientWizardCtx>["render"]>[0] & {
   alreadyAttached?: Array<"gestantes" | "tuberculose" | "hipertensao">;
 };
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function StepEscolherCondicoes({
   ctx,

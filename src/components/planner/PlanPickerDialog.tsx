@@ -16,10 +16,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlannerStore } from "@/stores/plannerStore";
 import type { Stop } from "@/stores/plannerStore";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface PlanSummary {
   id: string;
   date: string;
@@ -33,10 +29,6 @@ interface PlanPickerDialogProps {
   open: boolean;
   onClose: () => void;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function PlanPickerDialog({ open, onClose }: PlanPickerDialogProps) {
   const loadPlan = usePlannerStore((s) => s.loadPlan);
