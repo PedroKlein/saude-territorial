@@ -225,7 +225,7 @@ is fictitious even when the shape mimics a production tab.
 | Functional specification | `SPEC.md` |
 | ADR-001 (drop Sheets) | `docs/adr/ADR-001-drop-sheets.md` |
 | ADR-002 (Drizzle ORM) | `docs/adr/ADR-002-drizzle-orm.md` |
-| **Testing & verification guide** | **`TESTING.md`** |
+| Testing and verification | `CONTRIBUTING.md` (Testing section) |
 | Contributing guide | `CONTRIBUTING.md` |
 | Roadmap | `docs/roadmap.md` |
 | Gotchas | `docs/gotchas.md` |

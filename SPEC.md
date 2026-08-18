@@ -1,339 +1,134 @@
-# saude-territorial — Functional Specification
+# saude-territorial: functional specification
+
+What the system does, how its data is modeled, and the rules that drive alerts. For setup and commands see the [README](./README.md); for decisions and their rationale see the ADRs under [`docs/adr/`](./docs/adr/).
 
 ## Overview
 
-Georeferenced territorial-health monitoring platform for primary-care teams. It turns the team's clinical records into an interactive map with multiple layers, urgency alerts, route planning, and direct in-map editing.
+The US Moab Caldas team tracks patients across about ten monitoring spreadsheets (gestantes, tuberculose, diabetes, hipertensão, acamados, and others). None of them have a map, so the team can't see where patients cluster, which cases are urgent, or how to plan an efficient round of home visits. They also want to correct street names and nudge pin locations, which a spreadsheet handles poorly.
 
-**Problem:** the US Moab Caldas team manages ~10 monitoring spreadsheets (Gestantes, TB, DM, HAS, Acamados, etc.) with no spatial representation. They can't see where patients cluster, which urgencies exist, or plan efficient visit routes. They also need **customization** — adding layers, fixing street names, adjusting locations — that a spreadsheet doesn't allow ergonomically.
+This app puts the same records on an interactive map. A Community Health Agent (ACS) edits patient data in the app, with one map layer per condition, urgency highlighting, route planning, and draggable pins for addresses that don't geocode cleanly.
 
-**Solution:** an interactive map where the Community Health Agent (ACS) maintains data directly in the application (CRUD), with per-condition layers, urgency highlighting, route planning, and bidirectional editing of addresses/pins.
+Audience: ACS, nurses, and preceptors at US Moab Caldas.
 
-**Audience:** ACS, nurses, and preceptors at US Moab Caldas.
-
-**MVP scope:** map + layers + static alerts + basic CRUD + territories. No mobile, no distributed sync, no real time. See "MVP and milestones".
-
----
-
-## Stack
-
-| Concern | Choice | Rationale |
-|---|---|---|
-| Framework | Next.js 16 (App Router) | Full-stack, `"use cache"`, `proxy.ts`, Turbopack |
-| Language | TypeScript (strict mode) | Type safety across complex data models |
-| Map | Leaflet (react-leaflet v5) | Proven, plugin ecosystem (heat, cluster, draw), React 19 support |
-| UI/CSS | shadcn/ui + Tailwind CSS v4 | CSS-first `@theme` config, accessible components |
-| State (server) | TanStack Query v5 | Cache, refetch, optimistic updates |
-| State (client) | Zustand v5 | Lightweight store for UI state (active layers, filters, selections) |
-| Auth | Better Auth (Google OAuth, identity only) | TypeScript-first sessions; no `spreadsheets` scope |
-| Source of truth | Supabase Postgres | All patient data lives here |
-| Data access | Drizzle ORM | Typed queries, SQL-native migrations, RLS-friendly. See ADR-002 |
-| Auth session storage | Better Auth (SQLite via `better-sqlite3`) | Local session store |
-| Geocoding | Nominatim (OSM) | Free, open-source. Manual pin fallback |
-| Routing | OSRM | Free, open-source. Walking + driving routes |
-| Territories | GeoJSON files (in repo) | Simple, version-controlled. Later: remote source |
-| Package manager | pnpm | Fast, strict, Vercel-native |
-| Deploy | Vercel (free tier) + Supabase cloud | Native Next.js hosting, automatic deploys |
-
----
+MVP scope: map, layers, static alerts, patient CRUD, and territory overlays. No mobile, no cross-instance sync, no real time. See "Scope" below, and `docs/roadmap.md` for what comes next.
 
 ## Data model
 
-**Source of truth:** Supabase Postgres, accessed via Drizzle ORM. See `docs/adr/ADR-002-drizzle-orm.md`.
+Postgres is the source of truth, reached through Drizzle ORM (see `docs/adr/ADR-002-drizzle-orm.md`). The schema lives in `src/db/schema/*.ts`; `drizzle-kit` generates migrations into `drizzle/`.
 
-### Pattern: base + extension tables
+### Base plus extension tables
 
-A single `patients` table holds fields common to every patient. A per-condition **extension table** holds fields specific to each program/condition, related by `patient_id` (FK, cascade delete).
+One `patients` row holds the fields every patient shares. Each condition gets its own extension table keyed by `patient_id` (foreign key, cascade delete).
 
-| Table | Scope | Key |
+| Table | Holds | Key |
 |---|---|---|
-| `patients` | Common data (CNS, name, address, coordinates) | `id UUID PK`, `cns UNIQUE` |
-| `gestantes_data` | DUM, DPP, IG, risco, prenatal monitoring | `patient_id PK/FK` |
-| `tuberculose_data` | Type, baciloscopia, clinical form, contacts | `patient_id PK/FK` |
-| `has_data` | Last consultation date, blood-pressure monitoring | `patient_id PK/FK` |
-| *(future)* `dm_data`, `acamados_data`, `puericultura_data`, `pse_data`, `ilpi_data` | Analogous | `patient_id PK/FK` |
+| `patients` | CNS, name, address, coordinates | `id UUID PK`, `cns UNIQUE` |
+| `gestantes_data` | DUM, DPP, IG, risco, prenatal follow-up | `patient_id PK/FK` |
+| `tuberculose_data` | type, baciloscopia, clinical form, contacts | `patient_id PK/FK` |
+| `has_data` | last consultation date, blood-pressure monitoring | `patient_id PK/FK` |
+| future: `dm_data`, `acamados_data`, ... | analogous | `patient_id PK/FK` |
 
-The `patients` table includes `lat`, `lng`, `geocode_status ∈ {geocoded, manual, unresolved}` to support the geocoding flow with manual fallback. New columns and layers are tracked in `docs/roadmap.md`.
+`patients` also carries `lat`, `lng`, and `geocode_status` (one of `geocoded`, `manual`, `unresolved`) for the geocoding flow. New columns and layers are tracked in `docs/roadmap.md`.
 
 ### CNS deduplication
 
-CNS is the unique key in `patients`. When creating a patient with an existing CNS, the UI shows "This CNS already belongs to *Fulana*. Add condition to the existing patient?" — this avoids duplicates and preserves the "one patient = one pin with multiple condition badges" pattern.
+CNS is unique in `patients`. Creating a patient with a CNS that already exists shows "This CNS already belongs to Fulana. Add a condition to the existing patient?", which keeps one patient as one pin with multiple condition badges.
 
 ### Access rules
 
-- **No RLS in the MVP.** Every authenticated user reads and writes the shared team dataset. Compensating controls: session gates on every route, service-role DB access restricted to admin scripts (seed, backup), an LGPD guard that requires synthetic data on any seed.
-- **Post-MVP hardening:** RLS policies once the pilot expands to multiple teams.
-
-### Schema and migrations
-
-- Drizzle schema in `src/db/schema/*.ts`.
-- Migrations in `supabase/migrations/*.sql`, generated by `drizzle-kit generate`.
-
----
+The MVP has no row-level-security policies: every authenticated user reads and writes the shared team dataset. The compensating controls are a session check on every route, destructive DB scripts gated by `scripts/verify-non-prod-db.ts`, and an LGPD guard that requires synthetic data for any seed. Named RLS policies come later, when the pilot expands to multiple teams. The `drizzle/0002` migration already enables RLS with no policies as a backstop.
 
 ## Data flow
 
-```
-┌─────────────────┐         ┌──────────────────┐
-│    Supabase     │◄───────►│   Next.js API     │
-│  (source of     │ Drizzle │   Routes          │
-│    truth)       │         │                   │
-└─────────────────┘         └────────┬─────────-┘
-                                     │
-                            ┌────────▼──────────┐
-                            │  React Client     │
-                            │  (Map + Panels)   │
-                            └───────────────────┘
+Read: the page mounts, `usePatientData` (TanStack Query) calls `GET /api/patients`, and the route handler queries through Drizzle and returns patients grouped by layer. The cache holds a 5-minute staleTime and refetches on window focus.
 
-  Auth (Google identity)  ──►  Better Auth  ──►  SQLite (`auth.db`) session cookie
-```
+Write: an edit in the panel calls `POST`, `PATCH`, or `DELETE /api/patients/[id]`. The handler checks the session, runs the Drizzle mutation, and returns the updated patient. On success the client invalidates the patient cache and refetches.
 
-### Read
-1. The client mounts the page → `usePatientData` (TanStack Query) calls `GET /api/patients`.
-2. The route handler queries via Drizzle → returns JSON with patients grouped by layer (`{ [layerId]: [...patients] }`).
-3. TanStack Query cache holds a 5-minute staleTime; refetch on window focus.
-
-### Write
-1. The user edits/creates/deletes a patient in the panel → `useMutation` calls `POST/PATCH/DELETE /api/patients/[id]`.
-2. The route handler validates the session → runs a Drizzle mutation → returns the updated patient.
-3. `onSuccess` invalidates `patientKeys.all` → TanStack re-runs the `GET`.
-
-### Geocoding
-1. Address saved → calls Nominatim.
-2. Success → `geocode_status = 'geocoded'`, saves `lat/lng`.
-3. Failure → prompt to place a pin manually → `geocode_status = 'manual'`.
-4. The user can drag the marker at any time → PATCH updates `lat/lng` and keeps `geocode_status = 'manual'`.
-
----
+Geocoding: saving an address calls Nominatim. A confident hit stores `lat/lng` and sets `geocode_status = geocoded`. Failure or low confidence prompts the user to drop a pin, which sets `geocode_status = manual`. The user can drag any pin later; that persists the new coordinates and keeps the status `manual`.
 
 ## Authentication
 
-**Google OAuth for identity only** (see `docs/adr/ADR-001-drop-sheets.md`). No `spreadsheets` scope, no access-token refresh, no Google API calls on behalf of the user.
+Email/password is the default and needs no external service. Google OAuth is optional and identity-only (`openid email profile`, no Sheets or Drive scopes), wired only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both set. See `docs/adr/ADR-001-drop-sheets.md`.
 
-### Flow
-1. User visits the app → redirected to `/login`.
-2. Clicks "Entrar com Google" → Better Auth requests `openid email profile`.
-3. On authorization → a signed session cookie is set → redirects to `/map`.
-4. `proxy.ts` protects `/map`, `/settings`, and other dashboard routes.
+`proxy.ts` redirects unauthenticated users to `/login` and protects the dashboard routes. Any account the team creates can sign in; per-microárea authorization is post-MVP.
 
-### Access control
-- Any Google account authorized by the team can sign in.
-- Granular authorization (per microárea, per team) is post-MVP.
+## Layers
 
----
+Each layer is a health condition, defined in code in `src/config/layers.config.ts`. Each entry sets its icon, color, the columns shown in the detail panel, and whether clustering and heatmap are enabled.
 
-## Layer system
+Priority MVP layers are Gestantes, Tuberculose, and HAS. DM and Acamados exist in the config but carry no data yet.
 
-Each layer represents a health condition (Gestantes, TB, HAS, etc.). Layers are **defined in code** in `src/config/layers.config.ts`.
+Per layer you can toggle it from the sidebar, cluster its markers at low zoom, switch to a heatmap density view, and filter by microárea, alert level, or free text. A separate "Alertas" view shows every patient with an active urgency, regardless of condition.
 
-**Priority MVP layers:** Gestantes, Tuberculose, HAS.
-**Layers kept in code, no data in the MVP:** DM, Acamados.
+## Alerts
 
-Each config defines: `icon`, `color`, `visibleColumns` (for the detail panel), `clusterEnabled`, `heatmapEnabled`.
+Rules live in code (`src/config/alert-rules.config.ts`); a configurable UI is post-MVP. The engine (`src/lib/alerts/engine.ts`) supports the operators `>`, `<`, `>=`, `<=`, `=`, `!=`, `older_than_days`, and `is_empty`.
 
-### Per-layer features
-- **Toggle on/off** — sidebar with per-layer checkboxes.
-- **Clustering** — markers group at low zoom with a count.
-- **Heatmap** — alternate mode showing density.
-- **Filters** — microárea, alert level, free text.
-
-### Cross-layer overview
-A special "Alertas" layer shows ALL patients with an active urgency, regardless of condition.
-
----
-
-## Alert system
-
-Static rules in code (`src/config/alert-rules.config.ts`). Dynamic UI configuration is post-MVP.
-
-### Static MVP rules
+The four MVP rules:
 
 | Layer | Column | Operator | Value | Level |
 |---|---|---|---|---|
-| Gestantes | IG (weeks) | > | 40 | 🔴 Vermelho |
-| Gestantes | Risco | = | alto | 🟡 Amarelo |
-| Tuberculose | data_ultima_atualizacao | older_than_days | 30 | 🔴 Vermelho |
-| HAS | data_ultima_consulta | older_than_days | 180 | 🟡 Amarelo |
+| Gestantes | IG (weeks) | `>` | 40 | red |
+| Gestantes | risco | `=` | alto | yellow |
+| Tuberculose | data_ultima_atualizacao | `older_than_days` | 30 | red |
+| HAS | data_ultima_consulta | `older_than_days` | 180 | yellow |
 
-Operators supported by the engine (`src/lib/alerts/engine.ts`): `>`, `<`, `>=`, `<=`, `=`, `!=`, `older_than_days`, `is_empty`.
-
-### Visualization
-- Markers with a colored border at the highest active level.
-- A "Priority List" panel shows patients ordered by urgency.
-- A stats dashboard displays counts per level.
-
----
-
-## Addresses and geocoding
-
-### Pipeline
-
-```
-Address (Rua + Número + Complemento)
-    │
-    ▼
-Nominatim geocoding (address → lat/lng)
-    │
-    ├── Success (confidence ≥ threshold) → save lat/lng + geocode_status = 'geocoded'
-    │
-    └── Failure OR low confidence → prompt to place a pin manually
-                    │
-                    ▼
-              User clicks the map → lat/lng + geocode_status = 'manual'
-              Optional field: textual reference ("blue house past the bridge")
-```
-
-### Manual adjustment at any time
-The user can **drag the marker** of a patient to fix a wrong position — `geocode_status` becomes `'manual'` and the new coordinates are persisted via `PATCH /api/patients/[id]`.
-
----
+Markers get a colored border at their highest active level, a priority list orders patients by urgency, and a small dashboard counts patients per level.
 
 ## Routing
 
-### Simple route (US → patient)
-- "Traçar rota" button in the detail panel → OSRM → polyline on the map.
-- Profiles: 🚶 walking or 🚗 driving.
-
-### Day planning
-- Select multiple patients → optimized route.
-- Manual reordering, total estimated time.
-
----
+A "Traçar rota" button in the detail panel asks OSRM for a walking or driving route from US Moab Caldas to the patient and draws it on the map. Day planning selects several patients for one optimized route, with manual reordering and an estimated total time.
 
 ## Territories
 
-- `.geojson` files under `territories/` — loaded as a Leaflet overlay.
-- Microárea polygons colored per ACS/team.
-- Hover shows the microárea name.
-
-Editing boundaries directly on the map (leaflet-draw) is post-MVP.
-
----
+GeoJSON files under `territories/` load as a Leaflet overlay. Microárea polygons are colored per ACS, and hovering shows the microárea name. Editing boundaries on the map is post-MVP.
 
 ## UI
 
-### Main layout
+A header sits above a sidebar and the map. The sidebar holds layer toggles, filters, and route tools; the map shows markers, clusters, or a heatmap. Clicking a marker slides in a detail panel with the patient's data and route controls.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Header: Logo + User + Sync Badge + Settings                │
-├──────────┬──────────────────────────────────────────────────┤
-│          │                                                  │
-│  Sidebar │              Map (Leaflet)                       │
-│          │                                                  │
-│  Layers  │         Markers / Clusters / Heatmap             │
-│  Filters │                                                  │
-│  Routes  │                                                  │
-│          │                                                  │
-├──────────┴──────────────────────────────────────────────────┤
-│  Detail Panel (slide-in on marker click): data + routes     │
-└─────────────────────────────────────────────────────────────┘
-```
+Three view modes: individual markers (clustered at low zoom), a heatmap by area, and an alerts-only cross-layer filter.
 
-### View modes
-1. **Markers** — individual icons, cluster at low zoom.
-2. **Heatmap** — density by area.
-3. **Alerts** — cross-layer filter showing only patients with an urgency.
+## Scope
 
----
+In the MVP:
 
-## MVP and milestones
-
-### MVP — in scope
-- Google OAuth (identity only)
-- In-app patient CRUD (add, edit, remove)
+- Email/password auth, Google optional
+- Patient CRUD in the app
 - Leaflet map with per-layer markers
-- 3 priority layers: Gestantes, TB, HAS
-- Layer toggle, optional heatmap
-- Basic filters (microárea, alert level, search)
-- Static alerts with visual highlight
-- Territories (GeoJSON overlay)
-- Manual pin for non-geocodable addresses
-- Patient detail with route to US Moab Caldas
+- Three layers: Gestantes, TB, HAS
+- Layer toggles and an optional heatmap
+- Filters by microárea, alert level, and text
+- Static alerts with a visual highlight
+- Territory overlays
+- Manual pins for addresses that don't geocode
+- Route from a patient to US Moab Caldas
 
-### Stretch (if time allows)
-- Layer combination with AND/OR/NOT
-- Heatmap weighted by severity
-- Advanced marker clustering
-- Manual route reordering for multiple patients
+Out of the MVP: mobile and tablet, cross-instance sync, real time, e-SUS APS integration, automatic spreadsheet import (deferred, see ADR-001), ACS-created layers, and any AI-based normalization or prioritization.
 
-### Explicitly out of the MVP
-- Mobile / tablet support
-- Sync between distributed instances
-- Real time / websockets
-- e-SUS APS integration
-- Automatic spreadsheet import (deferred; see ADR-001)
-- Custom layer creation by ACS
-- AI-based street-name normalization
-- AI-based prioritization
+Implementation order lives in `docs/roadmap.md`. This document fixes the architecture.
 
-### Post-MVP work
+## Design decisions
 
-Tracked in [`docs/roadmap.md`](docs/roadmap.md). This spec fixes the **architecture**; implementation order lives in the roadmap.
+Current as of August 2026; the ADRs carry the full rationale.
 
----
-
-## Deployment
-
-### Vercel + Supabase cloud
-- Repository connected to Vercel; automatic deploy on push to `main`.
-- Environment variables: Google OAuth client ID/secret, Supabase URL/anon key/service-role key, `BETTER_AUTH_SECRET`, `DATABASE_URL`.
-- Preview deployments for PRs.
-- Supabase cloud as the Postgres backend.
-
-### Required environment variables
-
-```env
-# Google OAuth (identity only)
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Database (Drizzle connection string — direct Postgres, bypassing PgBouncer for schema ops)
-DATABASE_URL=
-
-# Better Auth
-BETTER_AUTH_SECRET=
-
-# App
-NEXT_PUBLIC_APP_URL=
-```
-
----
-
-## Locked architectural decisions
-
-Valid as of August 2026:
-
-1. **Supabase = source of truth.** See ADR-001. Google Sheets is not read at runtime.
-2. **Drizzle ORM = data access layer.** See ADR-002. No Supabase SDK in this repo; Postgres is reached exclusively via Drizzle.
-3. **SQL migrations generated via `drizzle-kit`**, committed to `supabase/migrations/`.
-4. **Google OAuth for identity only.** No `spreadsheets` scope, no access-token refresh, no on-behalf Google API calls.
-5. **In-app CRUD.** Editing a patient = modifying Supabase via `PATCH /api/patients/[id]`.
-6. **Layers defined in code.** `src/config/layers.config.ts`.
-7. **Static alert rules in code.** `src/config/alert-rules.config.ts`. UI configuration is post-MVP.
-8. **CNS = unique patient identifier.** UNIQUE constraint on `patients.cns`. A collision → "add condition to existing patient" prompt.
-9. **Base + extension pattern** for condition modeling. One `patients` table + N per-condition tables.
-10. **No RLS in the MVP.** Compensated by session gates on routes and service-role access restricted to admin scripts.
-11. **Geocoding with manual fallback.** Blocking on save; the user can drag the marker to fix at any time.
-12. **Cloud deploy.** Vercel + Supabase cloud. Local install is a future option, not the MVP.
-
----
+1. Postgres is the source of truth (ADR-001). Google Sheets is not read at runtime.
+2. Drizzle ORM is the only data-access path (ADR-002). No Supabase SDK is used; Postgres is reached through `src/db/client.ts`.
+3. Migrations are generated by `drizzle-kit` and committed to `drizzle/`.
+4. Auth is email/password with optional identity-only Google. No Sheets scope, no on-behalf Google API calls.
+5. Patients are edited in the app through `PATCH /api/patients/[id]`.
+6. Layers are defined in code (`src/config/layers.config.ts`).
+7. Alert rules are static, in code (`src/config/alert-rules.config.ts`).
+8. CNS is the unique patient key; a collision offers "add condition to the existing patient".
+9. Conditions use the base-plus-extension pattern: one `patients` table plus one table per condition.
+10. No RLS policies in the MVP; session gates and non-prod script gates compensate.
+11. Geocoding blocks on save, with a manual pin fallback; pins stay draggable afterward.
+12. Runs locally on Docker Postgres and deploys to any Node host with any Postgres.
 
 ## References
 
-- [`docs/adr/ADR-001-drop-sheets.md`](docs/adr/ADR-001-drop-sheets.md) — why Sheets was dropped
-- [`docs/adr/ADR-002-drizzle-orm.md`](docs/adr/ADR-002-drizzle-orm.md) — why Drizzle was chosen
-- [`docs/roadmap.md`](docs/roadmap.md) — post-MVP work in progress
-- [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — sister repo with documentation, original PoCs, and synthetic seed data
-  - Gestantes seed: `prototypes/mapa-gestantes/src/data/gestantes.json`
-  - Multi-condition seed: `prototypes/poc-01/data/pacientes.csv`
-- [Drizzle Docs](https://orm.drizzle.team)
-- [Supabase Docs](https://supabase.com/docs)
-- [react-leaflet](https://react-leaflet.js.org/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [OSRM API](http://project-osrm.org/docs/)
-- [Nominatim](https://nominatim.org/release-docs/develop/api/Search/)
+- `docs/adr/ADR-001-drop-sheets.md`: why Google Sheets was dropped
+- `docs/adr/ADR-002-drizzle-orm.md`: why Drizzle was chosen
+- `docs/roadmap.md`: post-MVP work
+- [extensao-gat4](https://github.com/PedroKlein/extensao-gat4): sister repo with domain docs, prototypes, and synthetic seed data
+- [Drizzle](https://orm.drizzle.team), [react-leaflet](https://react-leaflet.js.org/), [shadcn/ui](https://ui.shadcn.com/), [OSRM](http://project-osrm.org/docs/), [Nominatim](https://nominatim.org/release-docs/develop/api/Search/)

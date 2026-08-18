@@ -8,22 +8,22 @@ Behaviors and constraints that aren't obvious from the code alone. Read the rele
 
 `proxy.ts` MUST live at one of these paths:
 
-- `src/proxy.ts` ✅
-- `proxy.ts` (project root) ✅
-- `src/app/proxy.ts` ❌ silently ignored
+- `src/proxy.ts` (works)
+- `proxy.ts` at the project root (works)
+- `src/app/proxy.ts` (silently ignored)
 
 Next.js internals check for `/proxy` or `/src/proxy` specifically.
 
 ### Server Components cannot pass functions to Client Components
 
 ```tsx
-// ❌ Crashes: "Event handlers cannot be passed to Client Component props"
+// WRONG: crashes with "Event handlers cannot be passed to Client Component props"
 // A Server Component (default) rendering a Client Component with a callback prop.
 export default function SettingsPage() {
   return <SomeClientForm onSave={(id) => console.log(id)} />;
 }
 
-// ✅ Add "use client" to the page.
+// RIGHT: add "use client" to the page.
 "use client";
 export default function SettingsPage() {
   return <SomeClientForm onSave={(id) => console.log(id)} />;
@@ -67,7 +67,7 @@ const signature = crypto.createHmac("sha256", BETTER_AUTH_SECRET).update(token).
 const signedToken = encodeURIComponent(`${token}.${signature}`);
 ```
 
-You cannot set `better-auth.session_token` with just the raw token — it must be signed. Use the dev-session endpoint for testing.
+You cannot set `better-auth.session_token` with just the raw token; it must be signed. Use the dev-session endpoint for testing.
 
 ### SQLite for local development
 
@@ -87,28 +87,13 @@ export const auth = betterAuth({
 
 ### Database migration
 
-Use the built-in CLI — do NOT write custom migration scripts:
+Use the built-in CLI. Do not write custom migration scripts:
 
 ```bash
-echo 'y' | npx auth migrate
+echo 'y' | npx @better-auth/cli@latest migrate
 ```
 
-Creates `user`, `session`, `account`, `verification` tables. Common error `SqliteError: no such table: verification` → you forgot to run migrate.
-
-### Refresh token behavior
-
-Google only issues a refresh token on **first authorization**:
-
-```typescript
-socialProviders: {
-  google: {
-    accessType: "offline",   // required for refresh token
-    prompt: "consent",       // forces re-consent → guarantees a new refresh token
-  }
-}
-```
-
-Without `prompt: "consent"`, returning users won't get a new refresh token if the old one was lost.
+Creates the `user`, `session`, `account`, and `verification` tables. The error `SqliteError: no such table: verification` means you forgot to run migrate.
 
 ### nextCookies plugin
 
@@ -138,7 +123,7 @@ export const { GET, POST } = toNextJsHandler(auth);
 Export kAPIErrorHeaderSymbol doesn't exist in target module
 ```
 
-Fix: remove `@better-auth/cli` from devDependencies. Use `npx auth@latest migrate` instead (installs temporarily).
+Fix: run `npx @better-auth/cli@latest migrate`, which installs the CLI temporarily and avoids pinning an old `better-call`.
 
 ## UI patterns
 
@@ -203,7 +188,7 @@ button, a, [role="button"], input[type="submit"], select {
 
 ### Color tokens (from globals.css @theme)
 
-- `primary`: #1B5E20 (dark green — app brand)
+- `primary`: #1B5E20 (dark green, app brand)
 - `primary-light`: #4CAF50 (hover state)
 - `urgent-red`: #D32F2F (critical alerts)
 - `alert-yellow`: #F9A825 (attention alerts)
@@ -214,9 +199,9 @@ button, a, [role="button"], input[type="submit"], select {
 | Issue | Cause | Fix |
 |---|---|---|
 | Page shows "This page couldn't load" | Server Component passing an event handler to a Client Component | Add `"use client"` to the page |
-| Button click does nothing | Better Auth tables missing | `echo 'y' \| npx auth migrate` |
+| Button click does nothing | Better Auth tables missing | `echo 'y' \| npx @better-auth/cli@latest migrate` |
 | 500 on API route | Route handler bug | Check server logs; ensure the Drizzle client is initialized |
-| `no such table: verification` | Auth DB not migrated | `echo 'y' \| npx auth migrate` |
+| `no such table: verification` | Auth DB not migrated | `echo 'y' \| npx @better-auth/cli@latest migrate` |
 | Cookie not working | Better Auth signs cookies with HMAC | Use the dev-session endpoint for signed cookies |
 | `proxy.ts` not working | Wrong file location | Must be `src/proxy.ts`, not `src/app/proxy.ts` |
 | `auth.db` not found | Dev server started from the wrong directory | Always start from the project root |
