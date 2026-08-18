@@ -1,29 +1,29 @@
-# Plan: Sheet parity + validation + importer
+# Roadmap: sheet parity, validation, and importer
 
-> Multi-session plan produced after auditing every tab of the PET reference workbook (`plans/sheet-audit/workbook.xlsx`, CSV heads under `plans/sheet-audit/csv/`). The current MVP models three condition layers loosely; the sheet defines ten tabs with real clinical column sets, cross-tab links, and location-scoped entities not yet in the schema.
->
-> **This plan is preparatory only.** Do not start implementation until the user picks a phase.
+> Post-MVP roadmap: sheet parity, importer, new-layer work. Phases are executed in order; each is independent enough to ship on its own.
+
+Produced after auditing every tab of the PET reference workbook (`docs/reference/sheet-audit/workbook.xlsx`, per-tab CSVs under `docs/reference/sheet-audit/csv/`). The current MVP models three condition layers loosely; the sheet defines ten tabs with real clinical column sets, cross-tab links, and location-scoped entities not yet in the schema.
 
 ## Destination
 
 A repo where:
 
-1. Every clinical column captured on the sheet — that a well-run US actually fills — has a schema field with the right type, enum where applicable, and canonical PT-BR label.
-2. Enums that today drift ("alto" / "Alto" / "ALTO") are Postgres `pg_enum` types with Zod parity.
-3. Two new patient-scoped condition layers (Diabetes, Domiciliados/Acamados) plus two sheet-native follow-ons (Gestantes Expostas, Exame pé diabético) are first-class. Puericultura is designed but scoped as a variant of the "child+mother binomio" case (see decisions below).
+1. Every clinical column captured on the sheet — the ones a well-run US actually fills — has a schema field with the right type, an enum where applicable, and a canonical PT-BR label.
+2. Enums that drift today ("alto" / "Alto" / "ALTO") are Postgres `pg_enum` types with Zod parity.
+3. Two new patient-scoped condition layers (Diabetes, Domiciliados/Acamados) plus two sheet-native follow-ons (Gestantes Expostas, Exame pé diabético) are first-class. Puericultura is designed but scoped as a variant of the "child + mother binômio" case (see decisions below).
 4. Two location-scoped entities (ILPI institutions, PSE schools) have their own data model — they are NOT patient records.
-5. Cross-tab auto-linking rules (Gestante Exposta triggers on `resultadoTesteRapido='EXPOSTA'`; Exame Pé Diabético triggers on `pmdid=true`) are encoded as either persisted derived state or view-level joins with explicit contract.
+5. Cross-tab auto-linking rules (Gestante Exposta triggers on `resultadoTesteRapido='EXPOSTA'`; Exame Pé Diabético triggers on `pmdid=true`) are encoded as either persisted derived state or view-level joins with an explicit contract.
 6. An XLSX/CSV importer accepts the PET workbook (or a compatible export) and lands patient rows into Postgres with per-row validation reports. This is the single hardest piece.
 
 ## What we're not building
 
-- Editing the sheet FROM the app back OUT to a sheet. Post-pivot, Supabase is source of truth (ADR-001). Import is one-way.
+- Editing from the app back out to a sheet. Supabase is the source of truth (ADR-001). Import is one-way.
 - A generic "map any workbook" tool. The importer targets the PET workbook shape specifically; other formats need a mapper rewrite.
 - e-SUS APS integration. Deferred per SPEC.
 
 ## Column audit — tab by tab
 
-See `plans/sheet-audit/csv/*.csv` for the raw column heads. Summary of what's in the sheet vs what our current schema captures:
+See `docs/reference/sheet-audit/csv/*.csv` for the raw column heads. Summary of what's in the sheet vs. what the current schema captures:
 
 ### Gestantes (existing layer, partial coverage)
 
@@ -31,7 +31,7 @@ See `plans/sheet-audit/csv/*.csv` for the raw column heads. Summary of what's in
 
 **Gap:**
 - Avaliação Odontológica (during) — status enum
-- TR/Sorologia Sífilis+HIV: three separate results (1º/2º/3º trimestre), each `Feito|Não Feito|Não realizada`
+- TR/Sorologia Sífilis+HIV: three separate results (1º/2º/3º trimestre), each `Feito | Não Feito | Não realizada`
 - Resultado Teste Rápido: `MONITORAR | EXPOSTA | ...` — this is the trigger for the Expostas layer, cannot be dropped
 - Acompanhamento Peso/Altura PN — presence flag or count
 - Número de Visita Domiciliar — integer
@@ -97,7 +97,7 @@ Auto-linked from DM when `pmdid=true`. Column set:
 - PPD (mm) — numeric
 - Histopatologia, RX Tórax, Outros Exames — text
 - **Tratamento block:** Tipo de Entrada (`Caso Novo | Reingresso | Reingresso após abandono | Transferência | Não sabe`), Esquema (RHZE / RH / R / …), Data Início, Forma de tratamento
-- **9 consultas de acompanhamento** (1º ao 9º mês, cada `Realizada | Faltou | Não aplicável`)
+- **9 consultas de acompanhamento** (1º ao 9º mês, each `Realizada | Faltou | Não aplicável`)
 - TDO (Tratamento Diretamente Observado — `Regular | Irregular/faltoso | Não aplicável`)
 - Situação de Encerramento (Motivo enum `Cura | Abandono | Óbito por TB | Óbito por outra causa | Transferência | Falência | Mudança de diagnóstico`, Data)
 - Contatos: Nº moram junto (int), Nº examinadas (int), Todos examinados (bool), Lista (text — probably JSON-array of names)
@@ -123,8 +123,8 @@ Same institution model. Fields: Nome escola, INEP (unique 8-digit), Telefone, En
 
 Two rules currently expressed as sheet formulas:
 
-1. **Gestante EXPOSTA → row appears in Gestantes Expostas.** In the app: keep two extension tables. When a gestante's `resultadoTesteRapido` is set to `EXPOSTA`, atomically insert (if absent) a `gestantes_expostas_data` row with the same `patient_id`; when it changes away from EXPOSTA, we do NOT auto-delete — the follow-up may still be needed. Deleting is manual.
-2. **DM PMDID=true → row appears in Exame Pé Diabético.** Same pattern: `has_data` (well, `dm_data`) toggling PMDID inserts a `pe_diabetico_data` row. Manual delete only.
+1. **Gestante EXPOSTA → row appears in Gestantes Expostas.** In the app: keep two extension tables. When a gestante's `resultadoTesteRapido` is set to `EXPOSTA`, atomically insert (if absent) a `gestantes_expostas_data` row with the same `patient_id`; when it changes away from EXPOSTA, do NOT auto-delete — the follow-up may still be needed. Deleting is manual.
+2. **DM PMDID=true → row appears in Exame Pé Diabético.** Same pattern: `dm_data` toggling PMDID inserts a `pe_diabetico_data` row. Manual delete only.
 
 These are implemented as service-layer side effects on PATCH, not SQL triggers — code is easier to reason about, tests are simpler.
 
@@ -147,11 +147,11 @@ Every text column with a bounded value set becomes a Postgres enum + Zod branded
 - `tipo_sifilis`: `Primária | Secundária | Latente recente | Latente tardia | Terciária | Não determinada`
 - `raca_cor`: `Branca | Preta | Parda | Amarela | Indígena | Não declarada`
 
-For each enum: canonical value in code (snake_case English or the exact PT-BR string, one convention repo-wide — pick one), plus a display map to PT-BR labels for UI. Existing pattern in `src/config/alert-rules.config.ts` is a decent starting point.
+For each enum: one canonical value in code (snake_case English or the exact PT-BR string — one convention repo-wide), plus a display map to PT-BR labels for the UI. The existing pattern in `src/config/alert-rules.config.ts` is a reasonable starting point.
 
 ## Cross-field validation
 
-Beyond enums, the fields need coherence checks:
+Beyond enums, fields need coherence checks:
 
 - **Dates:**
   - `dum ≤ hoje`, `dpp = dum + 40 semanas` (already computed; UI just displays), `dataProximaConsulta > dataUltimaConsulta`.
@@ -163,7 +163,7 @@ Beyond enums, the fields need coherence checks:
   - `hba1c` numeric 4.0–20.0
   - `ppd` mm 0–30
   - `numeroPessoasMoramJunto` ≥ 0; `numeroExaminadas ≤ numeroMoram`
-- **CNS:** 15-digit + Luhn (already partial in Zod)
+- **CNS:** 15-digit + checksum (already partial in Zod)
 - **CEP:** already 8-digit normalized
 - **Telefone:** DDD + 8 or 9 digits
 
@@ -174,9 +174,9 @@ The single hardest deliverable. Design in three layers.
 ### Layer 1: Ingestion
 
 - Upload endpoint: `POST /api/import/preflight` accepts an XLSX or a set of CSV files. Body: multipart.
-- Runs on a server route; parses via SheetJS (`xlsx` npm package) — same lib used to extract the audit.
+- Runs on a server route; parses via SheetJS (`xlsx` npm package) — the same lib used to extract the audit.
 - Detects tab names against a known list; unknown tabs are ignored with a warning.
-- Per tab, applies the tab-specific parser (a set of functions in `src/lib/import/parsers/`).
+- Per tab, applies the tab-specific parser (functions in `src/lib/import/parsers/`).
 - Produces a **preview report** (never writes yet). Report shape:
   ```
   {
@@ -192,59 +192,58 @@ The single hardest deliverable. Design in three layers.
     ]
   }
   ```
-- User previews in the UI; explicit "Confirmar importação" button hits `POST /api/import/commit` with the same file (or a signed handle from preflight).
+- User previews in the UI; an explicit "Confirmar importação" button hits `POST /api/import/commit` with the same file (or a signed handle from preflight).
 
 ### Layer 2: Row parsing
 
 Each tab has a parser that maps sheet cells → Zod-validated `Patient + Extension` payloads.
 
 Two challenges:
-1. **Merged header rows.** Sheet has 2–3 header rows (super-group, group, column). The parser needs to know the column offset for each field. Encode this as a static `TabSchema` per tab — hardcoded, not detected.
-2. **CNS as float in xlsx.** Excel/Sheets stores long numeric CNS as scientific-notation floats (`7.92E+14`). Rehydrate: `Math.round(v).toString().padStart(15, '0')` and re-verify Luhn. Reject if malformed.
+1. **Merged header rows.** The sheet has 2–3 header rows (super-group, group, column). The parser needs the column offset for each field. Encode this as a static `TabSchema` per tab — hardcoded, not detected.
+2. **CNS as float in xlsx.** Excel/Sheets stores long numeric CNS as scientific-notation floats (`7.92E+14`). Rehydrate: `Math.round(v).toString().padStart(15, '0')` and re-verify checksum. Reject if malformed.
 
 ### Layer 3: Commit
 
 - Wraps every insert/upsert in a single transaction.
 - Strategy: **upsert by CNS**. If CNS exists, PATCH the patient and its extensions. If not, INSERT patient + extension row for the tab being processed.
-- The tab currently being processed determines WHICH extension row gets written; cross-tab side-effects (Expostas auto-row on `resultadoTesteRapido=EXPOSTA`) happen naturally as we process each tab.
+- The tab currently being processed determines which extension row gets written; cross-tab side-effects (Expostas auto-row on `resultadoTesteRapido=EXPOSTA`) happen naturally as each tab is processed.
 - Preserves `createdBy` / `updatedBy` = the importing user's session id.
-- Records import audit: new `import_batches` table (`id`, `user_id`, `filename`, `started_at`, `finished_at`, `stats jsonb`).
+- Records import audit: a new `import_batches` table (`id`, `user_id`, `filename`, `started_at`, `finished_at`, `stats jsonb`).
 
 ### UI
 
-A `/importar` page:
+An `/importar` page:
 1. Drop zone for XLSX
 2. Preflight runs, shows per-tab summary + expandable error lists
 3. If any errors, user downloads a fix-me CSV (rows that failed with reasons) and re-uploads
 4. Otherwise "Confirmar" commits and shows a completion summary with links to newly-created patient panels
 
-## Phased execution — five sessions, ordered
+## Phased execution
 
-Each session is scoped to fit an omp conversation without churning through context.
+Each phase is scoped to be shippable on its own.
 
-### Phase A — Enum discipline + validation hardening on existing fields — ✅ DONE (commit `2b3f5d4`)
+### Phase A — Enum discipline and validation hardening — shipped
+
 **Deliverable:** every existing enum-shaped `text` column becomes a Postgres enum with Zod parity; every existing form field gets cross-field validation. NO new columns or layers.
 
 - New migration adds `pg_enum` types + column-type conversions with USING casts.
-- Zod branded string helpers per enum.
-- Cross-field rules in a new `src/lib/patients/validation.ts` (superRefine).
+- Zod branded-string helpers per enum.
+- Cross-field rules in `src/lib/patients/validation.ts` (superRefine).
 - Existing tests updated; new tests for edge cases.
 - Panel + wizard forms get inline error copy per rule.
 
-Estimated size: one session, no new UI concepts.
+### Phase B — Existing layer completions — in progress
 
-### Phase B — Existing layer completions — ⏳ NEXT
-**Deliverable:** Gestantes gains its missing columns (odonto, TR sorologia trimestres, pós-parto trio, resultado teste rápido); HAS gains próxima consulta + aferição PA + registro + encaminhamentos; Tuberculose gains the treatment monitoring, TDO, encerramento, contatos.
+**Deliverable:** Gestantes gains its missing columns (odonto, TR sorologia trimestres, pós-parto trio, resultado teste rápido); HAS gains próxima consulta + aferição PA + registro + encaminhamentos; Tuberculose gains treatment monitoring, TDO, encerramento, contatos.
 
 - New migrations per layer.
 - Wizard step data pages extended.
 - Panel condition cards extended.
-- Alert rules unchanged (still the LOCKED 4).
+- Alert rules unchanged (still the locked 4).
 
-Estimated size: one session.
+### Phase C — New patient-scoped layers
 
-### Phase C — New patient-scoped layers — ⏳ PENDING
-**Deliverable:** Diabetes + Exame pé diabético (as sub-layer with auto-linking) + Domiciliados/Acamados land as first-class layers with wizard integration, panel cards, filter chips, and default (non-alerting) sidebar entries.
+**Deliverable:** Diabetes + Exame pé diabético (as a sub-layer with auto-linking) + Domiciliados/Acamados land as first-class layers with wizard integration, panel cards, filter chips, and default (non-alerting) sidebar entries.
 
 - Three migrations, three extension tables.
 - Layer config extended.
@@ -252,21 +251,21 @@ Estimated size: one session.
 - Panel condition cards for each.
 - Cross-tab linking for PMDID=Sim.
 
-Estimated size: one session (bigger). Might split.
+May split into two sessions.
 
-### Phase D — Institutions (ILPI + PSE) — ⏳ PENDING
+### Phase D — Institutions (ILPI + PSE)
+
 **Deliverable:** new `institutions` + `institution_activities` tables; `patients.institution_id` FK; institution list page + detail page; map layer overlay for institutions.
 
-- Distinct from patient layer — treat as its own module.
+- Distinct from the patient layer — treat as its own module.
 - Map: institutions render as square/hex chips visually distinct from patient chips.
 - Nav: new "Instituições" tab in the header alongside Pacientes.
 
-Estimated size: one session, standalone.
+### Phase E — XLSX importer (Layers 1–3 above)
 
-### Phase E — XLSX importer (Layers 1–3 above) — ⏳ PENDING (depends on A–D)
-**Deliverable:** `/importar` page with preflight + commit + audit; per-tab parsers for all ten tabs. Depends on A–D being done so the target schema is complete.
+**Deliverable:** `/importar` page with preflight + commit + audit; per-tab parsers for all ten tabs. Depends on A–D so the target schema is complete.
 
-Estimated size: one session but the biggest — parsers are ~150–300 LoC each; testing needs synthetic input files that exercise both the happy path and known error patterns.
+The biggest phase — parsers are ~150–300 LoC each; testing needs synthetic input files that exercise both the happy path and known error patterns.
 
 ## Ordering rationale
 
@@ -275,17 +274,15 @@ Estimated size: one session but the biggest — parsers are ~150–300 LoC each;
 - C before D because patient layers are still the primary user story.
 - E last: no point building the importer until the target schema is stable.
 
-Alternative: if the team has an urgent need to import existing data (real patients not yet in the app), collapse to A → E-lite (importer covers only current schema) → B → C → D. The lite importer costs ~0.6 sessions extra but unblocks migration earlier.
+Alternative: if the team has an urgent need to import existing data, collapse to A → E-lite (importer covers only the current schema) → B → C → D. The lite importer costs ~0.6 sessions extra but unblocks migration earlier.
 
-## Open questions for the user
+## Open decisions
 
-Before starting Phase A, we need decisions on:
+Before starting Phase A's successors, the team owes answers on:
 
 1. **Enum naming convention** — canonical values in English (`abandonment`) or verbatim PT-BR (`Abandono`)? Existing pattern leans PT-BR verbatim.
 2. **Puericultura mother-child link** — new "criança" role on `patients` with a `mother_id` FK, or a fully separate `criancas` table with its own mini-identity? Recommendation: FK on patients, with a `role` enum defaulting to `paciente`. Simpler joins, one source of truth for CNS.
-3. **Institutions as a separate module or as a special patient type?** Recommendation: separate. Different fields, different UI, no confusing overlap.
+3. **Institutions as a separate module or a special patient type?** Recommendation: separate. Different fields, different UI, no confusing overlap.
 4. **Importer input format** — one XLSX matching the PET workbook exactly, or a set of CSVs (one per tab)? Recommendation: XLSX only. Fewer moving parts, matches how the team exports today.
-5. **Import destructiveness** — upsert-by-CNS (my proposal), or reject if any CNS collides with an existing app row? Upsert is more useful for real workflows (team edits in sheet AND app until they migrate fully); reject is safer.
-6. **Alert rules on new layers** — do we add rules for DM (HbA1c > 8, no consulta in 180d), Puericultura (missing vacina by marco), Acamados (no visita in 30d)? Current 4 rules are LOCKED but the definition of "locked" was against the MVP; a new phase can add rules.
-
-Pick a phase to start with and I'll draft the concrete task list.
+5. **Import destructiveness** — upsert-by-CNS (proposed), or reject if any CNS collides with an existing app row? Upsert is more useful for real workflows; reject is safer.
+6. **Alert rules on new layers** — add rules for DM (HbA1c > 8, no consulta in 180d), Puericultura (missing vacina by marco), Acamados (no visita in 30d)? The current 4 rules are locked for the MVP; a new phase can add rules.
