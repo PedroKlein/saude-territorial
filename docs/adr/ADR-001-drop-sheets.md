@@ -55,5 +55,4 @@ Concretely:
 
 - Meeting summary (shared 2026-08 with UFRGS PET group): "Customização por parte dos agentes dos mapas… atualização de localizações feita dinamicamente pelos próprios agentes… planilha é MUITA informação para treinamento."
 - MVP doc "Design de Software — Projeto GAT-4 — Saúde Digital": entrega mínima lists "processamento sob demanda", "sistema de camadas", "sistema de alertas"; import from Sheet is "PODE entrar", not "VAI entrar".
-- `plans/pivot-cleanup.md` — the cleanup plan that implements this ADR.
 - `docs/adr/ADR-002-drizzle-orm.md` — companion decision on data access layer.
