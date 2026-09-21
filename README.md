@@ -15,8 +15,8 @@ Built for GAT 4 (Grupo de Ação Territorial 4) in the PET-Saúde Digital progra
 | State (client) | Zustand v5 |
 | Language | TypeScript (strict) |
 | Auth | Better Auth (email/password; Google OAuth optional) |
-| Data | Postgres, via Drizzle ORM (local Postgres runs in Docker) |
-| Auth session store | Better Auth (SQLite via `better-sqlite3`) |
+| Data | PostgreSQL via Drizzle ORM (persistent PGlite locally; native Postgres in production) |
+| Auth session store | Better Auth in the same selected PostgreSQL database |
 | Geocoding | Nominatim (OpenStreetMap) |
 | Routing | OSRM |
 | Package manager | pnpm |
@@ -24,24 +24,35 @@ Built for GAT 4 (Grupo de Ação Territorial 4) in the PET-Saúde Digital progra
 
 ## Getting started
 
-You need [mise](https://mise.jdx.dev), pnpm 9+, and Docker.
+You need [mise](https://mise.jdx.dev) and pnpm 9+. Docker is optional.
 
 ```bash
-mise run setup   # installs deps, starts Postgres in Docker, migrates, seeds data, creates a dev login
+mise run setup   # installs deps, migrates local PGlite, seeds data, creates a dev login
 mise run dev     # serves http://localhost:3000
 ```
 
-Open http://localhost:3000/login and sign in with **dev@local.dev / dev12345**. That's it: no Supabase, Vercel, or Google account is needed to run locally.
+Open http://localhost:3000/login and sign in with **dev@local.dev / dev12345**. That's it: no Docker, Supabase, Vercel, or Google account is needed to run locally.
 
-`mise run setup` is safe to re-run. If you only need to restart the database, `mise run db:up`.
+`mise run setup` is safe to re-run. Application and authentication data persist in `.data/pglite/`; use `mise run db:reset` to rebuild the local database. The reset command never deletes unrelated files, including a legacy `auth.db`.
 
 ### Optional: sign in with Google
 
 Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env.local` (identity-only, `openid email profile` scopes). When both are set, a "Entrar com Google" button appears next to the email/password form. Leave them unset and the app uses email/password only.
 
+### Running with native Postgres locally
+
+Docker is optional parity tooling, not part of the default development path:
+
+```bash
+mise run db:postgres:up
+DATABASE_DRIVER=postgres DATABASE_URL=postgresql://saude:saude@localhost:5432/saude_territorial mise run db:migrate
+```
+
+Use `mise run db:postgres:reset` to recreate, migrate, and seed that disposable parity database.
+
 ### Running on your own server
 
-Nothing here is tied to Supabase or Vercel. Point `DATABASE_URL` at any Postgres instance (a university host, managed Postgres, or your own box) and deploy the Next.js app to any Node runtime. The Docker Postgres is a local-development convenience, not a runtime dependency.
+Nothing here is tied to Supabase or Vercel. Production uses native Postgres: set `DATABASE_DRIVER=postgres` and point `DATABASE_URL` at the deployment database before starting the Next.js app on a Node runtime. Production rejects PGlite and fails fast when `DATABASE_URL` is missing.
 
 ## Commands
 
@@ -52,13 +63,13 @@ Nothing here is tied to Supabase or Vercel. Point `DATABASE_URL` at any Postgres
 | `mise run test` | Vitest |
 | `mise run lint` | ESLint |
 | `mise run type-check` | `tsc --noEmit` |
-| `mise run db:up` / `db:down` | Start / stop the local Postgres container |
-| `mise run db:migrate` | Apply Drizzle migrations to `DATABASE_URL` |
+| `mise run db:postgres:up` / `db:postgres:down` / `db:postgres:reset` | Manage the optional Docker Postgres parity database |
+| `mise run db:migrate` | Apply Drizzle migrations to local PGlite or selected Postgres |
 | `mise run db:seed` | Load synthetic patients (non-prod and LGPD gated) |
 | `mise run db:seed:user` | Create the local dev login |
 | `mise run db:reset` | Wipe and rebuild the local database |
 | `pnpm db:generate` | Generate a Drizzle migration from schema changes |
-| `pnpm db:studio` | Browse the database in Drizzle Studio |
+| `pnpm db:studio` | Browse an explicitly configured Postgres database in Drizzle Studio |
 
 ## Documentation
 
@@ -75,7 +86,7 @@ Nothing here is tied to Supabase or Vercel. Point `DATABASE_URL` at any Postgres
 
 ## Data handling
 
-All data is synthetic. The seed files live under `seed/` and the seed script sets `SEED_SYNTHETIC=1` for you; it also refuses to run against anything that doesn't look like a local or dev database (see `scripts/verify-non-prod-db.ts`). Never commit real patient records, and never log patient fields to stdout, analytics, or error trackers.
+All data is synthetic. The seed files live under `seed/` and the seed script sets `SEED_SYNTHETIC=1` for you. The fixed local PGlite database is allowed automatically; remote Postgres targets remain protected by the non-production gate in `scripts/lib/non-prod-gate.ts`. Never commit real patient records, and never log patient fields to stdout, analytics, or error trackers.
 
 ## License
 

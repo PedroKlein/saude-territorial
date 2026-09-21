@@ -2,7 +2,7 @@
 
 ## Before you start
 
-Read the [README](./README.md) for setup and [SPEC.md](./SPEC.md) for the data model. All data in this project is synthetic; never commit real records and never log patient fields.
+Read the [README](./README.md) for setup and [SPEC.md](./SPEC.md) for the data model. Local development defaults to persistent PGlite and does not require Docker; production uses native Postgres with `DATABASE_DRIVER=postgres` and `DATABASE_URL`. All data in this project is synthetic; never commit real records and never log patient fields.
 
 ## Language conventions
 
@@ -48,21 +48,19 @@ For UI and API changes, verify against the running app. Start it with `mise run 
 - API: check it directly with a signed session cookie.
 
 ```bash
-COOKIE=$(curl -s -D - http://localhost:3000/api/auth/dev-session 2>/dev/null \
-  | grep "set-cookie.*session_token" \
-  | sed 's/.*session_token=\([^;]*\).*/\1/')
+COOKIE_JAR=$(mktemp)
+trap 'rm -f "$COOKIE_JAR"' EXIT
+curl -s -o /dev/null -c "$COOKIE_JAR" http://localhost:3000/api/auth/dev-session
+curl -s -b "$COOKIE_JAR" http://localhost:3000/api/patients
 
-curl -s -H "Cookie: better-auth.session_token=$(python3 -c "import urllib.parse; print(urllib.parse.unquote('$COOKIE'))")" \
-  http://localhost:3000/api/patients
-
-# The same call without the cookie should return 401, not 500.
+# The same API call without the cookie should return 401, not 500.
 ```
 
-`GET /api/auth/dev-session` is a development-only shortcut: it signs a session cookie for the first user in `auth.db` (the seeded dev user) and is disabled outside development.
+`GET /api/auth/dev-session` is a development-only shortcut: it signs in the configured development account through Better Auth and is disabled outside development.
 
 ## Data safety
 
-- The `db:seed` scripts set `SEED_SYNTHETIC=1` for you. `scripts/verify-non-prod-db.ts` passes automatically for a `localhost` database; a non-local host additionally requires `I_HAVE_VERIFIED_NON_PROD=1`. Don't disable this gate.
+- The `db:seed` scripts set `SEED_SYNTHETIC=1` for you. The fixed local PGlite path is allowed automatically. A remote Postgres target must match a known non-production host or be explicitly verified with `I_HAVE_VERIFIED_NON_PROD=1`. Don't disable this gate.
 - `db:migrate` and `db:seed` are gated by the same check.
 - LGPD: never commit real patient data, and never log patient fields anywhere the code could run in production.
 

@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 Everything auth-related **for identity**: who is this user, do they have a valid session, protect the dashboard routes, sign in and sign out. Nothing more.
 
-**This skill does NOT cover data access.** All CRUD queries and mutations against Supabase go through Drizzle — see the `drizzle-data-access` skill. Auth's only relationship with data is "is there a session cookie set on this request".
+**This skill does NOT cover patient-data access.** All CRUD queries and mutations go through Drizzle. Better Auth stores its own models in the same selected PostgreSQL database.
 
 ## Historical note (post-pivot)
 
@@ -24,11 +24,13 @@ If a future feature needs additional Google scopes (a "sync from Sheets" import,
 
 ```typescript
 import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import Database from "better-sqlite3";
+
+import { db, schema } from "../db/client";
 
 export const auth = betterAuth({
-  database: new Database("./auth.db"),
+  database: drizzleAdapter(db, { provider: "pg", schema }),
   plugins: [nextCookies()],
   socialProviders: {
     google: {
@@ -47,7 +49,8 @@ export const auth = betterAuth({
 **Rules:**
 - Never add `spreadsheets`, `drive`, or any Google API scope here. Use incremental scopes for those.
 - Never persist raw access tokens or refresh tokens outside Better Auth's own store.
-- `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` must all be present in env; the app should fail fast on start otherwise.
+- `BETTER_AUTH_SECRET` is required. Google OAuth is configured only when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are present.
+- Run `mise run db:migrate` for both application and Better Auth tables; there is no separate auth migration path.
 
 ### `src/lib/auth-client.ts`
 
@@ -148,7 +151,7 @@ Assert the scope shape (identity-only) at least once — it's cheap insurance ag
 ## Anti-patterns
 
 - Requesting Google API scopes at sign-in "just in case" — request them incrementally when the feature that needs them is built.
-- Storing patient data or personal identifiers in `auth.db` — that database is for authentication artefacts only.
+- Storing patient data in Better Auth's `user`, `session`, `account`, or `verification` tables.
 - Building custom session logic on top of Better Auth — use its `getSession` and let it handle cookies, expiration, and refresh.
 - Logging `session.token` or any raw credential — never. Log `session.user.id` when you must correlate.
 

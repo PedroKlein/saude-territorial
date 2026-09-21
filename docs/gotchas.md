@@ -51,49 +51,29 @@ const MapView = dynamic(() => import("@/components/map/MapView"), { ssr: false }
 
 ## Better Auth
 
-### Cookie signing
+### Session cookies
 
-Better Auth signs session cookies with HMAC-SHA256. The cookie value format is `{token}.{base64_signature}`:
+Do not construct or log Better Auth session cookies. Use Better Auth's server API in application code and `GET /api/auth/dev-session` for local browser or API testing.
 
-- Signature is **standard base64** (not base64url), exactly 44 chars, ending with `=`
-- Signed with the `BETTER_AUTH_SECRET` env var
-- Verification checks `signature.length === 44 && signature.endsWith("=")`
+### Shared PostgreSQL database
 
-Node equivalent:
-
-```javascript
-import crypto from "crypto";
-const signature = crypto.createHmac("sha256", BETTER_AUTH_SECRET).update(token).digest("base64");
-const signedToken = encodeURIComponent(`${token}.${signature}`);
-```
-
-You cannot set `better-auth.session_token` with just the raw token; it must be signed. Use the dev-session endpoint for testing.
-
-### SQLite for local development
-
-Better Auth uses SQLite via `better-sqlite3`:
+Better Auth uses the same Drizzle database selected for application data:
 
 ```typescript
-import Database from "better-sqlite3";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db, schema } from "@/db/client";
+
 export const auth = betterAuth({
-  database: new Database("./auth.db"),
+  database: drizzleAdapter(db, { provider: "pg", schema }),
   // ...
 });
 ```
 
-- Install: `pnpm add better-sqlite3` + `pnpm add -D @types/better-sqlite3`
-- Approve builds: `pnpm approve-builds better-sqlite3`
-- `auth.db` is gitignored
+Local development defaults to persistent PGlite at `.data/pglite/`. Production uses native Postgres and requires `DATABASE_DRIVER=postgres` plus `DATABASE_URL`.
 
 ### Database migration
 
-Use the built-in CLI. Do not write custom migration scripts:
-
-```bash
-echo 'y' | npx @better-auth/cli@latest migrate
-```
-
-Creates the `user`, `session`, `account`, and `verification` tables. The error `SqliteError: no such table: verification` means you forgot to run migrate.
+Run `mise run db:migrate`. The committed Drizzle history creates both application and Better Auth tables; there is no separate auth migration path.
 
 ### nextCookies plugin
 
@@ -114,16 +94,6 @@ import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 export const { GET, POST } = toNextJsHandler(auth);
 ```
-
-### Dependency version conflicts
-
-`@better-auth/cli` can pull an old `better-call` (1.1.8) that conflicts with `@better-auth/core` (needs 1.3.7+). Symptom:
-
-```
-Export kAPIErrorHeaderSymbol doesn't exist in target module
-```
-
-Fix: run `npx @better-auth/cli@latest migrate`, which installs the CLI temporarily and avoids pinning an old `better-call`.
 
 ## UI patterns
 
@@ -199,9 +169,9 @@ button, a, [role="button"], input[type="submit"], select {
 | Issue | Cause | Fix |
 |---|---|---|
 | Page shows "This page couldn't load" | Server Component passing an event handler to a Client Component | Add `"use client"` to the page |
-| Button click does nothing | Better Auth tables missing | `echo 'y' \| npx @better-auth/cli@latest migrate` |
+| Button click does nothing | Better Auth tables missing | Run `mise run db:migrate` |
 | 500 on API route | Route handler bug | Check server logs; ensure the Drizzle client is initialized |
-| `no such table: verification` | Auth DB not migrated | `echo 'y' \| npx @better-auth/cli@latest migrate` |
+| `relation "verification" does not exist` | Shared database not migrated | Run `mise run db:migrate` |
 | Cookie not working | Better Auth signs cookies with HMAC | Use the dev-session endpoint for signed cookies |
 | `proxy.ts` not working | Wrong file location | Must be `src/proxy.ts`, not `src/app/proxy.ts` |
-| `auth.db` not found | Dev server started from the wrong directory | Always start from the project root |
+| Local data seems missing | Dev server started from another working directory | Start from the project root so `.data/pglite/` resolves consistently |

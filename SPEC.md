@@ -14,7 +14,7 @@ MVP scope: map, layers, static alerts, patient CRUD, and territory overlays. No 
 
 ## Data model
 
-Postgres is the source of truth, reached through Drizzle ORM (see `docs/adr/ADR-002-drizzle-orm.md`). The schema lives in `src/db/schema/*.ts`; `drizzle-kit` generates migrations into `drizzle/`.
+PostgreSQL is the source of truth, reached through Drizzle ORM (see `docs/adr/ADR-002-drizzle-orm.md`). The schema lives in `src/db/schema/*.ts`; `drizzle-kit` generates migrations into `drizzle/`. Local development uses persistent PGlite at `.data/pglite/` without Docker. Production and shared deployments use native Postgres, selected with `DATABASE_DRIVER=postgres`, and require `DATABASE_URL`. Application and Better Auth data use the same selected database.
 
 ### Base plus extension tables
 
@@ -123,7 +123,7 @@ Current as of August 2026; the ADRs carry the full rationale.
 9. Conditions use the base-plus-extension pattern: one `patients` table plus one table per condition.
 10. No RLS policies in the MVP; session gates and non-prod script gates compensate.
 11. Geocoding blocks on save, with a manual pin fallback; pins stay draggable afterward.
-12. Runs locally on Docker Postgres and deploys to any Node host with any Postgres.
+12. Runs locally on persistent PGlite without Docker; optional Docker Postgres provides parity testing, and production runs on any native Postgres reachable through `DATABASE_URL`.
 
 ## References
 

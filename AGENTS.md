@@ -4,7 +4,7 @@
 
 A multi-layer georeferenced health monitoring platform for Primary Health Care teams in Porto Alegre, Brazil. Part of **GAT 4** (Grupo de Ação Territorial 4) within the **PET-Saúde Digital** program (UFRGS + SMS Porto Alegre).
 
-The app renders patient records (managed in-app) as interactive map layers with alerts, routes, and full CRUD editing. **Postgres is the source of truth** (local via Docker for dev; Supabase used only for the MVP demo); Drizzle ORM owns all data access.
+The app renders patient records (managed in-app) as interactive map layers with alerts, routes, and full CRUD editing. **PostgreSQL is the source of truth** (persistent PGlite locally; native Postgres in production); Drizzle ORM owns all data access.
 
 **Sister repo:** [extensao-gat4](https://github.com/PedroKlein/extensao-gat4) — project documentation, domain context, meeting reports, glossary, static PoC prototypes, and synthetic seed data.
 
@@ -27,9 +27,9 @@ Read `SPEC.md` for the full functional specification, architecture decisions, an
 | State (client) | Zustand v5 |
 | Language | TypeScript (strict mode) |
 | Auth | Better Auth (email/password; Google OAuth optional, identity-only) |
-| **Source of truth** | **Postgres** (local via Docker Compose; any Postgres in prod) |
+| **Source of truth** | **PostgreSQL** (persistent PGlite locally; native Postgres in production) |
 | **Data access** | **Drizzle ORM** |
-| Auth session store | Better Auth (SQLite via `better-sqlite3`) |
+| Auth session store | Better Auth in the selected PostgreSQL database |
 | Geocoding | Nominatim (OpenStreetMap) |
 | Routing | OSRM |
 | Package manager | pnpm |
@@ -82,7 +82,7 @@ src/
 └── types/                         # Shared TypeScript types
 territories/                       # GeoJSON files for microáreas
 drizzle/                           # Drizzle-generated SQL migrations
-docker-compose.yml                 # Local Postgres (docker compose) for dev
+docker-compose.yml                 # Optional native Postgres parity environment
 seed/                              # Vendored synthetic seed data
 ```
 
@@ -97,7 +97,7 @@ Next.js API Routes
     ↕
 React Client (map + panels + editing)
 
-Auth: email/password (or optional Google OAuth) → Better Auth → SQLite (`auth.db`) session cookie
+Auth: email/password (or optional Google OAuth) → Better Auth → selected PostgreSQL database
 ```
 
 ### Key Principles

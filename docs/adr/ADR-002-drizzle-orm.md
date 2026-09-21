@@ -49,7 +49,7 @@ Boundary rules (enforced by the `drizzle-data-access` skill):
 ## Alternatives considered
 
 - **Prisma.** Rejected primarily for the **service-role RLS bypass footgun**: Prisma connects with a superuser connection string by default, so if we ever turn on RLS and forget to configure Prisma's session-variable extension, RLS becomes cosmetic. Also introduces a dual migration system (Prisma's history table vs. `supabase/migrations/`) and a code-generation step. Best pure DX but wrong fit for a project that will eventually enforce RLS.
-- **`@supabase/supabase-js` + generated types.** Rejected because base+extension joins via `.select("*, gestantes_data(*)")` are stringly-typed, hard to refactor, and mix concerns (auth SDK doing DB queries). Not needed at all in this codebase — all data access is Drizzle-only, and Better Auth handles sessions via its own SQLite store.
+- **`@supabase/supabase-js` + generated types.** Rejected because base+extension joins via `.select("*, gestantes_data(*)")` are stringly-typed, hard to refactor, and mix concerns (auth SDK doing DB queries). Not needed at all in this codebase — application and Better Auth data use Drizzle with the selected PostgreSQL runtime.
 
 ## Rollback plan
 
