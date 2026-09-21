@@ -55,11 +55,11 @@ export default function GeocodeMapPreview({
         scrollWheelZoom={interactive}
         doubleClickZoom={false}
         touchZoom={interactive}
-        attributionControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
         />
         {onPickCoords && <PickHandler onPickCoords={onPickCoords} />}
         <Marker
