@@ -49,33 +49,26 @@ run = "tsc --noEmit"
 description = "Run all quality gates: type-check + lint + test"
 depends = ["type-check", "lint", "test"]
 
-[tasks."db:up"]
-description = "Start the local Postgres (docker compose) and wait until healthy"
-run = """
-# Only start the local docker Postgres when DATABASE_URL points at localhost.
-# A remote DATABASE_URL (managed/hosted Postgres) needs no local container, and
-# starting one would just collide with whatever else owns the host port.
-url="$(sed -n 's/^DATABASE_URL=//p' .env.local 2>/dev/null | head -1)"
-case "$url" in
-  ""|*@localhost:*|*@127.0.0.1:*)
-    docker compose up -d --wait ;;
-  *)
-    echo "DATABASE_URL is not local, so skipping the docker Postgres:"
-    echo "  $url"
-    echo "Migrations and the app will use that DATABASE_URL directly." ;;
-esac
-"""
+[tasks."db:postgres:up"]
+description = "Start the optional Docker Postgres parity database"
+run = "docker compose up -d --wait"
 
-[tasks."db:down"]
-description = "Stop the local Postgres container (keeps data volume)"
+[tasks."db:postgres:down"]
+description = "Stop the optional Docker Postgres parity database"
 run = "docker compose down"
 
-[tasks."db:auth-migrate"]
-description = "Create Better Auth tables in the local SQLite store (auth.db)"
-run = "echo y | npx @better-auth/cli migrate"
+[tasks."db:postgres:reset"]
+description = "Wipe and rebuild the optional Docker Postgres parity database"
+run = """
+docker compose down -v
+docker compose up -d --wait
+url="postgresql://saude:saude@localhost:${DB_PORT:-5432}/saude_territorial"
+DATABASE_DRIVER=postgres DATABASE_URL="$url" pnpm db:migrate
+DATABASE_DRIVER=postgres DATABASE_URL="$url" pnpm db:seed
+"""
 
 [tasks."db:migrate"]
-description = "Apply Drizzle SQL migrations to the database (DATABASE_URL)"
+description = "Apply Drizzle migrations to local PGlite or selected Postgres"
 run = "pnpm db:migrate"
 
 [tasks."db:seed"]
@@ -83,7 +76,7 @@ description = "Load synthetic patient data (seed/) into the database"
 run = "pnpm db:seed"
 
 [tasks."db:seed:user"]
-description = "Create the local dev login (dev@local / dev12345)"
+description = "Create the configured local development login"
 run = "pnpm db:seed:user"
 
 [tasks."db:studio"]
@@ -91,28 +84,21 @@ description = "Open Drizzle Studio against the database"
 run = "pnpm db:studio"
 
 [tasks."db:reset"]
-description = "Wipe and rebuild the local database (drops the docker volume)"
-run = """
-docker compose down -v
-docker compose up -d --wait
-pnpm db:migrate
-pnpm db:seed
-"""
+description = "Wipe and rebuild the local PGlite database"
+run = "pnpm db:reset"
 
 [tasks.setup]
-description = "One-command local setup: install, DB, migrations, synthetic data, dev user"
+description = "One-command local setup: install, migrate, seed synthetic data, create dev user"
 run = """
 pnpm install
 [ -f .env.local ] || cp .env.local.example .env.local
-mise run db:up
-echo y | npx @better-auth/cli migrate
 pnpm db:migrate
 pnpm db:seed
 pnpm db:seed:user
 echo ""
 echo "Setup complete."
 echo "  Start the app:  mise run dev"
-echo "  Log in at http://localhost:3000/login  →  dev@local.dev / dev12345"
+echo "  Log in at http://localhost:3000/login with the configured development account."
 """
 
 [tasks.install]

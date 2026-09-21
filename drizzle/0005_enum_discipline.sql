@@ -20,6 +20,7 @@
 -- ---------------------------------------------------------------------------
 
 CREATE TYPE "public"."risco_gestante" AS ENUM ('habitual', 'alto');
+--> statement-breakpoint
 ALTER TABLE "gestantes_data"
   ALTER COLUMN "risco" TYPE "public"."risco_gestante"
   USING (
@@ -30,8 +31,10 @@ ALTER TABLE "gestantes_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."ig_abertura" AS ENUM ('< 12 sem', '12-24 sem', '> 24 sem');
+--> statement-breakpoint
 ALTER TABLE "gestantes_data"
   ALTER COLUMN "ig_abertura" TYPE "public"."ig_abertura"
   USING (
@@ -45,8 +48,10 @@ ALTER TABLE "gestantes_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."tr_status" AS ENUM ('Feito', 'Não Feito', 'Não realizada');
+--> statement-breakpoint
 
 -- trPrimeiroTri, trSegundoTri, trTerceiroTri all share tr_status.
 DO $$
@@ -71,10 +76,12 @@ BEGIN
     $f$, col, col);
   END LOOP;
 END $$;
+--> statement-breakpoint
 
 CREATE TYPE "public"."status_realizacao" AS ENUM (
   'Realizada', 'Não realizada', 'A realizar', 'Não se aplica'
 );
+--> statement-breakpoint
 
 -- avaliacao_odonto_status, vacina_dtpa, tr_hep_b_hep_c_primeiro_tri,
 -- tr_sif_hiv_terceiro_tri, puerperio_consulta, puerperio_visita_domiciliar,
@@ -112,8 +119,10 @@ BEGIN
     $f$, col, col);
   END LOOP;
 END $$;
+--> statement-breakpoint
 
 CREATE TYPE "public"."acompanhamento_status" AS ENUM ('Em dia', 'Atrasada', 'Não realizada');
+--> statement-breakpoint
 ALTER TABLE "gestantes_data"
   ALTER COLUMN "acompanhamento_peso_altura" TYPE "public"."acompanhamento_status"
   USING (
@@ -126,10 +135,12 @@ ALTER TABLE "gestantes_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."resultado_teste_rapido" AS ENUM (
   'MONITORAR', 'EXPOSTA', 'REAGENTE', 'Não Reagente'
 );
+--> statement-breakpoint
 ALTER TABLE "gestantes_data"
   ALTER COLUMN "resultado_tr" TYPE "public"."resultado_teste_rapido"
   USING (
@@ -143,12 +154,14 @@ ALTER TABLE "gestantes_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 -- ---------------------------------------------------------------------------
 -- Tuberculose
 -- ---------------------------------------------------------------------------
 
 CREATE TYPE "public"."baciloscopia_resultado" AS ENUM ('Positiva', 'Negativa');
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "baciloscopia_resultado" TYPE "public"."baciloscopia_resultado"
   USING (
@@ -159,8 +172,10 @@ ALTER TABLE "tuberculose_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."trm_resultado" AS ENUM ('Detectável', 'Não detectável');
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "trm_resultado" TYPE "public"."trm_resultado"
   USING (
@@ -174,8 +189,10 @@ ALTER TABLE "tuberculose_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."cultura_resultado" AS ENUM ('Positiva', 'Negativa', 'Pendente');
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "cultura_m_tuberculosis" TYPE "public"."cultura_resultado"
   USING (
@@ -187,10 +204,12 @@ ALTER TABLE "tuberculose_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."tdo_status" AS ENUM (
   'TDO regular', 'TDO irregular/faltoso', 'Não aplicável'
 );
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "tdo_status" TYPE "public"."tdo_status"
   USING (
@@ -208,10 +227,12 @@ ALTER TABLE "tuberculose_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."tipo_entrada_tb" AS ENUM (
   'Caso novo', 'Recidiva', 'Reingresso após abandono', 'Transferência', 'Não sabe'
 );
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "tipo_entrada" TYPE "public"."tipo_entrada_tb"
   USING (
@@ -229,6 +250,7 @@ ALTER TABLE "tuberculose_data"
       ELSE NULL
     END
   );
+--> statement-breakpoint
 
 CREATE TYPE "public"."encerramento_motivo_tb" AS ENUM (
   'Cura',
@@ -239,6 +261,7 @@ CREATE TYPE "public"."encerramento_motivo_tb" AS ENUM (
   'Falência',
   'Mudança de diagnóstico'
 );
+--> statement-breakpoint
 ALTER TABLE "tuberculose_data"
   ALTER COLUMN "encerramento_motivo" TYPE "public"."encerramento_motivo_tb"
   USING (

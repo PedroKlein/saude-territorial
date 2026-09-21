@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import Database from "better-sqlite3";
+
+import { db, schema } from "../db/client";
 
 /**
  * Better Auth configuration.
@@ -32,7 +34,7 @@ const socialProviders =
     : undefined;
 
 export const auth = betterAuth({
-  database: new Database("./auth.db"),
+  database: drizzleAdapter(db, { provider: "pg", schema }),
   plugins: [nextCookies()],
   emailAndPassword: {
     enabled: true,

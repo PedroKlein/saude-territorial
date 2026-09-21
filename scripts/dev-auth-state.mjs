@@ -34,7 +34,6 @@ async function main() {
   const match = setCookie.match(/better-auth\.session_token=([^;]+)/);
   if (!match) {
     console.error('Could not find session_token in Set-Cookie header');
-    console.error('Header:', setCookie);
     process.exit(1);
   }
 

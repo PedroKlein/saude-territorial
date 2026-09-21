@@ -1,9 +1,8 @@
-# Local Postgres for development. This is a dev-time convenience only — the
-# app talks to Postgres via a plain DATABASE_URL (Drizzle + postgres-js), so in
-# production you point that URL at any Postgres server (university host, managed
-# Postgres, etc.). No Supabase or other managed service is required.
+# Optional Postgres parity database. Local development defaults to PGlite;
+# production uses any Postgres server through DATABASE_URL.
 #
-# Usage is wrapped by mise tasks: `mise run db:up`, `db:down`, `db:reset`.
+# Usage is wrapped by mise tasks: `mise run db:postgres:up`,
+# `db:postgres:down`, and `db:postgres:reset`.
 #
 # `name:` pins the Compose project so it never collides with other repos that
 # also live in a `main/` worktree dir (Compose otherwise derives the project

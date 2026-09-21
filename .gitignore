@@ -19,11 +19,14 @@ next-env.d.ts
 coverage/
 test-results/
 
+# Local PGlite database
+/.data/
+
 # Misc
 .DS_Store
 *.pem
 
-# Better Auth SQLite (local dev only)
+# Legacy local auth database (unused; keep existing files untracked)
 auth.db
 
 # Dev auth state (contains session cookie)

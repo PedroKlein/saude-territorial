@@ -16,6 +16,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  db: {},
+  schema: {},
+  drizzleAdapter: vi.fn((database: unknown, config: unknown) => ({ database, config })),
+}));
+
 // Top-level vi.mock() calls — Vitest hoists these before any imports.
 // Must live at module scope, never inside describe/beforeEach/it.
 
@@ -33,10 +39,20 @@ vi.mock("better-auth/next-js", () => ({
   toNextJsHandler: vi.fn((auth: unknown) => ({ GET: vi.fn(), POST: vi.fn(), __auth: auth })),
 }));
 
+vi.mock("better-auth/adapters/drizzle", () => ({
+  drizzleAdapter: mocks.drizzleAdapter,
+}));
+
+vi.mock("@/db/client", () => ({
+  db: mocks.db,
+  schema: mocks.schema,
+}));
+
 // The betterAuth mock stashes the config it received on the returned instance,
 // so we read it back per-instance instead of indexing the shared mock's call
 // log (which accumulates across resetModules).
 type CapturedConfig = {
+  database?: unknown;
   emailAndPassword?: { enabled?: boolean };
   plugins?: unknown[];
   socialProviders?: { google?: { scope?: string[] } };
@@ -54,6 +70,18 @@ describe("lib/auth — Better Auth server config", () => {
     const mod = await import("@/lib/auth");
     expect(mod).toHaveProperty("auth");
     expect(typeof mod.auth).toBe("object");
+  });
+
+  it("uses the selected application database through Better Auth's pg adapter", async () => {
+    const mod = await import("@/lib/auth");
+
+    expect(mocks.drizzleAdapter).toHaveBeenCalledWith(mocks.db, {
+      provider: "pg",
+      schema: mocks.schema,
+    });
+    expect(capturedConfig(mod.auth).database).toBe(
+      mocks.drizzleAdapter.mock.results.at(-1)?.value,
+    );
   });
 
   it("enables email/password auth", async () => {

@@ -7,8 +7,8 @@
  * `gestantes_data`, `tuberculose_data`, and `has_data`.
  *
  * Two output modes, both LGPD-gated and non-prod-DB-gated:
- *   - default (`db:seed`)      → connect via DATABASE_URL, TRUNCATE + INSERT
- *                                inside a transaction using postgres-js.
+ *   - default (`db:seed`)      → load the selected local PGlite or Postgres
+ *                                database inside a transaction.
  *   - `--emit-sql` (`db:seed:emit`) → print BEGIN + TRUNCATE + INSERTs + COMMIT
  *                                     to stdout without opening a connection.
  *                                     Consumed by MCP `apply_migration` for the
@@ -18,11 +18,13 @@
  * summaries reach stdout/stderr. See `.agents/skills/lgpd-guard/SKILL.md`.
  */
 
+import { PGlite } from "@electric-sql/pglite";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { computeCnsChecksum } from "@/lib/patients/cns";
+import { getDatabaseDriver, PGLITE_DATA_DIR } from "../src/db/config";
+import { computeCnsChecksum } from "../src/lib/patients/cns";
 
 import postgres from "postgres";
 
@@ -55,13 +57,15 @@ const repoRoot = resolve(__dirname, "..");
 // --gestantes-path / --pacientes-path to point at other synthetic sources.
 const defaultGestantesPath = resolve(repoRoot, "seed/gestantes.json");
 const defaultPacientesPath = resolve(repoRoot, "seed/pacientes.csv");
+const gestantesPathOverride = args[gestantesPathIdx + 1];
+const pacientesPathOverride = args[pacientesPathIdx + 1];
 const gestantesPath =
-  gestantesPathIdx >= 0 && args[gestantesPathIdx + 1]
-    ? resolve(args[gestantesPathIdx + 1])
+  gestantesPathIdx >= 0 && gestantesPathOverride
+    ? resolve(gestantesPathOverride)
     : defaultGestantesPath;
 const pacientesPath =
-  pacientesPathIdx >= 0 && args[pacientesPathIdx + 1]
-    ? resolve(args[pacientesPathIdx + 1])
+  pacientesPathIdx >= 0 && pacientesPathOverride
+    ? resolve(pacientesPathOverride)
     : defaultPacientesPath;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,14 +178,6 @@ function idadeFromDob(iso: string | null): number | null {
   return age;
 }
 
-function normalizeRisco(input: string | undefined | null): string | null {
-  if (!input) return null;
-  const lower = input.trim().toLowerCase();
-  if (lower === "alto") return "alto";
-  if (lower === "habitual" || lower === "" || lower === "não" || lower === "nao") return "habitual";
-  return lower;
-}
-
 function mapGestantesJson(source: GestanteSourceRow[]): Pick<Rows, "patients" | "gestantes"> {
   const patients: PatientRow[] = [];
   const gestantes: GestanteRow[] = [];
@@ -262,7 +258,7 @@ function synthesiseCns(sourceId: string): string {
   const hex = createHash("sha256").update(sourceId).digest("hex");
   let digits = "";
   for (let i = 0; i < 10; i++) {
-    digits += (parseInt(hex[i], 16) % 10).toString();
+    digits += (parseInt(hex.charAt(i), 16) % 10).toString();
   }
   const prefix = `1${digits}`;
   return prefix + computeCnsChecksum(prefix);
@@ -271,12 +267,17 @@ function synthesiseCns(sourceId: string): string {
 function parseCsv(source: string): PacienteCsvRow[] {
   const lines = source.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  const header = lines[0].split(",").map((h) => h.trim());
+  const header = lines[0]?.split(",").map((h) => h.trim()) ?? [];
   const rows: PacienteCsvRow[] = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",");
+    const line = lines[i];
+    if (!line) continue;
+    const cols = line.split(",");
     const row: Record<string, string> = {};
-    for (let j = 0; j < header.length; j++) row[header[j]] = (cols[j] ?? "").trim();
+    for (let j = 0; j < header.length; j++) {
+      const key = header[j];
+      if (key) row[key] = (cols[j] ?? "").trim();
+    }
     rows.push(row as unknown as PacienteCsvRow);
   }
   return rows;
@@ -287,7 +288,7 @@ const ENDERECO_RE = /^(.+?)\s+(\d+\S*)$/;
 function parseEndereco(raw: string): { rua: string | null; numero: string | null } {
   const match = ENDERECO_RE.exec(raw.trim());
   if (!match) return { rua: raw.trim() || null, numero: null };
-  return { rua: match[1].trim(), numero: match[2].trim() };
+  return { rua: match[1]?.trim() ?? null, numero: match[2]?.trim() ?? null };
 }
 
 function mapPacientesCsv(
@@ -388,7 +389,7 @@ function encodeSql(value: Literal): string {
 
 function insertRow(table: string, row: Record<string, Literal>): string {
   const cols = Object.keys(row);
-  const vals = cols.map((c) => encodeSql(row[c])).join(", ");
+  const vals = cols.map((column) => encodeSql(row[column] ?? null)).join(", ");
   return `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${vals});`;
 }
 
@@ -406,34 +407,31 @@ function generateSql(rows: Rows): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Postgres apply — used by default mode
+// Database apply — used by default mode
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function applyToDb(rows: Rows): Promise<void> {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    // Should never reach here; the gate would have refused first. Guard anyway.
-    throw new Error("DATABASE_URL not set — refusing to connect.");
+  const seedSql = generateSql(rows);
+  const driver = getDatabaseDriver();
+
+  if (driver === "postgres") {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is required when DATABASE_DRIVER=postgres.");
+
+    const sql = postgres(url, { prepare: false, max: 1 });
+    try {
+      await sql.unsafe(seedSql);
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+    return;
   }
-  const sql = postgres(url, { prepare: false, max: 1 });
+
+  const client = new PGlite(resolve(PGLITE_DATA_DIR));
   try {
-    await sql.begin(async (tx) => {
-      await tx`TRUNCATE TABLE patients RESTART IDENTITY CASCADE`;
-      if (rows.patients.length > 0) {
-        await tx`INSERT INTO patients ${tx(rows.patients as unknown as Record<string, unknown>[])}`;
-      }
-      if (rows.gestantes.length > 0) {
-        await tx`INSERT INTO gestantes_data ${tx(rows.gestantes as unknown as Record<string, unknown>[])}`;
-      }
-      if (rows.tuberculose.length > 0) {
-        await tx`INSERT INTO tuberculose_data ${tx(rows.tuberculose as unknown as Record<string, unknown>[])}`;
-      }
-      if (rows.has.length > 0) {
-        await tx`INSERT INTO has_data ${tx(rows.has as unknown as Record<string, unknown>[])}`;
-      }
-    });
+    await client.exec(seedSql);
   } finally {
-    await sql.end({ timeout: 5 });
+    await client.close();
   }
 }
 
@@ -457,23 +455,26 @@ async function main(): Promise<void> {
     skipped: fromCsv.skipped,
   };
 
-  const bannerHost = (() => {
-    try {
-      const u = new URL(process.env.DATABASE_URL ?? "");
-      return `${u.hostname}${u.port ? `:${u.port}` : ""}`;
-    } catch {
-      return "<no DATABASE_URL>";
-    }
-  })();
+  const driver = getDatabaseDriver();
+  const target = driver === "postgres"
+    ? (() => {
+        try {
+          const url = new URL(process.env.DATABASE_URL ?? "");
+          return `${url.hostname}${url.port ? `:${url.port}` : ""}`;
+        } catch {
+          return "<no DATABASE_URL>";
+        }
+      })()
+    : PGLITE_DATA_DIR;
 
   if (emitSqlMode) {
     process.stderr.write(
-      `⚠️  Emitting seed SQL for patients / gestantes_data / tuberculose_data / has_data (target host: ${bannerHost}).\n`,
+      `⚠️  Emitting seed SQL for patients / gestantes_data / tuberculose_data / has_data (target: ${target}).\n`,
     );
     process.stdout.write(generateSql(rows));
   } else {
     process.stderr.write(
-      `⚠️  Truncating patients / gestantes_data / tuberculose_data / has_data on ${bannerHost}.\n`,
+      `⚠️  Truncating patients / gestantes_data / tuberculose_data / has_data on ${target}.\n`,
     );
     await applyToDb(rows);
   }

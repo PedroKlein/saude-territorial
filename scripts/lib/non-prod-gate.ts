@@ -1,17 +1,19 @@
 /**
  * Non-prod DB gate — refuses to run against production-shaped databases.
  *
- * Consumed by:
- *   - `scripts/verify-non-prod-db.ts` (CLI wrapper, run via `&&` from
- *     package.json destructive scripts)
- *   - `scripts/seed-patients.ts` (in-process check, defense-in-depth: guards
- *     against direct `tsx scripts/seed-patients.ts` invocations that would
- *     bypass the shell chain)
- *
- * Never logs the password portion of DATABASE_URL — only the host+port.
+ * Consumed by the migration and seed scripts, plus the standalone
+ * `scripts/verify-non-prod-db.ts` wrapper used by Postgres-only tooling.
+ * Local PGlite is fixed to `.data/pglite`; remote Postgres targets are checked
+ * by URL without ever logging credentials.
  *
  * See `docs/adr/ADR-002-drizzle-orm.md`.
  */
+
+import {
+  type DatabaseDriver,
+  getDatabaseDriver,
+  PGLITE_DATA_DIR,
+} from "../../src/db/config";
 
 /** Known non-prod project refs. Add refs as new dev/staging projects appear. */
 export const KNOWN_NON_PROD_REFS = [
@@ -32,6 +34,21 @@ export interface GateResult {
  * no process.exit. Callers decide how to react.
  */
 export function evaluateNonProdGate(env: NodeJS.ProcessEnv = process.env): GateResult {
+  let driver: DatabaseDriver;
+  try {
+    driver = getDatabaseDriver(env);
+  } catch (error) {
+    return {
+      ok: false,
+      host: env.DATABASE_DRIVER === "pglite" ? PGLITE_DATA_DIR : "<unset>",
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  if (driver === "pglite") {
+    return { ok: true, host: PGLITE_DATA_DIR, reason: "fixed local PGlite path" };
+  }
+
   const url = env.DATABASE_URL ?? "";
 
   if (!url) {
@@ -77,7 +94,11 @@ export function enforceNonProdGate(env: NodeJS.ProcessEnv = process.env): void {
     return;
   }
   console.error(`Refusing to run against ${result.host}: ${result.reason}.`);
-  if (result.host !== "<unset>" && result.host !== "<unparseable URL>") {
+  if (
+    result.host !== PGLITE_DATA_DIR &&
+    result.host !== "<unset>" &&
+    result.host !== "<unparseable URL>"
+  ) {
     console.error(
       "If this really is a non-prod database, add its project ref to KNOWN_NON_PROD_REFS in scripts/lib/non-prod-gate.ts.",
     );

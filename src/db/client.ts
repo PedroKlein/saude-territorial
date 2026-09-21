@@ -1,42 +1,53 @@
-import { drizzle } from "drizzle-orm/postgres-js";
+import { PGlite } from "@electric-sql/pglite";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
+import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import postgres from "postgres";
 
+import { getDatabaseDriver, PGLITE_DATA_DIR } from "./config";
 import * as schema from "./schema";
 
-/**
- * Single Drizzle client for the app. Imports of the DB MUST come from this
- * file — no other `postgres(...)` calls anywhere. See
- * `.agents/skills/drizzle-data-access/SKILL.md` for the boundary rules.
- *
- * - `prepare: false` is a safe default: it's required by transaction-pooling
- *   proxies (e.g. PgBouncer in transaction mode) and harmless on direct
- *   connections and local Postgres, so we leave it on everywhere.
- * - `max: 1` keeps the dev connection footprint small. Raise for production
- *   once the pilot expands.
- *
- * The URL is validated lazily: importing this module from Vitest (`NODE_ENV=test`
- * or `VITEST=true`) does NOT throw — schema tests that mock the DB can skip a
- * live connection entirely.
- */
+export type { DatabaseDriver } from "./config";
 
-const url = process.env.DATABASE_URL;
+export const databaseDriver = getDatabaseDriver();
 
-if (!url) {
-  const inTest = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
-  if (!inTest) {
-    throw new Error(
-      "DATABASE_URL is not set. Put it in .env.local (see .env.local.example).",
-    );
+const globalDatabase = globalThis as typeof globalThis & {
+  pgliteClient?: PGlite;
+};
+
+let closeDatabaseConnection: () => Promise<void> = () => Promise.resolve();
+
+function createDatabase(): PgDatabase<PgQueryResultHKT, typeof schema> {
+  if (databaseDriver === "pglite") {
+    const dataDir = path.resolve(PGLITE_DATA_DIR);
+    mkdirSync(path.dirname(dataDir), { recursive: true });
+    const client = globalDatabase.pgliteClient ?? new PGlite(dataDir);
+    globalDatabase.pgliteClient = client;
+    closeDatabaseConnection = async () => {
+      await client.close();
+      if (globalDatabase.pgliteClient === client) {
+        delete globalDatabase.pgliteClient;
+      }
+    };
+    return drizzlePglite(client, { schema });
   }
+
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL is required when DATABASE_DRIVER=postgres.");
+  }
+
+  const client = postgres(url, { prepare: false, max: 1 });
+  closeDatabaseConnection = async () => client.end({ timeout: 5 });
+  return drizzlePostgres(client, { schema });
 }
 
-// In tests, `postgres()` with a placeholder never opens a socket unless a
-// query is issued — safe.
-const client = postgres(url ?? "postgresql://placeholder@localhost:5432/placeholder", {
-  prepare: false,
-  max: 1,
-});
+export async function closeDatabase(): Promise<void> {
+  await closeDatabaseConnection();
+}
 
-export const db = drizzle(client, { schema });
+export const db = createDatabase();
 export { schema };
 export type DB = typeof db;

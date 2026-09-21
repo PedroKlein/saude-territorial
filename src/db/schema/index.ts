@@ -1,3 +1,4 @@
+export * from "./auth";
 export * from "./patients";
 export * from "./gestantes";
 export * from "./tuberculose";
