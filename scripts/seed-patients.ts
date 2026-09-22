@@ -23,7 +23,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { getDatabaseDriver, PGLITE_DATA_DIR } from "../src/db/config";
+import { getDatabaseDriver, getPgliteDataDir } from "../src/db/config";
 import { computeCnsChecksum } from "../src/lib/patients/cns";
 
 import postgres from "postgres";
@@ -427,7 +427,7 @@ async function applyToDb(rows: Rows): Promise<void> {
     return;
   }
 
-  const client = new PGlite(resolve(PGLITE_DATA_DIR));
+  const client = new PGlite(resolve(getPgliteDataDir()));
   try {
     await client.exec(seedSql);
   } finally {
@@ -465,7 +465,7 @@ async function main(): Promise<void> {
           return "<no DATABASE_URL>";
         }
       })()
-    : PGLITE_DATA_DIR;
+    : getPgliteDataDir();
 
   if (emitSqlMode) {
     process.stderr.write(

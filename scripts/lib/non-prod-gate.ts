@@ -3,8 +3,8 @@
  *
  * Consumed by the migration and seed scripts, plus the standalone
  * `scripts/verify-non-prod-db.ts` wrapper used by Postgres-only tooling.
- * Local PGlite is fixed to `.data/pglite`; remote Postgres targets are checked
- * by URL without ever logging credentials.
+ * Local PGlite stays inside `.data/`; remote Postgres targets are checked by
+ * URL without ever logging credentials.
  *
  * See `docs/adr/ADR-002-drizzle-orm.md`.
  */
@@ -12,7 +12,7 @@
 import {
   type DatabaseDriver,
   getDatabaseDriver,
-  PGLITE_DATA_DIR,
+  getPgliteDataDir,
 } from "../../src/db/config";
 
 /** Known non-prod project refs. Add refs as new dev/staging projects appear. */
@@ -40,13 +40,26 @@ export function evaluateNonProdGate(env: NodeJS.ProcessEnv = process.env): GateR
   } catch (error) {
     return {
       ok: false,
-      host: env.DATABASE_DRIVER === "pglite" ? PGLITE_DATA_DIR : "<unset>",
+      host: env.DATABASE_DRIVER === "pglite" ? (env.PGLITE_DATA_DIR ?? ".data/pglite") : "<unset>",
       reason: error instanceof Error ? error.message : String(error),
     };
   }
 
   if (driver === "pglite") {
-    return { ok: true, host: PGLITE_DATA_DIR, reason: "fixed local PGlite path" };
+    try {
+      const dataDir = getPgliteDataDir(env);
+      return {
+        ok: true,
+        host: dataDir,
+        reason: dataDir === ".data/pglite" ? "fixed local PGlite path" : "local PGlite path",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        host: env.PGLITE_DATA_DIR ?? ".data/pglite",
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   const url = env.DATABASE_URL ?? "";
@@ -95,7 +108,7 @@ export function enforceNonProdGate(env: NodeJS.ProcessEnv = process.env): void {
   }
   console.error(`Refusing to run against ${result.host}: ${result.reason}.`);
   if (
-    result.host !== PGLITE_DATA_DIR &&
+    !result.host.startsWith(".data/") &&
     result.host !== "<unset>" &&
     result.host !== "<unparseable URL>"
   ) {

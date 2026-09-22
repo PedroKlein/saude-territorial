@@ -6,7 +6,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 
-import { getDatabaseDriver, PGLITE_DATA_DIR } from "./config";
+import { getDatabaseDriver, getPgliteDataDir } from "./config";
 import * as schema from "./schema";
 
 export type { DatabaseDriver } from "./config";
@@ -21,7 +21,7 @@ let closeDatabaseConnection: () => Promise<void> = () => Promise.resolve();
 
 function createDatabase(): PgDatabase<PgQueryResultHKT, typeof schema> {
   if (databaseDriver === "pglite") {
-    const dataDir = path.resolve(PGLITE_DATA_DIR);
+    const dataDir = path.resolve(getPgliteDataDir());
     mkdirSync(path.dirname(dataDir), { recursive: true });
     const client = globalDatabase.pgliteClient ?? new PGlite(dataDir);
     globalDatabase.pgliteClient = client;

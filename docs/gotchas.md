@@ -175,3 +175,4 @@ button, a, [role="button"], input[type="submit"], select {
 | Cookie not working | Better Auth signs cookies with HMAC | Use the dev-session endpoint for signed cookies |
 | `proxy.ts` not working | Wrong file location | Must be `src/proxy.ts`, not `src/app/proxy.ts` |
 | Local data seems missing | Dev server started from another working directory | Start from the project root so `.data/pglite/` resolves consistently |
+| `Failed to get session` with `RuntimeError: Aborted()` | Persistent PGlite directory was left with a corrupted checkpoint/WAL after an abrupt process termination | Stop every process using the directory, then run `mise run db:reset` and `mise run db:seed:user`. This rebuilds the synthetic local database. Avoid running two processes against the same PGlite directory or terminating the server with `SIGKILL`. |

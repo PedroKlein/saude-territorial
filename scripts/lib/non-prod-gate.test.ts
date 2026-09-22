@@ -18,6 +18,32 @@ describe("non-production database gate", () => {
     });
   });
 
+  it("allows an explicit local PGlite directory", () => {
+    expect(
+      evaluateNonProdGate({
+        ...developmentEnv,
+        PGLITE_DATA_DIR: ".data/demo-video",
+      }),
+    ).toEqual({
+      ok: true,
+      host: ".data/demo-video",
+      reason: "local PGlite path",
+    });
+  });
+
+  it("refuses a PGlite directory outside .data", () => {
+    expect(
+      evaluateNonProdGate({
+        ...developmentEnv,
+        PGLITE_DATA_DIR: "/tmp/demo-video",
+      }),
+    ).toEqual({
+      ok: false,
+      host: "/tmp/demo-video",
+      reason: "PGLITE_DATA_DIR must be a relative path inside .data/.",
+    });
+  });
+
   it("refuses explicit PGlite in production", () => {
     expect(
       evaluateNonProdGate({ NODE_ENV: "production", DATABASE_DRIVER: "pglite" }),

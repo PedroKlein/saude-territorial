@@ -10,6 +10,8 @@ import postgres from "postgres";
 import { afterEach, describe, expect, it } from "vitest";
 import { promisify } from "node:util";
 
+import { getPgliteDataDir } from "../src/db/config";
+
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 const tsxLoader = require.resolve("tsx");
@@ -24,6 +26,7 @@ function commandEnvironment(overrides: Record<string, string | undefined>) {
   delete env.DATABASE_DRIVER;
   delete env.DATABASE_URL;
   delete env.I_HAVE_VERIFIED_NON_PROD;
+  delete env.PGLITE_DATA_DIR;
   delete env.SEED_SYNTHETIC;
   return Object.assign(env, overrides);
 }
@@ -46,8 +49,11 @@ async function makeTemporaryDirectory() {
   return directory;
 }
 
-async function readPgliteCounts(directory: string): Promise<SeedCounts> {
-  const client = new PGlite(path.join(directory, ".data/pglite"));
+async function readPgliteCounts(
+  directory: string,
+  dataDir = ".data/pglite",
+): Promise<SeedCounts> {
+  const client = new PGlite(path.join(directory, dataDir));
   const counts: SeedCounts = {
     patients: 0,
     gestantes_data: 0,
@@ -82,6 +88,19 @@ afterEach(async () => {
 });
 
 describe("database tooling", () => {
+  it("resolves the default and demo PGlite directories", () => {
+    expect(getPgliteDataDir({})).toBe(".data/pglite");
+    expect(getPgliteDataDir({ PGLITE_DATA_DIR: ".data/demo-video" })).toBe(
+      ".data/demo-video",
+    );
+    expect(() => getPgliteDataDir({ PGLITE_DATA_DIR: "/tmp/demo-video" })).toThrow(
+      "PGLITE_DATA_DIR must be a relative path inside .data/.",
+    );
+    expect(() => getPgliteDataDir({ PGLITE_DATA_DIR: ".data/../outside" })).toThrow(
+      "PGLITE_DATA_DIR must be a relative path inside .data/.",
+    );
+  });
+
   it("migrates and seeds local PGlite without Docker or DATABASE_URL", async () => {
     const directory = await makeTemporaryDirectory();
 
@@ -118,6 +137,48 @@ describe("database tooling", () => {
     }
 
     expect(await readPgliteCounts(directory)).toEqual({
+      patients: 68,
+      gestantes_data: 55,
+      tuberculose_data: 5,
+      has_data: 8,
+    });
+  }, 30_000);
+
+  it("resets the demo database without deleting the default database", async () => {
+    const directory = await makeTemporaryDirectory();
+    await migrateAndSeedPglite(directory);
+
+    const defaultClient = new PGlite(path.join(directory, ".data/pglite"));
+    try {
+      await defaultClient.exec("create table default_probe (value text)");
+    } finally {
+      await defaultClient.close();
+    }
+
+    const demoEnvironment = { PGLITE_DATA_DIR: ".data/demo-video" };
+    await runScript("migrate-db.ts", directory, demoEnvironment);
+    await runScript("seed-patients.ts", directory, {
+      ...demoEnvironment,
+      SEED_SYNTHETIC: "1",
+    });
+    await runScript("reset-db.ts", directory, demoEnvironment);
+
+    const unchangedDefaultClient = new PGlite(path.join(directory, ".data/pglite"));
+    try {
+      const probe = await unchangedDefaultClient.query<{ exists: boolean }>(
+        "select to_regclass('default_probe') is not null as exists",
+      );
+      expect(probe.rows[0]?.exists).toBe(true);
+    } finally {
+      await unchangedDefaultClient.close();
+    }
+
+    await runScript("migrate-db.ts", directory, demoEnvironment);
+    await runScript("seed-patients.ts", directory, {
+      ...demoEnvironment,
+      SEED_SYNTHETIC: "1",
+    });
+    expect(await readPgliteCounts(directory, ".data/demo-video")).toEqual({
       patients: 68,
       gestantes_data: 55,
       tuberculose_data: 5,

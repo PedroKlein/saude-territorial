@@ -9,7 +9,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import postgres from "postgres";
 
-import { getDatabaseDriver, PGLITE_DATA_DIR } from "../src/db/config";
+import { getDatabaseDriver, getPgliteDataDir } from "../src/db/config";
 import { enforceNonProdGate } from "./lib/non-prod-gate";
 
 const migrationsFolder = path.resolve(__dirname, "../drizzle");
@@ -31,7 +31,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const dataDir = path.resolve(PGLITE_DATA_DIR);
+  const dataDir = path.resolve(getPgliteDataDir());
   await mkdir(path.dirname(dataDir), { recursive: true });
   const client = new PGlite(dataDir);
   try {
