@@ -1,0 +1,42 @@
+# Dev compose: app with hot reload (volume-mounted source) + Postgres.
+# Usage: docker compose -f docker-compose.dev.yml up
+name: saude-territorial-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: saude-territorial-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saude
+      POSTGRES_PASSWORD: saude
+      POSTGRES_DB: saude_territorial
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - saude-dev-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saude -d saude_territorial"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    image: node:22-alpine
+    container_name: saude-territorial-dev-app
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && npx drizzle-kit migrate && echo 'y' | npx @better-auth/cli@latest migrate && pnpm dev"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://saude:saude@db:5432/saude_territorial
+    volumes:
+      - .:/app # Mount current source code inside docker
+      - dev-node-modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  saude-dev-pgdata:
+  dev-node-modules:

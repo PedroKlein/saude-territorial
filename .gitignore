@@ -1,9 +1,13 @@
+# NixOS
+.direnv
+
 # Next.js
 .next/
 out/
 
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Environment variables
 .env.local

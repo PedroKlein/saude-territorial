@@ -32,7 +32,7 @@ const socialProviders =
     : undefined;
 
 export const auth = betterAuth({
-  database: new Database("./auth.db"),
+  database: new Database(process.env.AUTH_DB_PATH ?? "./auth.db"),
   plugins: [nextCookies()],
   emailAndPassword: {
     enabled: true,
