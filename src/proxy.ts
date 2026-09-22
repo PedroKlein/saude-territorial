@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
+const protectedRoutes = ["/map", "/pacientes", "/settings"] as const;
+
+function isProtectedRoute(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    protectedRoutes.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    )
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: request.headers,
   });
 
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
-  // Protect dashboard routes — redirect to login if unauthenticated
-  // In development with demo mode, /map is accessible without auth
-  const isDev = process.env.NODE_ENV === "development";
-  if (pathname.startsWith("/settings") || (!isDev && pathname.startsWith("/map"))) {
-    if (!session) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+  if (isProtectedRoute(pathname) && !session) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Redirect logged-in users away from login page
