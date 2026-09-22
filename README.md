@@ -50,6 +50,24 @@ DATABASE_DRIVER=postgres DATABASE_URL=postgresql://saude:saude@localhost:5432/sa
 
 Use `mise run db:postgres:reset` to recreate, migrate, and seed that disposable parity database.
 
+### Running the full stack with Docker
+
+Use the development Compose file when both the application and native Postgres should run in containers:
+
+```bash
+./docker-run.sh dev
+```
+
+For a production-style local build, provide explicit authentication settings:
+
+```bash
+BETTER_AUTH_SECRET="$(openssl rand -base64 32)" \
+BETTER_AUTH_URL=http://localhost:3000 \
+./docker-run.sh prod
+```
+
+The Docker stacks always select native Postgres. Running `mise run setup` and `mise run dev` outside Docker continues to use persistent local PGlite by default.
+
 ### Running on your own server
 
 Nothing here is tied to Supabase or Vercel. Production uses native Postgres: set `DATABASE_DRIVER=postgres` and point `DATABASE_URL` at the deployment database before starting the Next.js app on a Node runtime. Production rejects PGlite and fails fast when `DATABASE_URL` is missing.

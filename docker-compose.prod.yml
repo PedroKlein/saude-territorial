@@ -1,0 +1,38 @@
+# Production stack: standalone Next.js image with native Postgres.
+# Usage: BETTER_AUTH_SECRET=... BETTER_AUTH_URL=https://example.com docker compose -f docker-compose.prod.yml up --build
+name: saude-territorial-prod
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: saude-territorial-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saude
+      POSTGRES_PASSWORD: saude
+      POSTGRES_DB: saude_territorial
+    volumes:
+      - saude-prod-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saude -d saude_territorial"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: saude-territorial-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_DRIVER: postgres
+      DATABASE_URL: postgresql://saude:saude@db:5432/saude_territorial
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  saude-prod-pgdata:

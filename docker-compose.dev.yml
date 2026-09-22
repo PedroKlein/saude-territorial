@@ -1,0 +1,48 @@
+# Full development stack: hot-reloading Next.js app with native Postgres.
+# Local development without Docker continues to use PGlite by default.
+# Usage: docker compose -f docker-compose.dev.yml up
+name: saude-territorial-dev
+
+services:
+  db-dev:
+    image: postgres:16-alpine
+    container_name: saude-territorial-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saude
+      POSTGRES_PASSWORD: saude
+      POSTGRES_DB: saude_territorial
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - saude-dev-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saude -d saude_territorial"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    image: node:22-alpine
+    container_name: saude-territorial-dev-app
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm exec drizzle-kit migrate && pnpm db:seed:user && pnpm dev"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_DRIVER: postgres
+      DATABASE_URL: postgresql://saude:saude@db-dev:5432/saude_territorial
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-me}
+      BETTER_AUTH_URL: http://localhost:${APP_PORT:-3000}
+      NEXT_PUBLIC_APP_URL: http://localhost:${APP_PORT:-3000}
+    volumes:
+      - .:/app
+      - dev-node-modules:/app/node_modules
+    depends_on:
+      db-dev:
+        condition: service_healthy
+
+volumes:
+  saude-dev-pgdata:
+  dev-node-modules:
