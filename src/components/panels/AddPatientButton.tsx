@@ -1,21 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import { Plus } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { PatientWizard } from "@/components/wizard/PatientWizard";
 
-export function AddPatientButton() {
+export function AddPatientButton({
+  className,
+  compactOnMobile = false,
+  label = "Adicionar paciente",
+}: {
+  className?: string;
+  compactOnMobile?: boolean;
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        aria-label={compactOnMobile ? label : undefined}
+        className={className}
         onClick={() => { setOpen(true); }}
-        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
-        + Adicionar paciente
-      </button>
+        <Plus data-icon="inline-start" />
+        <span className={compactOnMobile ? "hidden sm:inline" : undefined}>
+          {label}
+        </span>
+      </Button>
       <PatientWizard
         open={open}
         mode={{ kind: "new" }}
