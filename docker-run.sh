@@ -8,7 +8,7 @@ case "$ENV" in
     docker compose -f docker-compose.dev.yml up
     ;;
   prod)
-    docker compose -f docker-compose.prod.yml up --build
+    docker compose -f docker-compose.prod.yml up --build -d
     ;;
   *)
     echo "Usage: $0 [dev|prod]" >&2
