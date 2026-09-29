@@ -176,14 +176,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           contatosExaminados: t.contatosExaminados,
           todosContatosExaminados: t.todosContatosExaminados,
           contatosLista: t.contatosLista,
-          consultas: t.consultas
-            ? t.consultas.map((c) => ({
-                mes: c.mes,
-                realizada: c.realizada,
-                data: toBRDate(c.data),
-                observacao: c.observacao,
-              }))
-            : [],
+          consultas: t.consultas.map((c) => ({
+            mes: c.mes,
+            realizada: c.realizada,
+            data: toBRDate(c.data),
+            observacao: c.observacao,
+          })),
           // Kept for backwards-compat with any UI still reading the old key.
           baciloscopia: t.baciloscopiaResultado,
           trm: t.trmResultado,
@@ -383,7 +381,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             await tx.insert(tuberculoseConsultas).values({
               patientId: newId,
               mes: c.mes,
-              realizada: c.realizada ?? false,
+              realizada: c.realizada,
               data: c.data ?? null,
               observacao: c.observacao ?? null,
             });

@@ -43,6 +43,7 @@ import type { UnifiedPatient } from "@/app/api/patients/[id]/route";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
 import { computeDpp, computeIg, formatIg } from "@/lib/patients/dates";
+import { parseContacts } from "@/lib/patients/schemas";
 import { format } from "date-fns";
 
 import {
@@ -305,27 +306,10 @@ function ContactsHUDPicker({
 }) {
   const [showContacts, setShowContacts] = useState(false);
 
-  const contacts = useMemo(() => {
-    const raw = currentPatient.tuberculose?.contatosLista;
-    if (!raw || typeof raw !== "string") return [];
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => {
-          const c = item as Record<string, unknown>;
-          return {
-            cns: String(c.cns ?? ""),
-            nome: typeof c.nome === "string" ? c.nome : undefined,
-            examinado: Boolean(c.examinado),
-            coabita: c.coabita !== false,
-          };
-        });
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  }, [currentPatient.tuberculose?.contatosLista]);
+  const contacts = useMemo(
+    () => parseContacts(currentPatient.tuberculose?.contatosLista),
+    [currentPatient.tuberculose?.contatosLista],
+  );
 
   // Check if current patient is a contact of any other patient (Caso Fonte)
   const casoFontePatient = useMemo(() => {
@@ -340,16 +324,9 @@ function ContactsHUDPicker({
             ? (t as Record<string, unknown>).contatosLista
             : null;
       if (!rawLista) continue;
-      try {
-        const parsed = JSON.parse(rawLista as string);
-        if (
-          Array.isArray(parsed) &&
-          parsed.some((c: Record<string, unknown>) => String(c.cns ?? "") === currentPatient.cns)
-        ) {
-          return p;
-        }
-      } catch {
-        // ignore
+      const parsedContacts = parseContacts(rawLista);
+      if (parsedContacts.some((c) => c.cns === currentPatient.cns)) {
+        return p;
       }
     }
     return null;
@@ -364,7 +341,7 @@ function ContactsHUDPicker({
           <div className="flex min-w-0 items-center gap-1.5 font-medium truncate">
             <Activity className="size-3.5 shrink-0 text-amber-700" />
             <span className="truncate">
-              Caso Fonte: <strong>{casoFontePatient.nomeCompleto || casoFontePatient.cns}</strong>
+              Caso Fonte: <strong>{casoFontePatient.nomeCompleto ?? casoFontePatient.cns}</strong>
             </span>
           </div>
           <button
@@ -410,11 +387,11 @@ function ContactsHUDPicker({
                     className="flex items-center justify-between rounded-md bg-white p-2 border border-sky-100 shadow-2xs text-[11px]"
                   >
                     {(() => {
-                      const displayName = target?.nomeCompleto || c.nome;
+                      const displayName = target?.nomeCompleto;
+                      const targetRec = target as Record<string, unknown> | undefined;
                       const isExam = Boolean(
-                        (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
-                        (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
-                        c.examinado,
+                        targetRec?.dataPrimeiraAmostra ??
+                        targetRec?.baciloscopiaPrimeiraData,
                       );
                       return (
                         <div className="min-w-0 flex-1">
@@ -513,7 +490,6 @@ function PanelContent({
     if (!allPatientsData) return [];
     const map = new Map<string, { id: string; cns: string; nomeCompleto: string | null; lat: number | null; lng: number | null }>();
     for (const list of Object.values(allPatientsData)) {
-      if (!list) continue;
       for (const p of list) {
         if (!map.has(p.id)) {
           map.set(p.id, p);
@@ -1169,27 +1145,10 @@ function TuberculoseCardBody({
   allPatients?: { id: string; cns: string; nomeCompleto: string | null; lat: number | null; lng: number | null }[];
   onSwapToPatient?: (p: { id: string; lat: number | null; lng: number | null }) => void;
 }) {
-  const contacts = useMemo(() => {
-    const raw = data.contatosLista;
-    if (!raw || typeof raw !== "string") return [];
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => {
-          const c = item as Record<string, unknown>;
-          return {
-            cns: String(c.cns ?? ""),
-            nome: typeof c.nome === "string" ? c.nome : undefined,
-            examinado: Boolean(c.examinado),
-            coabita: c.coabita !== false,
-          };
-        });
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  }, [data.contatosLista]);
+  const contacts = useMemo(
+    () => parseContacts(data.contatosLista),
+    [data.contatosLista],
+  );
 
   const consultas = useMemo(() => {
     const raw = data.consultas;
@@ -1204,20 +1163,20 @@ function TuberculoseCardBody({
   const coabitantesCount = coabitantes.length;
   const examinadosCount = contacts.filter((c) => {
     const target = allPatients?.find((p) => p.cns === c.cns);
+    const targetRec = target as Record<string, unknown> | undefined;
     return Boolean(
-      (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
-      (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
-      c.examinado,
+      targetRec?.dataPrimeiraAmostra ??
+      targetRec?.baciloscopiaPrimeiraData,
     );
   }).length;
   const todosExaminados =
     coabitantesCount === 0 ||
     coabitantes.every((c) => {
       const target = allPatients?.find((p) => p.cns === c.cns);
+      const targetRec = target as Record<string, unknown> | undefined;
       return Boolean(
-        (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
-        (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
-        c.examinado,
+        targetRec?.dataPrimeiraAmostra ??
+        targetRec?.baciloscopiaPrimeiraData,
       );
     });
 
@@ -1409,11 +1368,11 @@ function TuberculoseCardBody({
                   className="flex items-center justify-between text-[11px] bg-white p-2 rounded border border-neutral-200/70 shadow-2xs"
                 >
                   {(() => {
-                    const displayName = target?.nomeCompleto || c.nome;
+                    const displayName = target?.nomeCompleto;
+                    const targetRec = target as Record<string, unknown> | undefined;
                     const isExam = Boolean(
-                      (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
-                      (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
-                      c.examinado,
+                      targetRec?.dataPrimeiraAmostra ??
+                      targetRec?.baciloscopiaPrimeiraData,
                     );
                     return (
                       <div className="truncate min-w-0 flex-1">

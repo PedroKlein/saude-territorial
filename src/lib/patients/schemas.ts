@@ -240,6 +240,28 @@ export const TuberculoseConsultaItemSchema = z.object({
 });
 export type TuberculoseConsultaItem = z.infer<typeof TuberculoseConsultaItemSchema>;
 
+export const ContactItemSchema = z.object({
+  cns: z.union([z.string(), z.number()]).transform((v) => String(v).trim()),
+  coabita: z.boolean().default(true),
+});
+export type ContactItem = z.infer<typeof ContactItemSchema>;
+
+export function parseContacts(raw: unknown): ContactItem[] {
+  if (!raw) return [];
+  try {
+    const data: unknown = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((item) => {
+        const res = ContactItemSchema.safeParse(item);
+        return res.success ? res.data : null;
+      })
+      .filter((c): c is ContactItem => c !== null);
+  } catch {
+    return [];
+  }
+}
+
 // TuberculosePatchSchema covers `tuberculose_data` and optional follow-up consultations.
 export const TuberculosePatchSchema = z
   .object({

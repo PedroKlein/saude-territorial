@@ -183,7 +183,7 @@ describe("StepDadosTB — full-parity round-trip", () => {
     expect(setCtx).toHaveBeenCalledTimes(1);
     const t = setCtx.mock.calls[0]![0]!.tuberculose as Record<string, unknown>;
     expect(Array.isArray(t.consultas)).toBe(true);
-    const consultas = t.consultas as Array<{ mes: number; realizada: boolean }>;
+    const consultas = t.consultas as { mes: number; realizada: boolean }[];
     expect(consultas).toHaveLength(1);
     expect(consultas[0]!.mes).toBe(1);
     expect(consultas[0]!.realizada).toBe(true);

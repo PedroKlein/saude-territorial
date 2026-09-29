@@ -40,7 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/panels/Field";
 import { EnumField } from "@/components/panels/EnumField";
-import { TuberculosePatchSchema } from "@/lib/patients/schemas";
+import { type ContactItem, parseContacts, TuberculosePatchSchema } from "@/lib/patients/schemas";
 import {
   BACILOSCOPIA_RESULTADO_LABELS,
   BACILOSCOPIA_RESULTADO_VALUES,
@@ -95,12 +95,7 @@ const StepSchema = z.object({
 
 type StepValues = z.infer<typeof StepSchema>;
 
-export type ContactItem = {
-  cns: string;
-  nome?: string;
-  examinado?: boolean;
-  coabita: boolean;
-};
+export type { ContactItem };
 
 export type ConsultaItemState = {
   mes: number;
@@ -124,39 +119,6 @@ function fmtDate(d: Date | null | undefined): string {
 function emptyToNull(v: string | undefined): string | null {
   if (v === undefined || v === "") return null;
   return v;
-}
-
-function parseContacts(raw: unknown): ContactItem[] {
-  if (Array.isArray(raw)) {
-    return raw.map((item) => {
-      const c = item as Record<string, unknown>;
-      return {
-        cns: String(c.cns ?? ""),
-        nome: typeof c.nome === "string" ? c.nome : undefined,
-        examinado: Boolean(c.examinado),
-        coabita: c.coabita !== false,
-      };
-    });
-  }
-  if (typeof raw === "string" && raw.trim().startsWith("[")) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => {
-          const c = item as Record<string, unknown>;
-          return {
-            cns: String(c.cns ?? ""),
-            nome: typeof c.nome === "string" ? c.nome : undefined,
-            examinado: Boolean(c.examinado),
-            coabita: c.coabita !== false,
-          };
-        });
-      }
-    } catch {
-      // ignore JSON parse error
-    }
-  }
-  return [];
 }
 
 function parseConsultas(raw: unknown): ConsultaItemState[] {
@@ -206,14 +168,9 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
       }
     >();
     Object.values(layerData).forEach((list) => {
-      list?.forEach((p) => {
-        if (p?.cns) {
-          map.set(p.cns, p as {
-            cns: string;
-            nomeCompleto: string | null;
-            dataPrimeiraAmostra?: unknown;
-            baciloscopiaPrimeiraData?: unknown;
-          });
+      list.forEach((p) => {
+        if (p.cns) {
+          map.set(p.cns, p);
         }
       });
     });
@@ -221,20 +178,17 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
   }, [layerData]);
 
   const isExaminado = useCallback(
-    (cns: string, fallback?: boolean) => {
+    (cns: string) => {
       const p = allPatients.find((pt) => pt.cns === cns);
-      if (p) {
-        return Boolean(p.dataPrimeiraAmostra || p.baciloscopiaPrimeiraData);
-      }
-      return Boolean(fallback);
+      return Boolean(p?.dataPrimeiraAmostra ?? p?.baciloscopiaPrimeiraData);
     },
     [allPatients],
   );
 
   const getContactName = useCallback(
-    (cns: string, fallbackNome?: string) => {
+    (cns: string) => {
       const p = allPatients.find((pt) => pt.cns === cns);
-      return p?.nomeCompleto || fallbackNome;
+      return p?.nomeCompleto ?? null;
     },
     [allPatients],
   );
@@ -282,12 +236,10 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
   // Dynamic derivation of contacts (0/0 counts as all examined)
   const coabitantes = contacts.filter((c) => c.coabita);
   const coabitantesCount = coabitantes.length;
-  const examinadosCount = contacts.filter((c) =>
-    isExaminado(c.cns, c.examinado),
-  ).length;
+  const examinadosCount = contacts.filter((c) => isExaminado(c.cns)).length;
   const todosExaminados =
     coabitantesCount === 0 ||
-    coabitantes.every((c) => isExaminado(c.cns, c.examinado));
+    coabitantes.every((c) => isExaminado(c.cns));
 
   // Contact list operations
   const handleAddContact = () => {
@@ -381,7 +333,7 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
                 coabita: c.coabita,
               })),
             )
-          : (prev.contatosLista as string | null | undefined) ?? null,
+          : prev.contatosLista ?? null,
       consultas: consultas.map((c) => ({
         mes: c.mes,
         realizada: c.realizada,
@@ -919,8 +871,8 @@ export function StepDadosTB({ ctx, setCtx, goNext }: Props) {
         {contacts.length > 0 ? (
           <div className="space-y-1.5">
             {contacts.map((c) => {
-              const name = getContactName(c.cns, c.nome);
-              const examinado = isExaminado(c.cns, c.examinado);
+              const name = getContactName(c.cns);
+              const examinado = isExaminado(c.cns);
 
               return (
                 <div

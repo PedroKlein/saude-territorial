@@ -321,7 +321,7 @@ export async function PATCH(
               .values({
                 patientId: id,
                 mes: c.mes,
-                realizada: c.realizada ?? false,
+                realizada: c.realizada,
                 data: c.data ?? null,
                 observacao: c.observacao ?? null,
                 updatedAt: now,
@@ -329,7 +329,7 @@ export async function PATCH(
               .onConflictDoUpdate({
                 target: [tuberculoseConsultas.patientId, tuberculoseConsultas.mes],
                 set: {
-                  realizada: c.realizada ?? false,
+                  realizada: c.realizada,
                   data: c.data ?? null,
                   observacao: c.observacao ?? null,
                   updatedAt: now,
@@ -625,14 +625,12 @@ function shape(p: Loaded): {
       contatosExaminados: t.contatosExaminados,
       todosContatosExaminados: t.todosContatosExaminados,
       contatosLista: t.contatosLista,
-      consultas: t.consultas
-        ? t.consultas.map((c) => ({
-            mes: c.mes,
-            realizada: c.realizada,
-            data: toBRDate(c.data),
-            observacao: c.observacao,
-          }))
-        : [],
+      consultas: t.consultas.map((c) => ({
+        mes: c.mes,
+        realizada: c.realizada,
+        data: toBRDate(c.data),
+        observacao: c.observacao,
+      })),
       baciloscopia: t.baciloscopiaResultado,
       trm: t.trmResultado,
       cultura: t.culturaMTuberculosis,
@@ -784,14 +782,12 @@ function shapeUnified(p: Loaded): UnifiedPatient {
           contatosExaminados: p.tuberculose.contatosExaminados,
           todosContatosExaminados: p.tuberculose.todosContatosExaminados,
           contatosLista: p.tuberculose.contatosLista,
-          consultas: p.tuberculose.consultas
-            ? p.tuberculose.consultas.map((c) => ({
-                mes: c.mes,
-                realizada: c.realizada,
-                data: toBRDate(c.data),
-                observacao: c.observacao,
-              }))
-            : [],
+          consultas: p.tuberculose.consultas.map((c) => ({
+            mes: c.mes,
+            realizada: c.realizada,
+            data: toBRDate(c.data),
+            observacao: c.observacao,
+          })),
           updatedAt: timestampToBRDate(p.tuberculose.updatedAt),
         }
       : null,
