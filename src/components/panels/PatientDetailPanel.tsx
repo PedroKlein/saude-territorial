@@ -1229,7 +1229,7 @@ function TuberculoseCardBody({
             {(data.tdoStatus as string | null) ?? "—"}
           </span>
         </Field>
-        <Field label="Forma tratamento">
+        <Field label="Forma de tratamento">
           <span className="text-sm text-neutral-800">
             {(data.formaTratamento as string | null) ?? "—"}
           </span>
@@ -1321,7 +1321,7 @@ function TuberculoseCardBody({
         Contatos & Coabitantes
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-        <Field label="Coabitantes">
+        <Field label="Contatos coabitantes">
           <span className="text-sm font-semibold text-neutral-800">
             {contacts.length > 0
               ? coabitantesCount
@@ -1330,7 +1330,7 @@ function TuberculoseCardBody({
                 : "—"}
           </span>
         </Field>
-        <Field label="Examinados (1ª amostra)">
+        <Field label="Contatos examinados">
           <span className="text-sm font-semibold text-neutral-800">
             {contacts.length > 0
               ? examinadosCount
@@ -1339,7 +1339,7 @@ function TuberculoseCardBody({
                 : "—"}
           </span>
         </Field>
-        <Field label="Todos examinados" className="col-span-2">
+        <Field label="Todos os contatos examinados" className="col-span-2">
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
               todosExaminados || data.todosContatosExaminados === true
