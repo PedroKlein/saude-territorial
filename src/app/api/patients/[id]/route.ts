@@ -299,22 +299,8 @@ export async function PATCH(
           });
 
         if (consultas && Array.isArray(consultas)) {
-          const activeMonths = consultas.map((c) => c.mes);
-          if (activeMonths.length > 0) {
-            await tx
-              .delete(tuberculoseConsultas)
-              .where(
-                and(
-                  eq(tuberculoseConsultas.patientId, id),
-                  notInArray(tuberculoseConsultas.mes, activeMonths),
-                ),
-              );
-          } else {
-            await tx
-              .delete(tuberculoseConsultas)
-              .where(eq(tuberculoseConsultas.patientId, id));
-          }
-
+          // Upsert first so no valid data is lost if a concurrent PATCH
+          // deletes orphans between our delete and insert.
           for (const c of consultas) {
             await tx
               .insert(tuberculoseConsultas)
@@ -335,6 +321,23 @@ export async function PATCH(
                   updatedAt: now,
                 },
               });
+          }
+
+          // Remove months no longer active.
+          const activeMonths = consultas.map((c) => c.mes);
+          if (activeMonths.length > 0) {
+            await tx
+              .delete(tuberculoseConsultas)
+              .where(
+                and(
+                  eq(tuberculoseConsultas.patientId, id),
+                  notInArray(tuberculoseConsultas.mes, activeMonths),
+                ),
+              );
+          } else {
+            await tx
+              .delete(tuberculoseConsultas)
+              .where(eq(tuberculoseConsultas.patientId, id));
           }
         }
       }
