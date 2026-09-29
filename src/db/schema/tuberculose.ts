@@ -14,33 +14,40 @@ import {
 
 import { patients } from "./patients";
 
-/** Baciloscopia — resultado consolidado (LOCKED por alert rule). */
 export const baciloscopiaResultadoEnum = pgEnum("baciloscopia_resultado", [
-  "Positiva",
-  "Negativa",
+  "Negativo",
+  "Positivo+",
+  "Positivo++",
+  "Positivo+++",
+  "Não realizado",
+  "<9 bacilos em 100 campos",
+  "Amostra Insuficiente.",
 ]);
 
-/** Teste Rápido Molecular. */
 export const trmResultadoEnum = pgEnum("trm_resultado", [
-  "Detectável",
-  "Não detectável",
+  "Detectado/ Rifampicina Sensível",
+  "Detectado Resistência à Rifampicina Não Detectado",
+  "Detectado Resistência à Rifampicina Detectado",
+  "Detectado traços / Rifampicina indeterminada",
+  "Não Detectado",
+  "Não realizado",
+  "Amostra Insuficiente.",
+  "Laudo indisponivel",
 ]);
 
-/** Cultura M. tuberculosis. */
 export const culturaResultadoEnum = pgEnum("cultura_resultado", [
   "Positiva",
   "Negativa",
   "Pendente",
+  "Não realizada",
 ]);
 
-/** TDO — Tratamento Diretamente Observado. */
 export const tdoStatusEnum = pgEnum("tdo_status", [
-  "TDO regular",
+  "Não está em TDO",
+  "TDO em dia",
   "TDO irregular/faltoso",
-  "Não aplicável",
 ]);
 
-/** Tipo de entrada no tratamento TB (sheet col V). */
 export const tipoEntradaTbEnum = pgEnum("tipo_entrada_tb", [
   "Caso novo",
   "Recidiva",
@@ -49,16 +56,17 @@ export const tipoEntradaTbEnum = pgEnum("tipo_entrada_tb", [
   "Não sabe",
 ]);
 
-/** Motivo de encerramento TB (sheet col AL). */
 export const encerramentoMotivoTbEnum = pgEnum("encerramento_motivo_tb", [
   "Cura",
+  "Completou tratamento",
+  "Êxito do tratamento",
   "Abandono",
-  "Óbito por TB",
-  "Óbito por outra causa",
   "Transferência",
+  "Óbito",
   "Falência",
-  "Mudança de diagnóstico",
+  "Mudança diagnóstico",
 ]);
+
 /**
  * `tuberculose_data` — single-row-per-case TB fields.
  *
@@ -84,44 +92,42 @@ export const tuberculoseData = pgTable("tuberculose_data", {
     .references(() => patients.id, { onDelete: "cascade" }),
 
   // Registro do caso (cols J, K)
-  tipo: text("tipo"), // col J
+  tipo: text("tipo"), // "Caso Fonte" | "Contato"
   galRegistro: text("gal_registro"), // col K — laboratory registry code
 
-  // Exames Diagnósticos (block L–T on the sheet)
-  baciloscopiaPrimeiraData: date("baciloscopia_primeira_data"), // col L
-  baciloscopiaSegundaData: date("baciloscopia_segunda_data"), // col M
-  // Free-text summary for backwards-compat with the current alert rule and
-  // the LOCKED spec vocabulary. Values: "Positiva" | "Negativa" | "".
-  baciloscopiaResultado: baciloscopiaResultadoEnum("baciloscopia_resultado"),
-  trmPrimeiraData: date("trm_primeira_data"), // col N — TRM 1ª amostra
-  trmSegundaData: date("trm_segunda_data"), // col O
-  trmResultado: trmResultadoEnum("trm_resultado"),
-  culturaMTuberculosis: culturaResultadoEnum("cultura_m_tuberculosis"), // col P
-  ppdMm: integer("ppd_mm"), // col Q — PPD skin test result in millimeters
-  histopatologia: text("histopatologia"), // col R
-  rxTorax: text("rx_torax"), // col S
-  outrosExames: text("outros_exames"), // col T
+  // Amostras & Exames Diagnósticos (block L–T on the sheet)
+  baciloscopiaPrimeiraData: date("baciloscopia_primeira_data"), // col L: Data da PRIMEIRA amostra
+  baciloscopiaSegundaData: date("baciloscopia_segunda_data"), // col M: Data da SEGUNDA amostra
+  baciloscopiaResultado: baciloscopiaResultadoEnum("baciloscopia_resultado"), // col N: 1ª amostra
+  baciloscopiaSegundaResultado: baciloscopiaResultadoEnum("baciloscopia_segunda_resultado"), // col O: 2ª amostra
+  trmPrimeiraData: date("trm_primeira_data"),
+  trmSegundaData: date("trm_segunda_data"),
+  trmData: date("trm_data"),
+  trmResultado: trmResultadoEnum("trm_resultado"), // col P: Teste Rápido Molecular M. Tuberculosis
+  culturaMTuberculosis: culturaResultadoEnum("cultura_m_tuberculosis"), // col Q: Cultura Escarro
+  culturaOutros: text("cultura_outros"), // col R: Cultura Outros
+  ppdMm: integer("ppd_mm"), // col S: PPD em milímetros
+  histopatologia: text("histopatologia"), // col T: Histopatologia
+  rxTorax: text("rx_torax"), // col U: RX Tórax
+  outrosExames: text("outros_exames"), // col V: Outros Exames
 
-  // Tratamento (cols U–Y)
-  formaClinica: text("forma_clinica"), // col U
-  tipoEntrada: tipoEntradaTbEnum("tipo_entrada"), // col V
-  esquema: text("esquema"), // col W — drug regimen, e.g. "RHZE"
-  dataInicio: date("data_inicio"), // col X
-  formaTratamento: text("forma_tratamento"), // col Y
-  tdoStatus: tdoStatusEnum("tdo_status"), // col AK
+  // Tratamento (cols W–AA, AK)
+  formaClinica: text("forma_clinica"), // col W: Forma Clínica
+  tipoEntrada: tipoEntradaTbEnum("tipo_entrada"), // col X: Tipo de Entrada
+  esquema: text("esquema"), // col Y: Esquema
+  dataInicio: date("data_inicio"), // col Z: Data de Início
+  formaTratamento: text("forma_tratamento"), // col AA: Forma de Tratamento
+  tdoStatus: tdoStatusEnum("tdo_status"), // col AK: TDO
 
   // Encerramento (cols AL, AM)
-  encerramentoMotivo: encerramentoMotivoTbEnum("encerramento_motivo"),
-  encerramentoData: date("encerramento_data"),
+  encerramentoMotivo: encerramentoMotivoTbEnum("encerramento_motivo"), // col AL
+  encerramentoData: date("encerramento_data"), // col AM
 
   // Contatos (cols AN–AQ)
-  contatosCoabitantes: integer("contatos_coabitantes"), // AN
-  contatosExaminados: integer("contatos_examinados"), // AO
-  todosContatosExaminados: boolean("todos_contatos_examinados"), // AP
-  // AQ — LGPD hot spot: free-text names of household members. Seed=NULL.
-  // API validator flags any write to this field and requires explicit consent
-  // metadata in a future task; for MVP it's a free-text column with a comment.
-  contatosLista: text("contatos_lista"),
+  contatosCoabitantes: integer("contatos_coabitantes"), // AN: Pessoas que moram junto
+  contatosExaminados: integer("contatos_examinados"), // AO: Pessoas examinadas
+  todosContatosExaminados: boolean("todos_contatos_examinados"), // AP: Todos examinados
+  contatosLista: text("contatos_lista"), // AQ: Lista das pessoas (JSON estruturado de contatos)
 
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -30,6 +30,8 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
+  Users,
+  Activity,
 } from "lucide-react";
 
 import { useMapStore } from "@/stores/mapStore";
@@ -288,6 +290,182 @@ function CoincidencePicker({
   );
 }
 
+// ---------------------------------------------------------------------------
+// ContactsHUDPicker — view contacts of the selected patient and swap to them
+// ---------------------------------------------------------------------------
+
+function ContactsHUDPicker({
+  currentPatient,
+  allPatients,
+  onSwapToPatient,
+}: {
+  currentPatient: UnifiedPatient;
+  allPatients: { id: string; cns: string; nomeCompleto: string | null; lat: number | null; lng: number | null }[];
+  onSwapToPatient: (p: { id: string; lat: number | null; lng: number | null }) => void;
+}) {
+  const [showContacts, setShowContacts] = useState(false);
+
+  const contacts = useMemo(() => {
+    const raw = currentPatient.tuberculose?.contatosLista;
+    if (!raw || typeof raw !== "string") return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => {
+          const c = item as Record<string, unknown>;
+          return {
+            cns: String(c.cns ?? ""),
+            nome: typeof c.nome === "string" ? c.nome : undefined,
+            examinado: Boolean(c.examinado),
+            coabita: c.coabita !== false,
+          };
+        });
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }, [currentPatient.tuberculose?.contatosLista]);
+
+  // Check if current patient is a contact of any other patient (Caso Fonte)
+  const casoFontePatient = useMemo(() => {
+    if (!currentPatient.cns) return null;
+    for (const p of allPatients) {
+      if (p.id === currentPatient.id) continue;
+      const t = (p as Record<string, unknown>).tuberculose;
+      const rawLista =
+        typeof (p as Record<string, unknown>).contatosLista === "string"
+          ? (p as Record<string, unknown>).contatosLista
+          : (t && typeof (t as Record<string, unknown>).contatosLista === "string")
+            ? (t as Record<string, unknown>).contatosLista
+            : null;
+      if (!rawLista) continue;
+      try {
+        const parsed = JSON.parse(rawLista as string);
+        if (
+          Array.isArray(parsed) &&
+          parsed.some((c: Record<string, unknown>) => String(c.cns ?? "") === currentPatient.cns)
+        ) {
+          return p;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  }, [allPatients, currentPatient.cns, currentPatient.id]);
+
+  if (contacts.length === 0 && !casoFontePatient) return null;
+
+  return (
+    <div className="border-b border-neutral-200">
+      {casoFontePatient && (
+        <div className="flex items-center justify-between gap-2 bg-amber-50 px-5 py-2 text-xs text-amber-900 border-b border-amber-200/60">
+          <div className="flex min-w-0 items-center gap-1.5 font-medium truncate">
+            <Activity className="size-3.5 shrink-0 text-amber-700" />
+            <span className="truncate">
+              Caso Fonte: <strong>{casoFontePatient.nomeCompleto || casoFontePatient.cns}</strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => { onSwapToPatient(casoFontePatient); }}
+            className="shrink-0 rounded bg-amber-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-amber-700 transition-colors shadow-2xs"
+          >
+            Ir para Caso Fonte ➔
+          </button>
+        </div>
+      )}
+
+      {contacts.length > 0 && (
+        <div className="bg-sky-50 px-5 py-2 text-xs text-sky-950">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 font-medium text-sky-900">
+              <Users className="size-3.5 shrink-0 text-sky-700" />
+              <span>
+                {contacts.length} {contacts.length === 1 ? "contato vinculado" : "contatos vinculados"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setShowContacts((v) => !v); }}
+              className="flex items-center gap-1 font-semibold text-sky-700 hover:text-sky-950"
+            >
+              <span>{showContacts ? "Ocultar" : "Ver contatos"}</span>
+              {showContacts ? (
+                <ChevronUp className="size-3" />
+              ) : (
+                <ChevronDown className="size-3" />
+              )}
+            </button>
+          </div>
+
+          {showContacts && (
+            <div className="mt-2 space-y-1.5 pt-2 border-t border-sky-200/60">
+              {contacts.map((c) => {
+                const target = allPatients.find((p) => p.cns === c.cns);
+                return (
+                  <div
+                    key={c.cns}
+                    className="flex items-center justify-between rounded-md bg-white p-2 border border-sky-100 shadow-2xs text-[11px]"
+                  >
+                    {(() => {
+                      const displayName = target?.nomeCompleto || c.nome;
+                      const isExam = Boolean(
+                        (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
+                        (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
+                        c.examinado,
+                      );
+                      return (
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono font-semibold text-neutral-900 truncate">
+                            {c.cns}
+                          </div>
+                          {displayName && (
+                            <div className="text-neutral-600 truncate font-medium">{displayName}</div>
+                          )}
+                          <div className="mt-0.5 flex gap-1 text-[10px]">
+                            <span className="text-neutral-500">
+                              {c.coabita ? "Mora junto" : "Não coabita"}
+                            </span>
+                            <span className="text-neutral-300">·</span>
+                            <span
+                              className={
+                                isExam
+                                  ? "text-emerald-700 font-medium"
+                                  : "text-amber-700"
+                              }
+                            >
+                              {isExam ? "1ª amostra coletada" : "Amostra pendente"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {target ? (
+                      <button
+                        type="button"
+                        onClick={() => { onSwapToPatient(target); }}
+                        className="shrink-0 ml-2 rounded bg-sky-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-sky-700 transition-colors shadow-2xs"
+                      >
+                        Alternar ➔
+                      </button>
+                    ) : (
+                      <span className="shrink-0 ml-2 text-[10px] text-neutral-400 italic">
+                        Sem ficha
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PanelInner({ id, onClose }: { id: string; onClose: () => void }) {
   const {
     data: patient,
@@ -325,6 +503,32 @@ function PanelContent({
   const [openCards, setOpenCards] = useState<string[]>(["gestante", "tuberculose", "has"]);
 
   const deletePatient = useDeletePatient();
+
+  const { data: allPatientsData } = usePatientData();
+  const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
+  const setMapView = useMapStore((s) => s.setMapView);
+  const mapZoom = useMapStore((s) => s.mapZoom);
+
+  const allPatients = useMemo(() => {
+    if (!allPatientsData) return [];
+    const map = new Map<string, { id: string; cns: string; nomeCompleto: string | null; lat: number | null; lng: number | null }>();
+    for (const list of Object.values(allPatientsData)) {
+      if (!list) continue;
+      for (const p of list) {
+        if (!map.has(p.id)) {
+          map.set(p.id, p);
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [allPatientsData]);
+
+  const swapToPatient = (p: { id: string; lat: number | null; lng: number | null }) => {
+    setSelectedPatient(p.id);
+    if (typeof p.lat === "number" && typeof p.lng === "number") {
+      setMapView([p.lat, p.lng], Math.max(mapZoom, 16));
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // Alert evaluation
@@ -552,6 +756,12 @@ function PanelContent({
           )}
         </div>
 
+        <ContactsHUDPicker
+          currentPatient={patient}
+          allPatients={allPatients}
+          onSwapToPatient={swapToPatient}
+        />
+
         {/* Condition cards */}
         <div className="px-4 py-3">
           <Accordion
@@ -656,6 +866,8 @@ function PanelContent({
                                   [card.key]: !s[card.key],
                                 })); }
                               }
+                              allPatients={allPatients}
+                              onSwapToPatient={swapToPatient}
                             />
                           )}
                           {card.key === "has" && (
@@ -951,18 +1163,101 @@ function TuberculoseCardBody({
   data,
   isAdvanced,
   onToggleAdvanced,
-}: CardBodyProps) {
+  allPatients,
+  onSwapToPatient,
+}: CardBodyProps & {
+  allPatients?: { id: string; cns: string; nomeCompleto: string | null; lat: number | null; lng: number | null }[];
+  onSwapToPatient?: (p: { id: string; lat: number | null; lng: number | null }) => void;
+}) {
+  const contacts = useMemo(() => {
+    const raw = data.contatosLista;
+    if (!raw || typeof raw !== "string") return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => {
+          const c = item as Record<string, unknown>;
+          return {
+            cns: String(c.cns ?? ""),
+            nome: typeof c.nome === "string" ? c.nome : undefined,
+            examinado: Boolean(c.examinado),
+            coabita: c.coabita !== false,
+          };
+        });
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }, [data.contatosLista]);
+
+  const consultas = useMemo(() => {
+    const raw = data.consultas;
+    if (!Array.isArray(raw)) return [];
+    return raw as {
+      mes: number;
+      realizada: boolean;
+    }[];
+  }, [data.consultas]);
+
+  const coabitantes = contacts.filter((c) => c.coabita);
+  const coabitantesCount = coabitantes.length;
+  const examinadosCount = contacts.filter((c) => {
+    const target = allPatients?.find((p) => p.cns === c.cns);
+    return Boolean(
+      (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
+      (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
+      c.examinado,
+    );
+  }).length;
+  const todosExaminados =
+    coabitantesCount === 0 ||
+    coabitantes.every((c) => {
+      const target = allPatients?.find((p) => p.cns === c.cns);
+      return Boolean(
+        (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
+        (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
+        c.examinado,
+      );
+    });
+
   return (
     <>
+      {/* Registro do Caso */}
+      <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+        Registro do Caso
+      </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-        <Field label="Tipo">
-          <span className="text-sm text-neutral-800">
+        <Field label="Tipo de caso">
+          <span className="text-sm font-medium text-neutral-800">
             {(data.tipo as string | null) ?? "—"}
           </span>
         </Field>
+        <Field label="GAL">
+          <span className="text-sm text-neutral-800">
+            {(data.galRegistro as string | null) ?? "—"}
+          </span>
+        </Field>
+      </div>
+
+      {/* Tratamento */}
+      <div className="mt-3.5 mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+        Tratamento
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <Field label="Forma clínica">
           <span className="text-sm text-neutral-800">
             {(data.formaClinica as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Tipo entrada">
+          <span className="text-sm text-neutral-800">
+            {(data.tipoEntrada as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Esquema">
+          <span className="text-sm text-neutral-800">
+            {(data.esquema as string | null) ?? "—"}
           </span>
         </Field>
         <Field label="Data início">
@@ -975,77 +1270,222 @@ function TuberculoseCardBody({
             {(data.tdoStatus as string | null) ?? "—"}
           </span>
         </Field>
+        <Field label="Forma tratamento">
+          <span className="text-sm text-neutral-800">
+            {(data.formaTratamento as string | null) ?? "—"}
+          </span>
+        </Field>
       </div>
+
+      {/* Amostras e Diagnóstico */}
+      <div className="mt-3.5 mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+        Amostras & Diagnóstico
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <Field label="1ª Amostra (Data)">
+          <span className="text-sm text-neutral-800">
+            {(data.dataPrimeiraAmostra as string | null) ??
+              (data.baciloscopiaPrimeiraData as string | null) ??
+              "—"}
+          </span>
+        </Field>
+        <Field label="Baciloscopia 1ª">
+          <span className="text-sm text-neutral-800">
+            {(data.baciloscopiaResultado as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="2ª Amostra (Data)">
+          <span className="text-sm text-neutral-800">
+            {(data.dataSegundaAmostra as string | null) ??
+              (data.baciloscopiaSegundaData as string | null) ??
+              "—"}
+          </span>
+        </Field>
+        <Field label="Baciloscopia 2ª">
+          <span className="text-sm text-neutral-800">
+            {(data.baciloscopiaSegundaResultado as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="TRM (Data)">
+          <span className="text-sm text-neutral-800">
+            {(data.trmData as string | null) ??
+              (data.trmPrimeiraData as string | null) ??
+              "—"}
+          </span>
+        </Field>
+        <Field label="TRM (Resultado)">
+          <span className="text-sm text-neutral-800">
+            {(data.trmResultado as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Cultura M. tuberculosis">
+          <span className="text-sm text-neutral-800">
+            {(data.culturaMTuberculosis as string | null) ?? "—"}
+          </span>
+        </Field>
+        <Field label="Cultura outros">
+          <span className="text-sm text-neutral-800">
+            {(data.culturaOutros as string | null) ?? "—"}
+          </span>
+        </Field>
+      </div>
+
+      {/* Consultas de Acompanhamento (1º ao 9º mês) */}
+      <div className="mt-3.5 mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+        Acompanhamento (1º ao 9º mês)
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 py-1">
+        {Array.from({ length: 9 }, (_, i) => i + 1).map((mes) => {
+          const c = consultas.find((item) => item.mes === mes);
+          return (
+            <div
+              key={mes}
+              className={`flex flex-col items-center justify-center rounded-lg border p-1.5 text-center text-xs ${
+                c
+                  ? c.realizada
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 font-medium"
+                    : "border-rose-200 bg-rose-50 text-rose-800 font-medium"
+                  : "border-neutral-200 bg-neutral-50/60 text-neutral-400"
+              }`}
+            >
+              <span className="text-[10px] font-semibold">{mes}º Mês</span>
+              <span className="text-[10px]">
+                {c ? (c.realizada ? "✓ Feita" : "✗ Não feita") : "—"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Contatos & Coabitantes */}
+      <div className="mt-3.5 mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+        Contatos & Coabitantes
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <Field label="Coabitantes">
+          <span className="text-sm font-semibold text-neutral-800">
+            {contacts.length > 0
+              ? coabitantesCount
+              : data.contatosCoabitantes != null
+                ? (data.contatosCoabitantes as number)
+                : "—"}
+          </span>
+        </Field>
+        <Field label="Examinados (1ª amostra)">
+          <span className="text-sm font-semibold text-neutral-800">
+            {contacts.length > 0
+              ? examinadosCount
+              : data.contatosExaminados != null
+                ? (data.contatosExaminados as number)
+                : "—"}
+          </span>
+        </Field>
+        <Field label="Todos examinados" className="col-span-2">
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+              todosExaminados || data.todosContatosExaminados === true
+                ? "bg-emerald-100 text-emerald-800"
+                : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            {todosExaminados || data.todosContatosExaminados === true
+              ? "Sim (Todos examinados)"
+              : "Não (Pendente)"}
+          </span>
+        </Field>
+      </div>
+
+      {contacts.length > 0 && (
+        <div className="mt-2 space-y-1.5 rounded-md border border-neutral-100 bg-neutral-50/70 p-2 text-xs">
+          <span className="text-[11px] font-semibold text-neutral-700 block">
+            Contatos vinculados ({contacts.length}):
+          </span>
+          <div className="max-h-36 overflow-y-auto space-y-1">
+            {contacts.map((c) => {
+              const target = allPatients?.find((p) => p.cns === c.cns);
+              return (
+                <div
+                  key={c.cns}
+                  className="flex items-center justify-between text-[11px] bg-white p-2 rounded border border-neutral-200/70 shadow-2xs"
+                >
+                  {(() => {
+                    const displayName = target?.nomeCompleto || c.nome;
+                    const isExam = Boolean(
+                      (target as Record<string, unknown>)?.dataPrimeiraAmostra ||
+                      (target as Record<string, unknown>)?.baciloscopiaPrimeiraData ||
+                      c.examinado,
+                    );
+                    return (
+                      <div className="truncate min-w-0 flex-1">
+                        <span className="font-mono font-semibold text-neutral-800">
+                          {c.cns}
+                        </span>
+                        {displayName && (
+                          <span className="text-neutral-600 ml-1.5 truncate font-medium">
+                            ({displayName})
+                          </span>
+                        )}
+                        <div className="mt-0.5 flex gap-1 text-[10px]">
+                          <span className="text-neutral-500">
+                            {c.coabita ? "Mora junto" : "Não coabita"}
+                          </span>
+                          <span className="text-neutral-300">·</span>
+                          <span
+                            className={
+                              isExam
+                                ? "text-emerald-700 font-medium"
+                                : "text-amber-700"
+                            }
+                          >
+                            {isExam ? "1ª amostra coletada" : "Amostra pendente"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {target && onSwapToPatient ? (
+                    <button
+                      type="button"
+                      onClick={() => { onSwapToPatient(target); }}
+                      className="shrink-0 ml-2 rounded bg-sky-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-sky-700 transition-colors shadow-2xs"
+                    >
+                      Alternar ➔
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Encerramento */}
+      {(Boolean(data.encerramentoMotivo) || Boolean(data.encerramentoData)) && (
+        <>
+          <div className="mt-3.5 mb-2 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+            Situação de Encerramento
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <Field label="Motivo">
+              <span className="text-sm font-medium text-neutral-800">
+                {(data.encerramentoMotivo as string | null) ?? "—"}
+              </span>
+            </Field>
+            <Field label="Data encerramento">
+              <span className="text-sm text-neutral-800">
+                {(data.encerramentoData as string | null) ?? "—"}
+              </span>
+            </Field>
+          </div>
+        </>
+      )}
+
+      {/* Advanced clinical details */}
       {isAdvanced && (
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-neutral-100 pt-3">
-          <Field label="Esquema">
-            <span className="text-sm text-neutral-800">
-              {(data.esquema as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Tipo entrada">
-            <span className="text-sm text-neutral-800">
-              {(data.tipoEntrada as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Encerramento">
-            <span className="text-sm text-neutral-800">
-              {(data.encerramentoData as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Motivo enc.">
-            <span className="text-sm text-neutral-800">
-              {(data.encerramentoMotivo as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Baciloscopia">
-            <span className="text-sm text-neutral-800">
-              {(data.baciloscopiaResultado as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="GAL">
-            <span className="text-sm text-neutral-800">
-              {(data.galRegistro as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="TRM (resultado)">
-            <span className="text-sm text-neutral-800">
-              {(data.trmResultado as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Cultura M. tuberculosis">
-            <span className="text-sm text-neutral-800">
-              {(data.culturaMTuberculosis as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Baciloscopia 1ª amostra">
-            <span className="text-sm text-neutral-800">
-              {(data.baciloscopiaPrimeiraData as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Baciloscopia 2ª amostra">
-            <span className="text-sm text-neutral-800">
-              {(data.baciloscopiaSegundaData as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="TRM 1ª amostra">
-            <span className="text-sm text-neutral-800">
-              {(data.trmPrimeiraData as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="TRM 2ª amostra">
-            <span className="text-sm text-neutral-800">
-              {(data.trmSegundaData as string | null) ?? "—"}
-            </span>
-          </Field>
           <Field label="PPD (mm)">
             <span className="text-sm text-neutral-800">
               {data.ppdMm != null ? (data.ppdMm as number) : "—"}
-            </span>
-          </Field>
-          <Field label="Histopatologia">
-            <span className="text-sm text-neutral-800">
-              {(data.histopatologia as string | null) ?? "—"}
             </span>
           </Field>
           <Field label="RX tórax">
@@ -1053,37 +1493,14 @@ function TuberculoseCardBody({
               {(data.rxTorax as string | null) ?? "—"}
             </span>
           </Field>
-          <Field label="Outros exames">
+          <Field label="Histopatologia" className="col-span-2">
+            <span className="text-sm text-neutral-800">
+              {(data.histopatologia as string | null) ?? "—"}
+            </span>
+          </Field>
+          <Field label="Outros exames" className="col-span-2">
             <span className="text-sm text-neutral-800">
               {(data.outrosExames as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Forma de tratamento">
-            <span className="text-sm text-neutral-800">
-              {(data.formaTratamento as string | null) ?? "—"}
-            </span>
-          </Field>
-          <Field label="Contatos coabitantes">
-            <span className="text-sm text-neutral-800">
-              {data.contatosCoabitantes != null
-                ? (data.contatosCoabitantes as number)
-                : "—"}
-            </span>
-          </Field>
-          <Field label="Contatos examinados">
-            <span className="text-sm text-neutral-800">
-              {data.contatosExaminados != null
-                ? (data.contatosExaminados as number)
-                : "—"}
-            </span>
-          </Field>
-          <Field label="Todos os contatos examinados">
-            <span className="text-sm text-neutral-800">
-              {data.todosContatosExaminados === true
-                ? "Sim"
-                : data.todosContatosExaminados === false
-                  ? "Não"
-                  : "—"}
             </span>
           </Field>
         </div>

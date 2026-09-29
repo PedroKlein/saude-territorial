@@ -159,25 +159,73 @@ export const IgAberturaSchema = makeEnumSchema(
   "IG na abertura",
 );
 
-/** Baciloscopia resultado consolidado (mantido pelo alert rule LOCKED). */
-export const BACILOSCOPIA_RESULTADO_VALUES = ["Positiva", "Negativa"] as const;
+/** Tipo de caso TB (sheet col J: "Caso Fonte" ou "Contato"). */
+export const TIPO_CASO_TB_VALUES = [
+  "Caso Fonte",
+  "Contato",
+] as const;
+export type TipoCasoTb = (typeof TIPO_CASO_TB_VALUES)[number];
+export const TIPO_CASO_TB_LABELS: Record<TipoCasoTb, string> = {
+  "Caso Fonte": "Caso Fonte",
+  Contato: "Contato",
+};
+export const TipoCasoTbSchema = makeEnumSchema(TIPO_CASO_TB_VALUES, "tipo de caso");
+
+/** GAL TB (sheet col K: "Não,Sim"). */
+export const GAL_TB_VALUES = ["Não", "Sim"] as const;
+export type GalTb = (typeof GAL_TB_VALUES)[number];
+export const GAL_TB_LABELS: Record<GalTb, string> = {
+  Não: "Não",
+  Sim: "Sim",
+};
+export const GalTbSchema = makeEnumSchema(GAL_TB_VALUES, "GAL");
+
+export const BACILOSCOPIA_RESULTADO_VALUES = [
+  "Negativo",
+  "Positivo+",
+  "Positivo++",
+  "Positivo+++",
+  "Não realizado",
+  "<9 bacilos em 100 campos",
+  "Amostra Insuficiente.",
+] as const;
 export type BaciloscopiaResultado =
   (typeof BACILOSCOPIA_RESULTADO_VALUES)[number];
 export const BACILOSCOPIA_RESULTADO_LABELS: Record<BaciloscopiaResultado, string> = {
-  Positiva: "Positiva",
-  Negativa: "Negativa",
+  Negativo: "Negativo",
+  "Positivo+": "Positivo (+)",
+  "Positivo++": "Positivo (++)",
+  "Positivo+++": "Positivo (+++)",
+  "Não realizado": "Não realizado",
+  "<9 bacilos em 100 campos": "< 9 bacilos em 100 campos",
+  "Amostra Insuficiente.": "Amostra Insuficiente",
 };
 export const BaciloscopiaResultadoSchema = makeEnumSchema(
   BACILOSCOPIA_RESULTADO_VALUES,
   "baciloscopia",
 );
 
-/** Teste Rápido Molecular. */
-export const TRM_RESULTADO_VALUES = ["Detectável", "Não detectável"] as const;
+/** Teste Rápido Molecular (TRM) — valores da planilha. */
+export const TRM_RESULTADO_VALUES = [
+  "Detectado/ Rifampicina Sensível",
+  "Detectado Resistência à Rifampicina Não Detectado",
+  "Detectado Resistência à Rifampicina Detectado",
+  "Detectado traços / Rifampicina indeterminada",
+  "Não Detectado",
+  "Não realizado",
+  "Amostra Insuficiente.",
+  "Laudo indisponivel",
+] as const;
 export type TrmResultado = (typeof TRM_RESULTADO_VALUES)[number];
 export const TRM_RESULTADO_LABELS: Record<TrmResultado, string> = {
-  Detectável: "Detectável",
-  "Não detectável": "Não detectável",
+  "Detectado/ Rifampicina Sensível": "Detectado / Rifampicina Sensível",
+  "Detectado Resistência à Rifampicina Não Detectado": "Detectado / Resistência à Rifampicina Não Detectada",
+  "Detectado Resistência à Rifampicina Detectado": "Detectado / Resistência à Rifampicina Detectada",
+  "Detectado traços / Rifampicina indeterminada": "Detectado traços / Rifampicina indeterminada",
+  "Não Detectado": "Não detectado",
+  "Não realizado": "Não realizado",
+  "Amostra Insuficiente.": "Amostra insuficiente",
+  "Laudo indisponivel": "Laudo indisponível",
 };
 export const TrmResultadoSchema = makeEnumSchema(
   TRM_RESULTADO_VALUES,
@@ -189,12 +237,14 @@ export const CULTURA_RESULTADO_VALUES = [
   "Positiva",
   "Negativa",
   "Pendente",
+  "Não realizada",
 ] as const;
 export type CulturaResultado = (typeof CULTURA_RESULTADO_VALUES)[number];
 export const CULTURA_RESULTADO_LABELS: Record<CulturaResultado, string> = {
   Positiva: "Positiva",
   Negativa: "Negativa",
   Pendente: "Pendente",
+  "Não realizada": "Não realizada",
 };
 export const CulturaResultadoSchema = makeEnumSchema(
   CULTURA_RESULTADO_VALUES,
@@ -203,17 +253,39 @@ export const CulturaResultadoSchema = makeEnumSchema(
 
 /** TDO — Tratamento Diretamente Observado. */
 export const TDO_STATUS_VALUES = [
-  "TDO regular",
+  "Não está em TDO",
+  "TDO em dia",
   "TDO irregular/faltoso",
-  "Não aplicável",
 ] as const;
 export type TdoStatus = (typeof TDO_STATUS_VALUES)[number];
 export const TDO_STATUS_LABELS: Record<TdoStatus, string> = {
-  "TDO regular": "TDO regular",
+  "Não está em TDO": "Não está em TDO",
+  "TDO em dia": "TDO em dia",
   "TDO irregular/faltoso": "TDO irregular/faltoso",
-  "Não aplicável": "Não aplicável",
 };
 export const TdoStatusSchema = makeEnumSchema(TDO_STATUS_VALUES, "TDO");
+
+/** RX Tórax — opções da planilha. */
+export const RX_TORAX_TB_VALUES = ["Solicitado", "Feito", "Não feito"] as const;
+export type RxToraxTb = (typeof RX_TORAX_TB_VALUES)[number];
+export const RX_TORAX_TB_LABELS: Record<RxToraxTb, string> = {
+  Solicitado: "Solicitado",
+  Feito: "Feito",
+  "Não feito": "Não feito",
+};
+export const RxToraxTbSchema = makeEnumSchema(RX_TORAX_TB_VALUES, "RX tórax");
+
+/** Consultas de acompanhamento 1º ao 9º mês status da planilha. */
+export const CONSULTA_TB_STATUS_VALUES = ["Realizada", "Não Realizada"] as const;
+export type ConsultaTbStatus = (typeof CONSULTA_TB_STATUS_VALUES)[number];
+export const CONSULTA_TB_STATUS_LABELS: Record<ConsultaTbStatus, string> = {
+  Realizada: "Realizada",
+  "Não Realizada": "Não realizada",
+};
+export const ConsultaTbStatusSchema = makeEnumSchema(
+  CONSULTA_TB_STATUS_VALUES,
+  "consulta de acompanhamento",
+);
 
 /** Tipo de entrada no tratamento TB (sheet col V). */
 export const TIPO_ENTRADA_TB_VALUES = [
@@ -239,23 +311,25 @@ export const TipoEntradaTbSchema = makeEnumSchema(
 /** Motivo de encerramento TB (sheet col AL). */
 export const ENCERRAMENTO_MOTIVO_TB_VALUES = [
   "Cura",
+  "Completou tratamento",
+  "Êxito do tratamento",
   "Abandono",
-  "Óbito por TB",
-  "Óbito por outra causa",
   "Transferência",
+  "Óbito",
   "Falência",
-  "Mudança de diagnóstico",
+  "Mudança diagnóstico",
 ] as const;
 export type EncerramentoMotivoTb =
   (typeof ENCERRAMENTO_MOTIVO_TB_VALUES)[number];
 export const ENCERRAMENTO_MOTIVO_TB_LABELS: Record<EncerramentoMotivoTb, string> = {
   Cura: "Cura",
+  "Completou tratamento": "Completou tratamento",
+  "Êxito do tratamento": "Êxito do tratamento",
   Abandono: "Abandono",
-  "Óbito por TB": "Óbito por TB",
-  "Óbito por outra causa": "Óbito por outra causa",
   Transferência: "Transferência",
+  Óbito: "Óbito",
   Falência: "Falência",
-  "Mudança de diagnóstico": "Mudança de diagnóstico",
+  "Mudança diagnóstico": "Mudança de diagnóstico",
 };
 export const EncerramentoMotivoTbSchema = makeEnumSchema(
   ENCERRAMENTO_MOTIVO_TB_VALUES,

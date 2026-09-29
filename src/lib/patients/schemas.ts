@@ -38,6 +38,7 @@ import {
   RiscoSchema,
   StatusRealizacaoSchema,
   TdoStatusSchema,
+  TipoCasoTbSchema,
   TipoEntradaTbSchema,
   TrmResultadoSchema,
   TrStatusSchema,
@@ -231,19 +232,32 @@ export const GestantesPatchSchema = z
 
 export type GestantesPatch = z.infer<typeof GestantesPatchSchema>;
 
-// TuberculosePatchSchema covers `tuberculose_data` only — the edit form does not touch `tuberculose_consultas`.
+export const TuberculoseConsultaItemSchema = z.object({
+  mes: z.number().int().min(1).max(9),
+  realizada: z.boolean().default(false),
+  data: dateFlex.optional(),
+  observacao: textOrNull.optional(),
+});
+export type TuberculoseConsultaItem = z.infer<typeof TuberculoseConsultaItemSchema>;
+
+// TuberculosePatchSchema covers `tuberculose_data` and optional follow-up consultations.
 export const TuberculosePatchSchema = z
   .object({
-    tipo: textOrNull.optional(),
+    tipo: TipoCasoTbSchema.optional(),
     galRegistro: textOrNull.optional(),
+    dataPrimeiraAmostra: dateFlex.optional(),
+    dataSegundaAmostra: dateFlex.optional(),
     baciloscopiaPrimeiraData: dateFlex.optional(),
     baciloscopiaSegundaData: dateFlex.optional(),
     baciloscopiaResultado: BaciloscopiaResultadoSchema.optional(),
+    baciloscopiaSegundaResultado: BaciloscopiaResultadoSchema.optional(),
     trmPrimeiraData: dateFlex.optional(),
     trmSegundaData: dateFlex.optional(),
+    trmData: dateFlex.optional(),
     trmResultado: TrmResultadoSchema.optional(),
     culturaMTuberculosis: CulturaResultadoSchema.optional(),
-    ppdMm: PpdMmSchema.nullable().optional(),
+    culturaOutros: textOrNull.optional(),
+    ppdMm: PpdMmSchema.optional(),
     histopatologia: textOrNull.optional(),
     rxTorax: textOrNull.optional(),
     outrosExames: textOrNull.optional(),
@@ -255,20 +269,26 @@ export const TuberculosePatchSchema = z
     tdoStatus: TdoStatusSchema.optional(),
     encerramentoMotivo: EncerramentoMotivoTbSchema.optional(),
     encerramentoData: dateFlex.optional(),
-    contatosCoabitantes: z.number().int().min(0).nullable().optional(),
-    contatosExaminados: z.number().int().min(0).nullable().optional(),
+    contatosCoabitantes: z.coerce.number().int().min(0).nullable().optional(),
+    contatosExaminados: z.coerce.number().int().min(0).nullable().optional(),
     todosContatosExaminados: z.boolean().nullable().optional(),
-    // NOTE: `contatosLista` is a LGPD hot-spot (household names). Excluded
-    // from the MVP edit surface; will require an explicit consent path.
+    contatosLista: textOrNull.optional(),
+    consultas: z.array(TuberculoseConsultaItemSchema).optional(),
   })
   .strict()
   .superRefine((v, ctx) => {
     const today = todayIso();
+    if (!v.baciloscopiaPrimeiraData && v.dataPrimeiraAmostra) {
+      v.baciloscopiaPrimeiraData = v.dataPrimeiraAmostra;
+    }
+    if (!v.baciloscopiaSegundaData && v.dataSegundaAmostra) {
+      v.baciloscopiaSegundaData = v.dataSegundaAmostra;
+    }
     if (isoAfter(v.baciloscopiaPrimeiraData, v.baciloscopiaSegundaData)) {
       ctx.addIssue({
         code: "custom",
         path: ["baciloscopiaSegundaData"],
-        message: "A 2ª baciloscopia não pode ser anterior à 1ª.",
+        message: "A 2ª baciloscopia / amostra não pode ser anterior à 1ª.",
       });
     }
     if (isoAfter(v.dataInicio, v.encerramentoData)) {
@@ -292,13 +312,13 @@ export const TuberculosePatchSchema = z
         message: "Data de encerramento não pode ser no futuro.",
       });
     }
-    // Início do tratamento acontece após a primeira baciloscopia — o exame
+    // Início do tratamento acontece após a primeira baciloscopia / amostra — o exame
     // fecha o diagnóstico que autoriza iniciar o esquema.
     if (isoAfter(v.baciloscopiaPrimeiraData, v.dataInicio)) {
       ctx.addIssue({
         code: "custom",
         path: ["dataInicio"],
-        message: "Início do tratamento não pode ser anterior à 1ª baciloscopia.",
+        message: "Início do tratamento não pode ser anterior à 1ª amostra.",
       });
     }
     if (
