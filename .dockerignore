@@ -18,3 +18,5 @@ screenshots
 .review-screens
 .agents
 tools/demo-video
+**/*.test.ts
+**/*.test.tsx
