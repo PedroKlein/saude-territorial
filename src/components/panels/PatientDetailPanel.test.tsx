@@ -55,7 +55,7 @@ vi.mock("@/hooks/useUpdatePatient", () => ({
 
 // Panel transitively imports PatientWizard → StepSucesso → lottie-react.
 // JSDOM has no canvas, so stub Lottie out for this file too.
-vi.mock("lottie-react", () => ({ default: () => null }));
+vi.mock("lottie-react", () => ({ Lottie: () => null }));
 
 // StepEndereco lazy-loads a react-leaflet MapContainer via next/dynamic.
 // Return a no-op so the wizard import chain doesn't try to render Leaflet.
@@ -76,7 +76,7 @@ vi.mock("motion/react", () => ({
 // Stub lottie-react — lottie-web crashes in JSDOM (no HTMLCanvasElement.getContext).
 // PatientDetailPanel now transitively imports lottie-react via PatientWizard → StepSucesso.
 vi.mock("lottie-react", () => ({
-  default: () => null,
+  Lottie: () => null,
 }));
 
 // Stub PatientWizard so the panel tests stay focused on the panel itself.
