@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { patients } from "@/db/schema/patients";
 import { gestantesData } from "@/db/schema/gestantes";
-import { tuberculoseData } from "@/db/schema/tuberculose";
+import { tuberculoseConsultas, tuberculoseData } from "@/db/schema/tuberculose";
 import { hasData } from "@/db/schema/has";
 import { PatientCreateSchema } from "@/lib/patients/schemas";
 import { normalizeAddress } from "@/lib/geocoding/normalize";
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rows = await db.query.patients.findMany({
       with: {
         gestantes: true,
-        tuberculose: true,
+        tuberculose: { with: { consultas: true } },
         has: true,
       },
     });
@@ -148,17 +148,40 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           ...baseRecord,
           tipo: t.tipo,
           galRegistro: t.galRegistro,
+          dataPrimeiraAmostra: toBRDate(t.baciloscopiaPrimeiraData),
+          dataSegundaAmostra: toBRDate(t.baciloscopiaSegundaData),
+          baciloscopiaPrimeiraData: toBRDate(t.baciloscopiaPrimeiraData),
+          baciloscopiaSegundaData: toBRDate(t.baciloscopiaSegundaData),
           baciloscopiaResultado: t.baciloscopiaResultado,
+          baciloscopiaSegundaResultado: t.baciloscopiaSegundaResultado,
+          trmPrimeiraData: toBRDate(t.trmPrimeiraData),
+          trmSegundaData: toBRDate(t.trmSegundaData),
+          trmData: toBRDate(t.trmData ?? t.trmPrimeiraData),
           trmResultado: t.trmResultado,
           culturaMTuberculosis: t.culturaMTuberculosis,
+          culturaOutros: t.culturaOutros,
+          ppdMm: t.ppdMm,
+          histopatologia: t.histopatologia,
+          rxTorax: t.rxTorax,
           formaClinica: t.formaClinica,
           tipoEntrada: t.tipoEntrada,
           esquema: t.esquema,
           dataInicio: toBRDate(t.dataInicio),
+          formaTratamento: t.formaTratamento,
           tdoStatus: t.tdoStatus,
           encerramentoMotivo: t.encerramentoMotivo,
           encerramentoData: toBRDate(t.encerramentoData),
           outrosExames: t.outrosExames,
+          contatosCoabitantes: t.contatosCoabitantes,
+          contatosExaminados: t.contatosExaminados,
+          todosContatosExaminados: t.todosContatosExaminados,
+          contatosLista: t.contatosLista,
+          consultas: t.consultas.map((c) => ({
+            mes: c.mes,
+            realizada: c.realizada,
+            data: toBRDate(c.data),
+            observacao: c.observacao,
+          })),
           // Kept for backwards-compat with any UI still reading the old key.
           baciloscopia: t.baciloscopiaResultado,
           trm: t.trmResultado,
@@ -343,10 +366,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           ...(data.gestantes ?? {}),
         });
       } else if (data.condicao === "tuberculose") {
+        const { consultas, dataPrimeiraAmostra, dataSegundaAmostra, ...tbData } =
+          data.tuberculose ?? {};
+        const firstDate = tbData.baciloscopiaPrimeiraData ?? dataPrimeiraAmostra;
+        const secondDate = tbData.baciloscopiaSegundaData ?? dataSegundaAmostra;
         await tx.insert(tuberculoseData).values({
           patientId: newId,
-          ...(data.tuberculose ?? {}),
+          ...tbData,
+          baciloscopiaPrimeiraData: firstDate ?? null,
+          baciloscopiaSegundaData: secondDate ?? null,
         });
+        if (consultas && Array.isArray(consultas) && consultas.length > 0) {
+          for (const c of consultas) {
+            await tx.insert(tuberculoseConsultas).values({
+              patientId: newId,
+              mes: c.mes,
+              realizada: c.realizada,
+              data: c.data ?? null,
+              observacao: c.observacao ?? null,
+            });
+          }
+        }
       } else if (data.condicao === "hipertensao") {
         await tx.insert(hasData).values({
           patientId: newId,

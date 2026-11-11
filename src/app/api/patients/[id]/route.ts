@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, notInArray } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { patients } from "@/db/schema/patients";
 import { gestantesData } from "@/db/schema/gestantes";
 import { hasData } from "@/db/schema/has";
-import { tuberculoseData } from "@/db/schema/tuberculose";
+import { tuberculoseConsultas, tuberculoseData } from "@/db/schema/tuberculose";
 import { geocodeWithCache } from "@/lib/geocoding/cache";
 import { normalizeAddress } from "@/lib/geocoding/normalize";
 import {
@@ -274,14 +274,72 @@ export async function PATCH(
           });
       }
       if (patch.tuberculose) {
-        const values = { patientId: id, updatedAt: now, ...patch.tuberculose };
+        const { consultas, dataPrimeiraAmostra, dataSegundaAmostra, ...tbPatch } =
+          patch.tuberculose;
+        const firstDate = tbPatch.baciloscopiaPrimeiraData ?? dataPrimeiraAmostra;
+        const secondDate = tbPatch.baciloscopiaSegundaData ?? dataSegundaAmostra;
+        const values = {
+          patientId: id,
+          updatedAt: now,
+          ...tbPatch,
+          ...(firstDate !== undefined ? { baciloscopiaPrimeiraData: firstDate } : {}),
+          ...(secondDate !== undefined ? { baciloscopiaSegundaData: secondDate } : {}),
+        };
         await tx
           .insert(tuberculoseData)
           .values(values)
           .onConflictDoUpdate({
             target: tuberculoseData.patientId,
-            set: { ...patch.tuberculose, updatedAt: now },
+            set: {
+              ...tbPatch,
+              ...(firstDate !== undefined ? { baciloscopiaPrimeiraData: firstDate } : {}),
+              ...(secondDate !== undefined ? { baciloscopiaSegundaData: secondDate } : {}),
+              updatedAt: now,
+            },
           });
+
+        if (consultas && Array.isArray(consultas)) {
+          // Upsert first so no valid data is lost if a concurrent PATCH
+          // deletes orphans between our delete and insert.
+          for (const c of consultas) {
+            await tx
+              .insert(tuberculoseConsultas)
+              .values({
+                patientId: id,
+                mes: c.mes,
+                realizada: c.realizada,
+                data: c.data ?? null,
+                observacao: c.observacao ?? null,
+                updatedAt: now,
+              })
+              .onConflictDoUpdate({
+                target: [tuberculoseConsultas.patientId, tuberculoseConsultas.mes],
+                set: {
+                  realizada: c.realizada,
+                  data: c.data ?? null,
+                  observacao: c.observacao ?? null,
+                  updatedAt: now,
+                },
+              });
+          }
+
+          // Remove months no longer active.
+          const activeMonths = consultas.map((c) => c.mes);
+          if (activeMonths.length > 0) {
+            await tx
+              .delete(tuberculoseConsultas)
+              .where(
+                and(
+                  eq(tuberculoseConsultas.patientId, id),
+                  notInArray(tuberculoseConsultas.mes, activeMonths),
+                ),
+              );
+          } else {
+            await tx
+              .delete(tuberculoseConsultas)
+              .where(eq(tuberculoseConsultas.patientId, id));
+          }
+        }
       }
       if (patch.hipertensao) {
         const values = { patientId: id, updatedAt: now, ...patch.hipertensao };
@@ -307,7 +365,11 @@ export async function PATCH(
   // than reshaping in-memory because we already own the round trip.
   const updated = await db.query.patients.findFirst({
     where: eq(patients.id, id),
-    with: { gestantes: true, tuberculose: true, has: true },
+    with: {
+      gestantes: true,
+      tuberculose: { with: { consultas: true } },
+      has: true,
+    },
   });
 
   if (!updated) {
@@ -423,7 +485,11 @@ export async function GET(
   try {
     const row = await db.query.patients.findFirst({
       where: eq(patients.id, id),
-      with: { gestantes: true, tuberculose: true, has: true },
+      with: {
+        gestantes: true,
+        tuberculose: { with: { consultas: true } },
+        has: true,
+      },
     });
 
     if (!row) {
@@ -455,7 +521,11 @@ type Loaded = NonNullable<
   Awaited<
     ReturnType<
       typeof db.query.patients.findFirst<{
-        with: { gestantes: true; tuberculose: true; has: true };
+        with: {
+          gestantes: true;
+          tuberculose: { with: { consultas: true } };
+          has: true;
+        };
       }>
     >
   >
@@ -530,17 +600,40 @@ function shape(p: Loaded): {
       ...baseRecord,
       tipo: t.tipo,
       galRegistro: t.galRegistro,
+      dataPrimeiraAmostra: toBRDate(t.baciloscopiaPrimeiraData),
+      dataSegundaAmostra: toBRDate(t.baciloscopiaSegundaData),
+      baciloscopiaPrimeiraData: toBRDate(t.baciloscopiaPrimeiraData),
+      baciloscopiaSegundaData: toBRDate(t.baciloscopiaSegundaData),
       baciloscopiaResultado: t.baciloscopiaResultado,
+      baciloscopiaSegundaResultado: t.baciloscopiaSegundaResultado,
+      trmPrimeiraData: toBRDate(t.trmPrimeiraData),
+      trmSegundaData: toBRDate(t.trmSegundaData),
+      trmData: toBRDate(t.trmData ?? t.trmPrimeiraData),
       trmResultado: t.trmResultado,
       culturaMTuberculosis: t.culturaMTuberculosis,
+      culturaOutros: t.culturaOutros,
       formaClinica: t.formaClinica,
       tipoEntrada: t.tipoEntrada,
       esquema: t.esquema,
       dataInicio: toBRDate(t.dataInicio),
+      formaTratamento: t.formaTratamento,
       tdoStatus: t.tdoStatus,
       encerramentoMotivo: t.encerramentoMotivo,
       encerramentoData: toBRDate(t.encerramentoData),
       outrosExames: t.outrosExames,
+      ppdMm: t.ppdMm,
+      histopatologia: t.histopatologia,
+      rxTorax: t.rxTorax,
+      contatosCoabitantes: t.contatosCoabitantes,
+      contatosExaminados: t.contatosExaminados,
+      todosContatosExaminados: t.todosContatosExaminados,
+      contatosLista: t.contatosLista,
+      consultas: t.consultas.map((c) => ({
+        mes: c.mes,
+        realizada: c.realizada,
+        data: toBRDate(c.data),
+        observacao: c.observacao,
+      })),
       baciloscopia: t.baciloscopiaResultado,
       trm: t.trmResultado,
       cultura: t.culturaMTuberculosis,
@@ -664,17 +757,23 @@ function shapeUnified(p: Loaded): UnifiedPatient {
       ? {
           tipo: p.tuberculose.tipo,
           galRegistro: p.tuberculose.galRegistro,
+          dataPrimeiraAmostra: toBRDate(p.tuberculose.baciloscopiaPrimeiraData),
+          dataSegundaAmostra: toBRDate(p.tuberculose.baciloscopiaSegundaData),
           baciloscopiaPrimeiraData: toBRDate(p.tuberculose.baciloscopiaPrimeiraData),
           baciloscopiaSegundaData: toBRDate(p.tuberculose.baciloscopiaSegundaData),
           baciloscopiaResultado: p.tuberculose.baciloscopiaResultado,
+          baciloscopiaSegundaResultado: p.tuberculose.baciloscopiaSegundaResultado,
           trmPrimeiraData: toBRDate(p.tuberculose.trmPrimeiraData),
           trmSegundaData: toBRDate(p.tuberculose.trmSegundaData),
+          trmData: toBRDate(p.tuberculose.trmData ?? p.tuberculose.trmPrimeiraData),
           trmResultado: p.tuberculose.trmResultado,
           culturaMTuberculosis: p.tuberculose.culturaMTuberculosis,
+          culturaOutros: p.tuberculose.culturaOutros,
           formaClinica: p.tuberculose.formaClinica,
           tipoEntrada: p.tuberculose.tipoEntrada,
           esquema: p.tuberculose.esquema,
           dataInicio: toBRDate(p.tuberculose.dataInicio),
+          formaTratamento: p.tuberculose.formaTratamento,
           tdoStatus: p.tuberculose.tdoStatus,
           encerramentoMotivo: p.tuberculose.encerramentoMotivo,
           encerramentoData: toBRDate(p.tuberculose.encerramentoData),
@@ -682,10 +781,16 @@ function shapeUnified(p: Loaded): UnifiedPatient {
           ppdMm: p.tuberculose.ppdMm,
           histopatologia: p.tuberculose.histopatologia,
           rxTorax: p.tuberculose.rxTorax,
-          formaTratamento: p.tuberculose.formaTratamento,
           contatosCoabitantes: p.tuberculose.contatosCoabitantes,
           contatosExaminados: p.tuberculose.contatosExaminados,
           todosContatosExaminados: p.tuberculose.todosContatosExaminados,
+          contatosLista: p.tuberculose.contatosLista,
+          consultas: p.tuberculose.consultas.map((c) => ({
+            mes: c.mes,
+            realizada: c.realizada,
+            data: toBRDate(c.data),
+            observacao: c.observacao,
+          })),
           updatedAt: timestampToBRDate(p.tuberculose.updatedAt),
         }
       : null,

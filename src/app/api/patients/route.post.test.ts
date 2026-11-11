@@ -161,7 +161,7 @@ const CREATED_TB = {
   gestantes: null,
   tuberculose: {
     patientId: PATIENT_UUID,
-    tipo: "Pulmonar",
+    tipo: "Caso Fonte",
     galRegistro: null,
     baciloscopiaPrimeiraData: null,
     baciloscopiaSegundaData: null,
@@ -280,7 +280,7 @@ describe("POST /api/patients", () => {
       cns: CNS_TB,
       base: { nomeCompleto: "PACIENTE_SINTETICO_TB" },
       condicao: "tuberculose" as const,
-      tuberculose: { tipo: "Pulmonar" },
+      tuberculose: { tipo: "Caso Fonte" },
     };
 
     const res = await POST(makeRequest(tbBody));

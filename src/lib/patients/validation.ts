@@ -86,11 +86,16 @@ export const PressaoArterialSchema = z
  * larger is almost surely a data-entry slip (someone typed 300 or reported
  * something in a different unit).
  */
-export const PpdMmSchema = z
-  .number()
-  .int()
-  .min(0, "PPD não pode ser negativo.")
-  .max(30, "PPD acima de 30mm é implausível — verifique a leitura.");
+export const PpdMmSchema = z.preprocess(
+  (v) => (v === "" || v === null || v === undefined || (typeof v === "number" && isNaN(v)) ? null : Number(v)),
+  z
+    .number({ message: "PPD deve ser um número." })
+    .int("PPD deve ser um número inteiro.")
+    .min(0, "PPD não pode ser negativo.")
+    .max(30, "PPD acima de 30mm é implausível — verifique a leitura.")
+    .nullable()
+);
+
 
 /** Today's date in ISO `yyyy-MM-dd` (wall clock). */
 export function todayIso(): string {

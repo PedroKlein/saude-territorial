@@ -68,10 +68,10 @@ describe("Enum coercion — case-insensitive, whitespace-tolerant", () => {
   it("preserves canonical casing for PT-BR verbatim enums", () => {
     expect(TrStatusSchema.parse("feito")).toBe("Feito");
     expect(TrStatusSchema.parse("NÃO FEITO")).toBe("Não Feito");
-    expect(BaciloscopiaResultadoSchema.parse("negativa")).toBe("Negativa");
-    expect(TdoStatusSchema.parse("tdo regular")).toBe("TDO regular");
+    expect(BaciloscopiaResultadoSchema.parse("negativo")).toBe("Negativo");
+    expect(TdoStatusSchema.parse("tdo em dia")).toBe("TDO em dia");
     expect(TipoEntradaTbSchema.parse("caso novo")).toBe("Caso novo");
-    expect(EncerramentoMotivoTbSchema.parse("ÓBITO POR TB")).toBe("Óbito por TB");
+    expect(EncerramentoMotivoTbSchema.parse("cura")).toBe("Cura");
     expect(ResultadoTrSchema.parse("exposta")).toBe("EXPOSTA");
   });
 
