@@ -1,13 +1,17 @@
 name: CodeQL
 
+# Disabled: code scanning on a private repo needs GitHub Code Security (paid),
+# so every run failed. Manual trigger only until the repo goes public; then
+# restore the triggers below.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    # Weekly scan catches newly published vulnerability patterns without a code change.
-    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+  # schedule:
+  #   # Weekly scan catches newly published vulnerability patterns without a code change.
+  #   - cron: "0 6 * * 1"
 
 jobs:
   analyze:
