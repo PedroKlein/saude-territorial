@@ -152,6 +152,8 @@ describe("database runtime", () => {
       `
         const second = await import(${JSON.stringify(`${clientModuleUrl}?hmr=second`)});
         if (db.$client !== second.db.$client) throw new Error("PGlite client was recreated");
+        // No query ran, so wait for init: PGlite >= 0.5.10 hangs on close() before ready.
+        await db.$client.waitReady;
         await db.$client.close();
       `,
       directory,

@@ -26,6 +26,9 @@ function createDatabase(): PgDatabase<PgQueryResultHKT, typeof schema> {
     const client = globalDatabase.pgliteClient ?? new PGlite(dataDir);
     globalDatabase.pgliteClient = client;
     closeDatabaseConnection = async () => {
+      // PGlite >= 0.5.10 never settles close() if it runs before init
+      // finishes (e.g. a script that exits before its first query).
+      await client.waitReady;
       await client.close();
       if (globalDatabase.pgliteClient === client) {
         delete globalDatabase.pgliteClient;
