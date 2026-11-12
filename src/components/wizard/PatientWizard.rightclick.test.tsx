@@ -107,7 +107,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 vi.mock("lottie-react", () => ({
-  default: () => <div data-testid="lottie" />,
+  Lottie: () => <div data-testid="lottie" />,
 }));
 
 /** Stub out next/dynamic so GeocodeMapPreview renders a lightweight placeholder. */

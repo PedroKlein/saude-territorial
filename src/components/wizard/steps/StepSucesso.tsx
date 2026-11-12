@@ -11,7 +11,7 @@
  * LGPD: no patient identifiers reach console.*.
  */
 
-import Lottie from "lottie-react";
+import { Lottie } from "lottie-react";
 import { MapPin, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMapStore } from "@/stores/mapStore";
@@ -61,7 +61,8 @@ export function StepSucesso({
     <div className="flex flex-col items-center gap-6 py-8 text-center">
       <div role="img" aria-label="Animação de sucesso" className="size-32">
         <Lottie
-          animationData={successAnimation}
+          src={successAnimation}
+          autoplay
           loop={false}
           className="size-full"
         />
