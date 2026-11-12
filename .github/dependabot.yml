@@ -5,7 +5,8 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      # Monthly keeps the PR queue small for a team that reviews part-time.
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
       # Batch routine bumps into one PR to keep review load sane; majors stay separate.
@@ -18,4 +19,9 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      # Action bumps rarely interact; one PR for all of them instead of one each.
+      github-actions:
+        patterns:
+          - "*"

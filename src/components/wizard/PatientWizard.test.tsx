@@ -115,7 +115,7 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-vi.mock("lottie-react", () => ({ default: () => <div data-testid="lottie" /> }));
+vi.mock("lottie-react", () => ({ Lottie: () => <div data-testid="lottie" /> }));
 
 vi.mock("next/dynamic", () => ({
   // dynamic(fn, opts) must return a COMPONENT. Returning `opts.loading()`
