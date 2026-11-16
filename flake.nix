@@ -21,6 +21,7 @@
               pkgs.nodejs_22
               pkgs.pnpm
               pkgs.postgresql_16  # psql client
+              pkgs.osmium-tool    # OSM extract for local Nominatim
             ];
           };
         });

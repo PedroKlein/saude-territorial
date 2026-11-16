@@ -26,6 +26,12 @@ test-results/
 # Local PGlite database
 /.data/
 
+# Service account keys
+.secret/
+
+# Nominatim OSM data
+services/nominatim/porto-alegre.osm.pbf
+
 # Misc
 .DS_Store
 *.pem
