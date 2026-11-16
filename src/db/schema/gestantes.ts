@@ -16,9 +16,9 @@ export const riscoGestante = pgEnum("risco_gestante", ["habitual", "alto"]);
 
 /** IG na abertura pré-natal (bucketizada). */
 export const igAberturaEnum = pgEnum("ig_abertura", [
-  "< 12 sem",
+  "<12 sem",
   "12-24 sem",
-  "> 24 sem",
+  ">24 sem",
 ]);
 
 /** TR/Sorologia Sífilis+HIV por trimestre. */
@@ -39,12 +39,10 @@ export const acompanhamentoStatus = pgEnum("acompanhamento_status", [
   "Não realizada",
 ]);
 
-/** Resultado consolidado do Teste Rápido — EXPOSTA aciona a sub-layer. */
+/** Resultado consolidado do Teste Rápido — MONITORAR aciona a sub-layer. */
 export const resultadoTesteRapido = pgEnum("resultado_teste_rapido", [
   "MONITORAR",
-  "EXPOSTA",
-  "REAGENTE",
-  "Não Reagente",
+  "Seguir com Fluxo habitual",
 ]);
 /**
  * `gestantes_data` — pregnancy-specific fields.
@@ -95,7 +93,7 @@ export const gestantesData = pgTable("gestantes_data", {
   trPrimeiroTri: trStatus("tr_primeiro_tri"),
   trSegundoTri: trStatus("tr_segundo_tri"),
   trTerceiroTri: trStatus("tr_terceiro_tri"),
-  // REAGENTE / EXPOSTA flips isExposta=true on save.
+  // MONITORAR flips isExposta=true on save.
   resultadoTr: resultadoTesteRapido("resultado_tr"),
   trHepBHepCPrimeiroTri: statusRealizacao("tr_hep_b_hep_c_primeiro_tri"), // AA
   trSifHivTerceiroTri: statusRealizacao("tr_sif_hiv_terceiro_tri"), // AB

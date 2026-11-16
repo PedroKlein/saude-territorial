@@ -12,7 +12,7 @@ A repo where:
 2. Enums that drift today ("alto" / "Alto" / "ALTO") are Postgres `pg_enum` types with Zod parity.
 3. Two new patient-scoped condition layers (Diabetes, Domiciliados/Acamados) plus two sheet-native follow-ons (Gestantes Expostas, Exame pé diabético) are first-class. Puericultura is designed but scoped as a variant of the "child + mother binômio" case (see decisions below).
 4. Two location-scoped entities (ILPI institutions, PSE schools) have their own data model : they are NOT patient records.
-5. Cross-tab auto-linking rules (Gestante Exposta triggers on `resultadoTesteRapido='EXPOSTA'`; Exame Pé Diabético triggers on `pmdid=true`) are encoded as either persisted derived state or view-level joins with an explicit contract.
+5. Cross-tab auto-linking rules (Gestante Exposta triggers on `resultadoTesteRapido='MONITORAR'`; Exame Pé Diabético triggers on `pmdid=true`) are encoded as either persisted derived state or view-level joins with an explicit contract.
 6. An XLSX/CSV importer accepts the PET workbook (or a compatible export) and lands patient rows into Postgres with per-row validation reports. This is the single hardest piece.
 
 ## What we're not building
@@ -40,7 +40,7 @@ See `docs/reference/sheet-audit/csv/*.csv` for the raw column heads. Summary of 
 
 ### Gestantes Expostas (NEW LAYER: HIV vertical transmission follow-up)
 
-Wholly new. Auto-linked from Gestantes when `resultadoTesteRapido='EXPOSTA'`.
+Wholly new. Auto-linked from Gestantes when `resultadoTesteRapido='MONITORAR'`.
 
 Column set:
 - **HIV:** TR HIV realizado (bool), Resultado TR HIV (`REAGENTE | NÃO REAGENTE`), Confirmação lab HIV (`Sim|Não|Pendente`), Carga viral HIV (`< 1.000 | ≥ 1.000 cópias/mL`), CD4 (`< 200 | 200-500 | > 500 células/mm³`), TARV iniciado (bool), Data início TARV
@@ -123,7 +123,7 @@ Same institution model. Fields: Nome escola, INEP (unique 8-digit), Telefone, En
 
 Two rules currently expressed as sheet formulas:
 
-1. **Gestante EXPOSTA: a row appears in Gestantes Expostas.** In the app: keep two extension tables. When a gestante's `resultadoTesteRapido` is set to `EXPOSTA`, atomically insert (if absent) a `gestantes_expostas_data` row with the same `patient_id`; when it changes away from EXPOSTA, do NOT auto-delete; the follow-up may still be needed. Deleting is manual.
+1. **Gestante MONITORAR: a row appears in Gestantes Expostas.** In the app: keep two extension tables. When a gestante's `resultadoTesteRapido` is set to `MONITORAR`, atomically insert (if absent) a `gestantes_expostas_data` row with the same `patient_id`; when it changes away from MONITORAR, do NOT auto-delete; the follow-up may still be needed. Deleting is manual.
 2. **DM PMDID=true: a row appears in Exame Pé Diabético.** Same pattern: `dm_data` toggling PMDID inserts a `pe_diabetico_data` row. Manual delete only.
 
 These are implemented as service-layer side effects on PATCH, not SQL triggers; code is easier to reason about and tests are simpler.
@@ -133,10 +133,10 @@ These are implemented as service-layer side effects on PATCH, not SQL triggers; 
 Every text column with a bounded value set becomes a Postgres enum + Zod branded string. Non-exhaustive draft list:
 
 - `risco_gestante`: `habitual | alto`
-- `resultado_tr`: `REAGENTE | NÃO REAGENTE | INDETERMINADO`
+- `resultado_tr`: `MONITORAR | Seguir com Fluxo habitual`
 - `resultado_tr_sifilis_hiv`: `Feito | Não Feito | Não realizada`
 - `avaliacao_odonto`: `Realizada | Não Realizada | A realizar | Não se aplica`
-- `resultado_ts_gestante`: `MONITORAR | EXPOSTA | LIBERADA | ...` (real values TBD)
+- `resultado_ts_gestante`: `MONITORAR | Seguir com Fluxo habitual`
 - `tipo_dm`: `DM 1 | DM 2 | Gestacional | Outro`
 - `tipo_tb`: pending
 - `tipo_entrada_tb`: `Caso Novo | Reingresso | Reingresso após abandono | Transferência | Não sabe`
@@ -206,7 +206,7 @@ Two challenges:
 
 - Wraps every insert/upsert in a single transaction.
 - Strategy: **upsert by CNS**. If CNS exists, PATCH the patient and its extensions. If not, INSERT patient + extension row for the tab being processed.
-- The tab currently being processed determines which extension row gets written; cross-tab side-effects (Expostas auto-row on `resultadoTesteRapido=EXPOSTA`) happen naturally as each tab is processed.
+- The tab currently being processed determines which extension row gets written; cross-tab side-effects (Expostas auto-row on `resultadoTesteRapido=MONITORAR`) happen naturally as each tab is processed.
 - Preserves `createdBy` / `updatedBy` = the importing user's session id.
 - Records import audit: a new `import_batches` table (`id`, `user_id`, `filename`, `started_at`, `finished_at`, `stats jsonb`).
 
