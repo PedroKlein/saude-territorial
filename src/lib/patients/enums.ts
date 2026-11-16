@@ -126,20 +126,16 @@ export const AcompanhamentoStatusSchema = makeEnumSchema(
 
 /**
  * Resultado do Teste Rápido consolidado (Gestantes col U).
- * `EXPOSTA` é o gatilho para a sub-layer Gestantes Expostas (Phase C).
+ * `MONITORAR` é o gatilho para a sub-layer Gestantes Expostas.
  */
 export const RESULTADO_TR_VALUES = [
   "MONITORAR",
-  "EXPOSTA",
-  "REAGENTE",
-  "Não Reagente",
+  "Seguir com Fluxo habitual",
 ] as const;
 export type ResultadoTr = (typeof RESULTADO_TR_VALUES)[number];
 export const RESULTADO_TR_LABELS: Record<ResultadoTr, string> = {
   MONITORAR: "Monitorar",
-  EXPOSTA: "Exposta",
-  REAGENTE: "Reagente",
-  "Não Reagente": "Não reagente",
+  "Seguir com Fluxo habitual": "Seguir com Fluxo habitual",
 };
 export const ResultadoTrSchema = makeEnumSchema(
   RESULTADO_TR_VALUES,
@@ -147,12 +143,12 @@ export const ResultadoTrSchema = makeEnumSchema(
 );
 
 /** IG na abertura do pré-natal, bucketizada — não é semana bruta. */
-export const IG_ABERTURA_VALUES = ["< 12 sem", "12-24 sem", "> 24 sem"] as const;
+export const IG_ABERTURA_VALUES = ["<12 sem", "12-24 sem", ">24 sem"] as const;
 export type IgAbertura = (typeof IG_ABERTURA_VALUES)[number];
 export const IG_ABERTURA_LABELS: Record<IgAbertura, string> = {
-  "< 12 sem": "Menos de 12 semanas",
+  "<12 sem": "Menos de 12 semanas",
   "12-24 sem": "Entre 12 e 24 semanas",
-  "> 24 sem": "Mais de 24 semanas",
+  ">24 sem": "Mais de 24 semanas",
 };
 export const IgAberturaSchema = makeEnumSchema(
   IG_ABERTURA_VALUES,

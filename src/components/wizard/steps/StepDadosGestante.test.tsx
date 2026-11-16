@@ -58,7 +58,7 @@ describe("StepDadosGestante — full-parity round-trip", () => {
       gestantes: {
         dum: "01/01/2026",
         risco: "alto",
-        igAbertura: "< 12 sem",
+        igAbertura: "<12 sem",
         numeroConsultas: 6,
         acompanhamentoPesoAltura: "Em dia",
         numeroVisitasDomiciliares: 3,
@@ -85,7 +85,7 @@ describe("StepDadosGestante — full-parity round-trip", () => {
 
     expect(setCtx).toHaveBeenCalledTimes(1);
     const g = setCtx.mock.calls[0]![0]!.gestantes as Record<string, unknown>;
-    expect(g.igAbertura).toBe("< 12 sem");
+    expect(g.igAbertura).toBe("<12 sem");
     expect(g.acompanhamentoPesoAltura).toBe("Em dia");
     expect(g.numeroVisitasDomiciliares).toBe(3);
     expect(g.avaliacaoOdontoStatus).toBe("Realizada");

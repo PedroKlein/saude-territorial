@@ -191,7 +191,7 @@ const HAS_CONDITION: Record<string, unknown> = {
 /** Gestante with the full Phase B field set surfaced under "Mostrar mais". */
 const GESTANTE_FULL: Record<string, unknown> = {
   ...GESTANTE_CONDITION,
-  igAbertura: "< 12 sem",
+  igAbertura: "<12 sem",
   acompanhamentoPesoAltura: "Em dia",
   numeroVisitasDomiciliares: 3,
   avaliacaoOdontoStatus: "Realizada",
