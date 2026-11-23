@@ -7,6 +7,7 @@ import { LayerSidebar } from "./LayerSidebar";
 import { useMapStore } from "@/stores/mapStore";
 
 vi.mock("@/hooks/useTerritoryData", () => ({
+  useMicroareasGeoJson: () => ({ data: undefined, isFetching: false }),
   useBairrosGeoJson: () => ({ data: undefined, isFetching: false }),
   useHealthTerritoriesGeoJson: () => ({ data: undefined, isFetching: false }),
 }));

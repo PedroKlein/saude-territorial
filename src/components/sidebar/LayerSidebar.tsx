@@ -25,6 +25,7 @@ import type { ViewMode } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
 import {
+  useMicroareasGeoJson,
   useBairrosGeoJson,
   useHealthTerritoriesGeoJson,
 } from "@/hooks/useTerritoryData";
@@ -94,6 +95,9 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
     (s) => s.setShowHealthTerritories,
   );
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const { isFetching: microareasLoading } = useMicroareasGeoJson(
+    showTerritories || viewMode === "microarea",
+  );
   const { isFetching: bairrosLoading } = useBairrosGeoJson(showBairros);
   const { isFetching: healthTerritoriesLoading } =
     useHealthTerritoriesGeoJson(showHealthTerritories);
@@ -248,7 +252,7 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
                   id: "microareas",
                   label: "Microáreas",
                   active: showTerritories,
-                  loading: false,
+                  loading: microareasLoading,
                   dotClass: "bg-brand",
                   activeClass:
                     "border-brand/40 bg-brand/10 text-brand font-semibold",

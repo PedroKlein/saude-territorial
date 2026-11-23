@@ -2,16 +2,23 @@
 
 import { useMemo } from "react";
 import { GeoJSON } from "react-leaflet";
-import type { Feature } from "geojson";
+import type { Feature, FeatureCollection } from "geojson";
 import type { PathOptions, Layer, FeatureGroup } from "leaflet";
-import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import type { LayerId } from "@/config/layers.config";
 import type { PatientRecord } from "@/hooks/usePatientData";
+import {
+  countPatientsInTerritories,
+  getTerritoryId,
+  getTerritoryName,
+  type TerritoryPatientPoint,
+} from "@/lib/territories/spatial";
 import { attachNonFocusableHandlers } from "./leafletPathFocus";
 
 type MicroareaChoroplethProps = {
-  data: Partial<Record<LayerId, PatientRecord[]>>;
-}
+  geojson: FeatureCollection;
+  data?: Partial<Record<LayerId, PatientRecord[]>>;
+  patients?: TerritoryPatientPoint[];
+};
 
 function countToStyle(count: number, max: number): PathOptions {
   if (count === 0) {
@@ -46,29 +53,37 @@ function countToStyle(count: number, max: number): PathOptions {
  *
  * LGPD: only aggregate counts per polygon are derived; no individual fields rendered.
  */
-export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
-  const countsByMicroarea = useMemo(() => {
-    const seenIds = new Map<string, Set<string>>();
-    for (const patients of Object.values(data)) {
+export function MicroareaChoropleth({
+  geojson,
+  data,
+  patients,
+}: MicroareaChoroplethProps) {
+  const patientPool = useMemo((): TerritoryPatientPoint[] => {
+    if (patients) return patients;
+    if (!data) return [];
+    const list: TerritoryPatientPoint[] = [];
+    for (const group of Object.values(data)) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Partial<Record<...>> values can be undefined at runtime even though Object.values() types them as PatientRecord[]
-      if (!patients) continue;
-      for (const p of patients) {
-        const ma = p.microarea as string | undefined;
-        if (!ma) continue;
-        let bucket = seenIds.get(ma);
-        if (!bucket) {
-          bucket = new Set<string>();
-          seenIds.set(ma, bucket);
-        }
-        bucket.add(p.id);
+      if (!group) continue;
+      for (const p of group) {
+        list.push({
+          id: p.id,
+          lat: p.lat,
+          lng: p.lng,
+          microarea: typeof p.microarea === "string" ? p.microarea : null,
+        });
       }
     }
-    const counts = new Map<string, number>();
-    for (const [ma, ids] of seenIds) {
-      counts.set(ma, ids.size);
-    }
-    return counts;
-  }, [data]);
+    return list;
+  }, [data, patients]);
+
+  const countsByMicroarea = useMemo(
+    () =>
+      countPatientsInTerritories(geojson, patientPool, {
+        matchProperty: "microarea",
+      }),
+    [geojson, patientPool],
+  );
 
   const maxCount = Math.max(1, ...countsByMicroarea.values());
 
@@ -83,15 +98,15 @@ export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
   );
 
   function styleFeature(feature?: Feature): PathOptions {
-    const id = feature?.properties?.id as string | undefined;
-    const count = id ? (countsByMicroarea.get(id) ?? 0) : 0;
+    const id = feature ? getTerritoryId(feature) : "";
+    const count = countsByMicroarea.get(id) ?? 0;
     return countToStyle(count, maxCount);
   }
 
   function onEachFeature(feature: Feature, layer: Layer) {
-    const id = feature.properties?.id as string | undefined;
-    const nome = (feature.properties?.nome as string | undefined) ?? id ?? "Microárea";
-    const count = id ? (countsByMicroarea.get(id) ?? 0) : 0;
+    const id = getTerritoryId(feature);
+    const nome = getTerritoryName(feature);
+    const count = countsByMicroarea.get(id) ?? 0;
     const label = `${nome} · ${count} paciente${count !== 1 ? "s" : ""}`;
     const fg = layer as FeatureGroup;
     fg.bindTooltip(label, { sticky: true });
@@ -101,7 +116,7 @@ export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
   return (
     <GeoJSON
       key={stableKey}
-      data={MICROAREAS_GEOJSON}
+      data={geojson}
       style={styleFeature}
       onEachFeature={onEachFeature}
     />
