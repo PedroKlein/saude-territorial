@@ -18,11 +18,16 @@ import {
   Hexagon,
   UserRound,
   PanelLeftClose,
+  Loader2,
 } from "lucide-react";
 import { useMapStore } from "@/stores/mapStore";
 import type { ViewMode } from "@/stores/mapStore";
 import { LAYER_CONFIG, type LayerId } from "@/config/layers.config";
 import type { LayeredPatientData } from "@/hooks/usePatientData";
+import {
+  useBairrosGeoJson,
+  useHealthTerritoriesGeoJson,
+} from "@/hooks/useTerritoryData";
 import { evaluatePatient } from "@/lib/alerts/engine";
 import { ALERT_RULES } from "@/config/alert-rules.config";
 import { SearchInput } from "./SearchInput";
@@ -80,7 +85,18 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
   const setAlertsOnly = useMapStore((s) => s.setAlertsOnly);
   const viewMode = useMapStore((s) => s.viewMode);
   const setViewMode = useMapStore((s) => s.setViewMode);
+  const showTerritories = useMapStore((s) => s.showTerritories);
+  const setShowTerritories = useMapStore((s) => s.setShowTerritories);
+  const showBairros = useMapStore((s) => s.showBairros);
+  const setShowBairros = useMapStore((s) => s.setShowBairros);
+  const showHealthTerritories = useMapStore((s) => s.showHealthTerritories);
+  const setShowHealthTerritories = useMapStore(
+    (s) => s.setShowHealthTerritories,
+  );
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const { isFetching: bairrosLoading } = useBairrosGeoJson(showBairros);
+  const { isFetching: healthTerritoriesLoading } =
+    useHealthTerritoriesGeoJson(showHealthTerritories);
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
 
@@ -219,6 +235,73 @@ export function LayerSidebar({ data }: LayerSidebarProps) {
               <span className="truncate">{label}</span>
             </button>
           ))}
+        </div>
+
+        <div className="mt-2.5">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+            Territórios
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(
+              [
+                {
+                  id: "microareas",
+                  label: "Microáreas",
+                  active: showTerritories,
+                  loading: false,
+                  dotClass: "bg-brand",
+                  activeClass:
+                    "border-brand/40 bg-brand/10 text-brand font-semibold",
+                  onToggle: () => { setShowTerritories(!showTerritories); },
+                },
+                {
+                  id: "bairros",
+                  label: "Bairros",
+                  active: showBairros,
+                  loading: bairrosLoading,
+                  dotClass: "bg-slate-600",
+                  activeClass:
+                    "border-slate-400 bg-slate-100 text-slate-900 font-semibold",
+                  onToggle: () => { setShowBairros(!showBairros); },
+                },
+                {
+                  id: "health-territories",
+                  label: "Territórios (US)",
+                  active: showHealthTerritories,
+                  loading: healthTerritoriesLoading,
+                  dotClass: "bg-blue-600",
+                  activeClass:
+                    "border-blue-400 bg-blue-50 text-blue-800 font-semibold",
+                  onToggle: () => {
+                    setShowHealthTerritories(!showHealthTerritories);
+                  },
+                },
+              ] as const
+            ).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={item.active}
+                onClick={item.onToggle}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition ${
+                  item.active
+                    ? item.activeClass
+                    : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                }`}
+              >
+                {item.loading ? (
+                  <Loader2 className="size-2.5 animate-spin" />
+                ) : (
+                  <span
+                    className={`size-2 rounded-full ${
+                      item.active ? item.dotClass : "bg-neutral-300"
+                    }`}
+                  />
+                )}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

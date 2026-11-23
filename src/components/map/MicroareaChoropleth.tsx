@@ -7,6 +7,7 @@ import type { PathOptions, Layer, FeatureGroup } from "leaflet";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import type { LayerId } from "@/config/layers.config";
 import type { PatientRecord } from "@/hooks/usePatientData";
+import { attachNonFocusableHandlers } from "./leafletPathFocus";
 
 type MicroareaChoroplethProps = {
   data: Partial<Record<LayerId, PatientRecord[]>>;
@@ -92,7 +93,9 @@ export function MicroareaChoropleth({ data }: MicroareaChoroplethProps) {
     const nome = (feature.properties?.nome as string | undefined) ?? id ?? "Microárea";
     const count = id ? (countsByMicroarea.get(id) ?? 0) : 0;
     const label = `${nome} · ${count} paciente${count !== 1 ? "s" : ""}`;
-    (layer as FeatureGroup).bindTooltip(label);
+    const fg = layer as FeatureGroup;
+    fg.bindTooltip(label, { sticky: true });
+    attachNonFocusableHandlers(fg);
   }
 
   return (

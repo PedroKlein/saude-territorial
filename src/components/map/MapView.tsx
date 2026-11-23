@@ -10,12 +10,17 @@ import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
+import { GeoJsonTerritoryLayer } from "./GeoJsonTerritoryLayer";
 import { MicroareaOutlines } from "./MicroareaOutlines";
 import { DensityHeatmap } from "./DensityHeatmap";
 import { MicroareaChoropleth } from "./MicroareaChoropleth";
 import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
 import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { usePatientData, type LayeredPatientData } from "@/hooks/usePatientData";
+import {
+  useBairrosGeoJson,
+  useHealthTerritoriesGeoJson,
+} from "@/hooks/useTerritoryData";
 import { useMapStore } from "@/stores/mapStore";
 import { usePlannerStore } from "@/stores/plannerStore";
 import { useSearchParams } from "next/navigation";
@@ -85,6 +90,11 @@ export default function MapView() {
   const { data } = usePatientData();
   const activeRoute = useMapStore((s) => s.activeRoute);
   const showTerritories = useMapStore((s) => s.showTerritories);
+  const showBairros = useMapStore((s) => s.showBairros);
+  const showHealthTerritories = useMapStore((s) => s.showHealthTerritories);
+  const { data: bairrosGeoJson } = useBairrosGeoJson(showBairros);
+  const { data: healthTerritoriesGeoJson } =
+    useHealthTerritoriesGeoJson(showHealthTerritories);
 
   const viewMode = useMapStore((s) => s.viewMode);
   const activeLayers = useMapStore((s) => s.activeLayers);
@@ -188,7 +198,7 @@ export default function MapView() {
         className="h-full w-full"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Divisões Territoriais: <a href="https://prefeitura.poa.br/sms/onde-esta-o-aedes/mapas" target="_blank" rel="noopener noreferrer">SMS Porto Alegre / GeoSaúde</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
@@ -221,6 +231,22 @@ export default function MapView() {
           </Popup>
         </Marker>
         <MapController data={data} />
+        {showBairros && bairrosGeoJson && (
+          <GeoJsonTerritoryLayer
+            geojson={bairrosGeoJson}
+            variant="bairro"
+            paneName="bairrosPane"
+            paneZIndex={350}
+          />
+        )}
+        {showHealthTerritories && healthTerritoriesGeoJson && (
+          <GeoJsonTerritoryLayer
+            geojson={healthTerritoriesGeoJson}
+            variant="health-unit"
+            paneName="healthTerritoriesPane"
+            paneZIndex={360}
+          />
+        )}
         {showTerritories && (
           <>
             <TerritoryLayer

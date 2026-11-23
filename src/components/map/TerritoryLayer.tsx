@@ -4,6 +4,7 @@ import { GeoJSON } from "react-leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 import { useMemo } from "react";
 import type L from "leaflet";
+import { attachNonFocusableHandlers } from "./leafletPathFocus";
 
 const MICROAREA_COLORS: Partial<Record<string, string>> = {
   MA1: "#E91E63",
@@ -36,8 +37,9 @@ export function TerritoryLayer({ geojson, onMicroareaClick }: TerritoryLayerProp
   const onEachFeature = useMemo(
     () => (feature: Feature, layer: L.Layer) => {
       if (feature.properties?.nome) {
-        layer.bindTooltip(feature.properties.nome as string);
+        layer.bindTooltip(feature.properties.nome as string, { sticky: true });
       }
+      attachNonFocusableHandlers(layer);
       if (onMicroareaClick) {
         layer.on("click", () => {
           onMicroareaClick(feature.properties?.id as string);
