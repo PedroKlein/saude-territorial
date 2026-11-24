@@ -39,8 +39,8 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
-vi.mock("@/config/microareas.data", () => ({
-  MICROAREAS_GEOJSON: { features: [] },
+vi.mock("@/hooks/useTerritoryData", () => ({
+  useMicroareasGeoJson: () => ({ data: undefined }),
 }));
 
 vi.mock("@/config/geo.constants", () => ({

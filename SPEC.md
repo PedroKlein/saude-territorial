@@ -81,7 +81,7 @@ A "Traçar rota" button in the detail panel asks OSRM for a walking or driving r
 
 ## Territories
 
-GeoJSON files under `territories/` load as a Leaflet overlay. Microárea polygons are colored per ACS, and hovering shows the microárea name. Editing boundaries on the map is post-MVP.
+Three toggleable territory overlays render on the Leaflet map from `public/territories/`: **Microáreas** (`microareas.geojson`, colored per ACS), **Bairros** (`bairros.geojson`), and **Territórios (US)** (`territorios.geojson`), lazy-loaded when toggled on. Hovering a polygon displays its name and automatically computed patient count. In the `Áreas` view mode, active territory overlays render as choropleths. Editing boundaries on the map is post-MVP.
 
 ## UI
 

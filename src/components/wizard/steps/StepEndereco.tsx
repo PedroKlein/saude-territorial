@@ -20,7 +20,7 @@
  * pin.
  */
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,8 +38,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field } from "@/components/panels/Field";
-import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
 import { US_MOAB_CALDAS } from "@/config/geo.constants";
+import { useMicroareasGeoJson } from "@/hooks/useTerritoryData";
+import { getTerritoryId, getTerritoryName } from "@/lib/territories/spatial";
 import type { PatientWizardCtx } from "@/components/wizard/PatientWizard";
 import type { WizardStepRenderProps } from "@/components/wizard/Wizard";
 import { lookupCep } from "@/lib/geocoding/viacep";
@@ -52,14 +53,6 @@ const GeocodeMapPreview = dynamic(() => import("./GeocodeMapPreview"), {
     <div className="h-[200px] animate-pulse rounded-lg bg-neutral-100" />
   ),
 });
-
-const MICROAREA_OPTIONS = (
-  MICROAREAS_GEOJSON.features as {
-    properties: { id: string; nome: string } | null;
-  }[]
-).flatMap((f) =>
-  f.properties ? [{ value: f.properties.id, label: f.properties.nome }] : [],
-);
 
 const EnderecoSchema = z.object({
   cep: z.string().optional(),
@@ -110,6 +103,16 @@ function formatCep(v: string): string {
 type Props = WizardStepRenderProps<PatientWizardCtx>;
 
 export function StepEndereco({ ctx, setCtx, goNext }: Props) {
+  const { data: microareasGeoJson } = useMicroareasGeoJson(true);
+  const microareaOptions = useMemo(
+    () =>
+      (microareasGeoJson?.features ?? []).map((f, idx) => ({
+        value: getTerritoryId(f, idx),
+        label: getTerritoryName(f),
+      })),
+    [microareasGeoJson],
+  );
+
   const { register, handleSubmit, control, setValue, formState: { errors } } =
     useForm<EnderecoValues>({
       resolver: zodResolver(EnderecoSchema),
@@ -292,7 +295,7 @@ export function StepEndereco({ ctx, setCtx, goNext }: Props) {
               <SelectValue placeholder="Selecionar microárea" />
             </SelectTrigger>
             <SelectContent>
-              {MICROAREA_OPTIONS.map((o) => (
+              {microareaOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>

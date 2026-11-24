@@ -29,6 +29,8 @@ type MapState = {
   mapZoom: number;
   activeRoute: ActiveRoute | null;
   showTerritories: boolean;
+  showBairros: boolean;
+  showHealthTerritories: boolean;
   viewMode: ViewMode;
   alertsOnly: boolean;
   /** Patient currently in manual-pin-drop mode (null = not pinning). */
@@ -41,6 +43,8 @@ type MapActions = {
   setMapView: (center: [number, number], zoom: number) => void;
   setActiveRoute: (route: ActiveRoute | null) => void;
   setShowTerritories: (show: boolean) => void;
+  setShowBairros: (show: boolean) => void;
+  setShowHealthTerritories: (show: boolean) => void;
   setViewMode: (m: ViewMode) => void;
   setAlertsOnly: (on: boolean) => void;
   setPinningPatient: (target: PinningTarget | null) => void;
@@ -66,6 +70,8 @@ export const useMapStore = create<MapStore>()(persist(
   mapZoom: 14,
   activeRoute: null,
   showTerritories: false,
+  showBairros: false,
+  showHealthTerritories: false,
   viewMode: "markers",
   alertsOnly: false,
   pinningPatient: null,
@@ -87,6 +93,10 @@ export const useMapStore = create<MapStore>()(persist(
 
   setShowTerritories: (show) => set({ showTerritories: show }),
 
+  setShowBairros: (show) => set({ showBairros: show }),
+
+  setShowHealthTerritories: (show) => set({ showHealthTerritories: show }),
+
 
   setViewMode: (m) => set({ viewMode: m }),
 
@@ -101,6 +111,8 @@ export const useMapStore = create<MapStore>()(persist(
       mapCenter: state.mapCenter,
       mapZoom: state.mapZoom,
       showTerritories: state.showTerritories,
+      showBairros: state.showBairros,
+      showHealthTerritories: state.showHealthTerritories,
       viewMode: state.viewMode,
     }),
   }

@@ -45,4 +45,20 @@ describe("mapStore", () => {
     expect(state.mapCenter[1]).toBeCloseTo(-51.2177, 3);
     expect(state.mapZoom).toBe(14);
   });
+
+  it("toggles territory overlay flags", () => {
+    const state = useMapStore.getState();
+    expect(state.showTerritories).toBe(false);
+    expect(state.showBairros).toBe(false);
+    expect(state.showHealthTerritories).toBe(false);
+
+    state.setShowTerritories(true);
+    state.setShowBairros(true);
+    state.setShowHealthTerritories(true);
+
+    const updated = useMapStore.getState();
+    expect(updated.showTerritories).toBe(true);
+    expect(updated.showBairros).toBe(true);
+    expect(updated.showHealthTerritories).toBe(true);
+  });
 });

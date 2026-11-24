@@ -10,12 +10,18 @@ import { ActiveRouteLayer } from "./ActiveRouteLayer";
 import { MapController } from "./MapController";
 import { ClusteredLayer } from "./ClusteredLayer";
 import { TerritoryLayer } from "./TerritoryLayer";
+import { GeoJsonTerritoryLayer } from "./GeoJsonTerritoryLayer";
 import { MicroareaOutlines } from "./MicroareaOutlines";
 import { DensityHeatmap } from "./DensityHeatmap";
 import { MicroareaChoropleth } from "./MicroareaChoropleth";
 import { ManualPinOverlay, PinClickCatcher } from "./ManualPinMode";
-import { MICROAREAS_GEOJSON } from "@/config/microareas.data";
-import { usePatientData, type LayeredPatientData } from "@/hooks/usePatientData";
+import { usePatientData } from "@/hooks/usePatientData";
+import {
+  useMicroareasGeoJson,
+  useBairrosGeoJson,
+  useHealthTerritoriesGeoJson,
+} from "@/hooks/useTerritoryData";
+import { collectVisiblePatients } from "@/lib/territories/spatial";
 import { useMapStore } from "@/stores/mapStore";
 import { usePlannerStore } from "@/stores/plannerStore";
 import { useSearchParams } from "next/navigation";
@@ -85,6 +91,9 @@ export default function MapView() {
   const { data } = usePatientData();
   const activeRoute = useMapStore((s) => s.activeRoute);
   const showTerritories = useMapStore((s) => s.showTerritories);
+  const showBairros = useMapStore((s) => s.showBairros);
+  const showHealthTerritories = useMapStore((s) => s.showHealthTerritories);
+  const alertsOnly = useMapStore((s) => s.alertsOnly);
 
   const viewMode = useMapStore((s) => s.viewMode);
   const activeLayers = useMapStore((s) => s.activeLayers);
@@ -95,6 +104,16 @@ export default function MapView() {
   const mapSelectMode = usePlannerStore((s) => s.mapSelectMode);
   const setMicroareaFilter = useFilterStore((s) => s.setMicroareaFilter);
   const currentMicroareas = useFilterStore((s) => s.microareas);
+  const alertLevels = useFilterStore((s) => s.alertLevels);
+  const searchText = useFilterStore((s) => s.searchText);
+  const hideUncertain = useFilterStore((s) => s.hideUncertain);
+  const applyFilters = useFilterStore((s) => s.applyFilters);
+  const { data: microareasGeoJson } = useMicroareasGeoJson(
+    showTerritories || viewMode === "microarea",
+  );
+  const { data: bairrosGeoJson } = useBairrosGeoJson(showBairros);
+  const { data: healthTerritoriesGeoJson } =
+    useHealthTerritoriesGeoJson(showHealthTerritories);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [rightClickCoords, setRightClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const setSelectedPatient = useMapStore((s) => s.setSelectedPatient);
@@ -122,16 +141,22 @@ export default function MapView() {
   );
 
   const layerIds = Object.keys(LAYER_CONFIG) as LayerId[];
-  // Flat patient list filtered by active layers — used for density points
-  // and passed to choropleth. Deduped by patient id across layers.
-  const filteredData = useMemo((): LayeredPatientData => {
-    if (!data) return {};
-    const out: LayeredPatientData = {};
-    for (const layerId of layerIds) {
-      if (activeLayers[layerId]) out[layerId] = data[layerId];
-    }
-    return out;
-  }, [data, activeLayers, layerIds]);
+  // Unique patients visible under active condition layers and sidebar filters —
+  // shared by territory overlays and choropleths so counts stay consistent.
+  const visiblePatients = useMemo(
+    () => collectVisiblePatients(data, activeLayers, alertsOnly, applyFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `applyFilters` reads filter state via Zustand get(); explicit filter slices drive recomputation
+    [
+      data,
+      activeLayers,
+      alertsOnly,
+      applyFilters,
+      currentMicroareas,
+      alertLevels,
+      searchText,
+      hideUncertain,
+    ],
+  );
 
   const densityPoints = useMemo(() => {
     if (viewMode !== "density" || !data) return [];
@@ -188,7 +213,7 @@ export default function MapView() {
         className="h-full w-full"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Divisões Territoriais: <a href="https://prefeitura.poa.br/sms/onde-esta-o-aedes/mapas" target="_blank" rel="noopener noreferrer">SMS Porto Alegre / GeoSaúde</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
@@ -221,14 +246,35 @@ export default function MapView() {
           </Popup>
         </Marker>
         <MapController data={data} />
-        {showTerritories && (
+        {showBairros && bairrosGeoJson && (
+          <GeoJsonTerritoryLayer
+            geojson={bairrosGeoJson}
+            patients={visiblePatients}
+            variant="bairro"
+            choropleth={viewMode === "microarea"}
+            paneName="bairrosPane"
+            paneZIndex={350}
+          />
+        )}
+        {showHealthTerritories && healthTerritoriesGeoJson && (
+          <GeoJsonTerritoryLayer
+            geojson={healthTerritoriesGeoJson}
+            patients={visiblePatients}
+            variant="health-unit"
+            choropleth={viewMode === "microarea"}
+            paneName="healthTerritoriesPane"
+            paneZIndex={360}
+          />
+        )}
+        {showTerritories && viewMode !== "microarea" && microareasGeoJson && (
           <>
             <TerritoryLayer
-              geojson={MICROAREAS_GEOJSON}
+              geojson={microareasGeoJson}
+              patients={visiblePatients}
               onMicroareaClick={handleMicroareaClick}
             />
             <MicroareaOutlines
-              geojson={MICROAREAS_GEOJSON}
+              geojson={microareasGeoJson}
               filteredIds={currentMicroareas}
             />
           </>
@@ -272,9 +318,14 @@ export default function MapView() {
         {viewMode === "density" && densityPoints.length > 0 && (
           <DensityHeatmap points={densityPoints} />
         )}
-        {viewMode === "microarea" && (
-          <MicroareaChoropleth data={filteredData} />
-        )}
+        {viewMode === "microarea" &&
+          microareasGeoJson &&
+          (showTerritories || (!showBairros && !showHealthTerritories)) && (
+            <MicroareaChoropleth
+              geojson={microareasGeoJson}
+              patients={visiblePatients}
+            />
+          )}
 
         <PinClickCatcher
           active={pinningPatient !== null}
