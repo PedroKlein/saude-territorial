@@ -29,7 +29,7 @@ Coloque apenas estes arquivos na instalação, preservando o `docker-compose.pro
 
 Na VM atual, a instalação fica em `/home/giflach/teste`. É necessário acesso administrativo para atravessar o diretório pessoal do proprietário. Primeiro use uma área separada para revisão; copie para a instalação somente após aprovação.
 
-Não execute uma sincronização ampla com `rsync --delete`: o Compose do servidor contém Nominatim e backups que não estão no Compose básico deste checkout. O overlay HTTPS mantém essas definições e altera apenas a porta da aplicação, sua origem de autenticação e o novo proxy.
+Não execute uma sincronização ampla com `rsync --delete` sem revisar antes o modo de simulação: ela remove arquivos que existem apenas no servidor. O overlay HTTPS altera apenas a porta da aplicação e sua origem de autenticação, e adiciona o proxy; banco, Nominatim e backups permanecem como estão.
 
 Não coloque certificados ou chaves no checkout, no contexto de build ou em diretórios sujeitos à sincronização. Não baixe a chave privada da VM.
 
