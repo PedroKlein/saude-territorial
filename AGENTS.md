@@ -76,11 +76,11 @@ src/
 ├── config/                        # Layer visual config, alert rules, constants
 │   ├── layers.config.ts           # Icon, color, visible columns per layer
 │   ├── alert-rules.config.ts      # Static alert rules (locked 4)
-│   ├── geo.constants.ts           # US Moab Caldas coordinates
-│   └── microareas.data.ts         # Microarea metadata
-├── hooks/                         # Custom React hooks (usePatientData, ...)
+│   └── geo.constants.ts           # US Moab Caldas coordinates
+├── hooks/                         # Custom React hooks (usePatientData, useTerritoryData, ...)
 └── types/                         # Shared TypeScript types
-territories/                       # GeoJSON files for microáreas
+public/
+└── territories/                   # GeoJSON overlays (microareas, bairros, health unit territories)
 drizzle/                           # Drizzle-generated SQL migrations
 docker-compose.yml                 # Optional native Postgres parity environment
 seed/                              # Vendored synthetic seed data

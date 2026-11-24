@@ -15,10 +15,14 @@ EXCLUDES=(
   .env
   .env.local
   ".env*.local"
+  .secret/
 
   # Local dev state
   .data/
   .auth-state.json
+
+  # Nominatim OSM data
+  services/nominatim/porto-alegre.osm.pbf
 
   # Demo tooling and generated media
   tools/demo-video/

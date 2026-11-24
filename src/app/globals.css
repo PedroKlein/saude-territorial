@@ -280,3 +280,8 @@ select {
 .us-popup .leaflet-popup-close-button:hover {
   color: oklch(28% 0.01 260);
 }
+
+/* Prevent browser focus bounding box around clicked Leaflet polygons. */
+.leaflet-container .leaflet-interactive:focus {
+  outline: none;
+}

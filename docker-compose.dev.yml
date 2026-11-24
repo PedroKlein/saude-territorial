@@ -39,10 +39,31 @@ services:
     volumes:
       - .:/app
       - dev-node-modules:/app/node_modules
+      - ${GOOGLE_SA_KEY_FILE:-./.secret/sa_key.json}:/app/.secret/sa_key.json:ro
     depends_on:
       db-dev:
         condition: service_healthy
 
+  nominatim:
+    image: mediagis/nominatim:5.3
+    container_name: saude-territorial-dev-nominatim
+    restart: unless-stopped
+    environment:
+      PBF_PATH: /nominatim/data/porto-alegre.osm.pbf
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
+    ports:
+      - "${NOMINATIM_PORT:-3002}:8080"
+    volumes:
+      - nominatim-dev-data:/var/lib/postgresql/16/main
+      - ./services/nominatim:/nominatim/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30m
+
 volumes:
   saude-dev-pgdata:
   dev-node-modules:
+  nominatim-dev-data:
