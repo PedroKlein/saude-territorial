@@ -5,6 +5,13 @@ node_modules
 *.local
 .env
 .env.*
+**/*.key
+**/*.pem
+**/*.crt
+**/*.cer
+**/*.csr
+**/*.p12
+**/*.pfx
 .direnv
 .devenv
 coverage

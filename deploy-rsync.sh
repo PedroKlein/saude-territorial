@@ -43,6 +43,12 @@ EXCLUDES=(
   # OS junk
   .DS_Store
   "*.pem"
+  "*.key"
+  "*.crt"
+  "*.cer"
+  "*.csr"
+  "*.p12"
+  "*.pfx"
 )
 
 EXCLUDE_ARGS=()

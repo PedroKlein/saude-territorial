@@ -72,6 +72,8 @@ The Docker stacks always select native Postgres. Running `mise run setup` and `m
 
 Nothing here is tied to Supabase or Vercel. Production uses native Postgres: set `DATABASE_DRIVER=postgres` and point `DATABASE_URL` at the deployment database before starting the Next.js app on a Node runtime. Production rejects PGlite and fails fast when `DATABASE_URL` is missing.
 
+Para adicionar HTTPS a uma instalação Docker existente, consulte [Publicar a aplicação com HTTPS na porta 443](./docs/deployment.md). O procedimento mantém os serviços e volumes atuais e exige confirmação da política de acesso pela VPN antes da ativação.
+
 ## Commands
 
 | Command | What it does |

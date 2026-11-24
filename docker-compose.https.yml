@@ -1,0 +1,35 @@
+services:
+  app:
+    ports: !reset []
+    environment:
+      BETTER_AUTH_URL: https://${HTTPS_HOST:?HTTPS_HOST is required}
+
+  proxy:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "0.0.0.0:443:443"
+    environment:
+      HTTPS_HOST: ${HTTPS_HOST:?HTTPS_HOST is required}
+      NGINX_ENVSUBST_FILTER: ^HTTPS_HOST$
+    volumes:
+      - type: bind
+        source: ./deploy/nginx/default.conf.template
+        target: /etc/nginx/templates/default.conf.template
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${TLS_CERT_DIR:?TLS_CERT_DIR is required}/${HTTPS_HOST}.fullchain.crt
+        target: /etc/nginx/tls/fullchain.crt
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${TLS_CERT_DIR:?TLS_CERT_DIR is required}/${HTTPS_HOST}.key
+        target: /etc/nginx/tls/private.key
+        read_only: true
+        bind:
+          create_host_path: false

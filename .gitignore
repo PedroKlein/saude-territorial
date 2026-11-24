@@ -29,6 +29,9 @@ test-results/
 # Misc
 .DS_Store
 *.pem
+*.key
+*.p12
+*.pfx
 
 # Legacy local auth database (unused; keep existing files untracked)
 auth.db
