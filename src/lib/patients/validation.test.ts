@@ -72,7 +72,7 @@ describe("Enum coercion — case-insensitive, whitespace-tolerant", () => {
     expect(TdoStatusSchema.parse("tdo em dia")).toBe("TDO em dia");
     expect(TipoEntradaTbSchema.parse("caso novo")).toBe("Caso novo");
     expect(EncerramentoMotivoTbSchema.parse("cura")).toBe("Cura");
-    expect(ResultadoTrSchema.parse("exposta")).toBe("EXPOSTA");
+    expect(ResultadoTrSchema.parse("monitorar")).toBe("MONITORAR");
   });
 
   it("keeps distinct enums for shape-similar fields", () => {
@@ -83,8 +83,8 @@ describe("Enum coercion — case-insensitive, whitespace-tolerant", () => {
   });
 
   it("normalizes bucketed IG abertura", () => {
-    expect(IgAberturaSchema.parse("< 12 sem")).toBe("< 12 sem");
-    expect(IgAberturaSchema.parse("< 12 SEM")).toBe("< 12 sem");
+    expect(IgAberturaSchema.parse("<12 sem")).toBe("<12 sem");
+    expect(IgAberturaSchema.parse("<12 SEM")).toBe("<12 sem");
     expect(() => IgAberturaSchema.parse("18 sem")).toThrow();
   });
 
