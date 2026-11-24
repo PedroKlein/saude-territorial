@@ -41,6 +41,9 @@ beforeEach(async () => {
     `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$DOCKER_LOG"
 printf '%s\\n' "\${BETTER_AUTH_URL:-}" >> "$DOCKER_ORIGIN_LOG"
+if [[ "$*" == *"nginx -t"* && "\${READ_STDIN:-0}" == "1" ]]; then
+  cat > /dev/null
+fi
 if [[ "$*" == *"nginx -t"* && "$FAIL_NGINX_CHECK" == "1" ]]; then
   exit 1
 fi
@@ -73,7 +76,7 @@ describe("Docker deployment command", () => {
     await run("https", "--check");
     const calls = await dockerCalls();
     expect(calls).toContain("-f docker-compose.prod.yml -f docker-compose.https.yml config --quiet");
-    expect(calls).toContain("run --rm --no-deps proxy nginx -t");
+    expect(calls).toContain("run --rm --no-deps -T proxy nginx -t");
     expect(calls).not.toContain(" up ");
   });
 
@@ -153,6 +156,16 @@ exec "$REAL_OPENSSL" "$@"
     await expect(run("https")).rejects.toThrow();
     expect(await dockerCalls()).toContain("nginx -t");
     expect(await dockerCalls()).not.toContain(" up ");
+  });
+
+  it("does not wait for caller input during the Nginx check", async () => {
+    environment.READ_STDIN = "1";
+    await execFileAsync("bash", [script, "https", "--check"], {
+      cwd: directory,
+      env: environment,
+      timeout: 3_000,
+    });
+    expect(await dockerCalls()).toContain("run --rm --no-deps -T proxy nginx -t");
   });
 
   it("rejects unknown HTTPS arguments before calling Docker", async () => {

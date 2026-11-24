@@ -33,7 +33,7 @@ case "$ENV" in
 
     COMPOSE=(docker compose -f docker-compose.prod.yml -f docker-compose.https.yml)
     "${COMPOSE[@]}" config --quiet
-    "${COMPOSE[@]}" run --rm --no-deps proxy nginx -t
+    "${COMPOSE[@]}" run --rm --no-deps -T proxy nginx -t </dev/null
 
     if [[ "${2:-}" == "--check" ]]; then
       exit 0
